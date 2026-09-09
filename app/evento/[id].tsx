@@ -5,6 +5,10 @@ import MapView, { Marker } from 'react-native-maps';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { Evento } from '../../types/evento';
 import { obtenerEventoPorId } from '../../services/eventos.service';
+import * as Notifications from 'expo-notifications'; //! importado únicamente para botón de prueba de notificaciones
+
+// 1. Importamos el nuevo componente
+import BotonEventoFavorito from '../../components/boton-evento-favorito';
 
 export default function PantallaDetalleEvento() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -49,7 +53,6 @@ export default function PantallaDetalleEvento() {
         const label = encodeURIComponent(evento.titulo);
         const latLng = `${latitud},${longitud}`;
 
-        // Construye la URL específica según el sistema operativo
         const url = Platform.select({
             ios: `maps:0,0?q=${label}@${latLng}`,
             android: `geo:0,0?q=${latLng}(${label})`
@@ -58,6 +61,21 @@ export default function PantallaDetalleEvento() {
         if (url) {
             Linking.openURL(url).catch(err => console.error("Error al abrir los mapas", err));
         }
+    };
+
+    //! Función para probar notificaciones push
+    const probarNotificacion = async () => {
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: "🔔 ¡Prueba de Notificación!",
+                body: `Esta es una prueba para el evento: ${evento?.titulo}`,
+                sound: true,
+            },
+            trigger: {
+                type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                seconds: 5,
+            },
+        });
     };
 
     return (
@@ -73,15 +91,29 @@ export default function PantallaDetalleEvento() {
             )}
 
             <View style={styles.content}>
-                <Text style={styles.title}>{evento.titulo}</Text>
+                {/* 2. Envolvemos el título y el botón favorito en una fila */}
+                <View style={styles.titleRow}>
+                    <Text style={styles.title}>{evento.titulo}</Text>
+                    <BotonEventoFavorito evento={evento} />
+                </View>
+
                 {esSinHorario ? (
                     <Text style={styles.date}>Inicio: {fechaSolo} (Sin horario asignado)</Text>
                 ) : (
                     <Text style={styles.date}>Inicio: {fechaCompleta}</Text>
                 )}
+
                 <View style={styles.divider} />
 
                 <Text style={styles.description}>{evento.descripcion}</Text>
+
+                {/* BOTÓN TEMPORAL PARA PRUEBAS - ELIMINAR ANTES DE PRODUCCIÓN */}
+                <TouchableOpacity
+                    style={{ backgroundColor: 'red', padding: 12, borderRadius: 8, marginTop: 20, alignItems: 'center' }}
+                    onPress={probarNotificacion}
+                >
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>🧪 Probar Notificación Push para {evento.titulo}</Text>
+                </TouchableOpacity>
 
                 <Text style={styles.subtitle}>Ubicación</Text>
                 <Text style={styles.text}>{evento.direccionLibre || 'Ver en mapa'}</Text>
@@ -129,7 +161,19 @@ const styles = StyleSheet.create({
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     headerImage: { width: '100%', aspectRatio: 16 / 9 },
     content: { padding: 20 },
-    title: { fontSize: 24, fontWeight: 'bold', color: '#111', marginBottom: 8 },
+    // 3. Añadimos el estilo para la fila del título
+    titleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 8,
+    },
+    title: {
+        flex: 1, // Permite que el título ocupe el espacio disponible sin empujar la estrella fuera
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#111',
+    },
     date: { fontSize: 16, color: '#666', marginBottom: 16 },
     divider: { height: 1, backgroundColor: '#eee', marginVertical: 16 },
     description: { fontSize: 16, lineHeight: 24, color: '#333', marginBottom: 20 },

@@ -75,11 +75,11 @@ const styles = StyleSheet.create({
     },
     detailRow: {
         flexDirection: 'row',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     date: {
         fontSize: 12,
         color: '#666',
-        marginLeft: 4
+        marginLeft: 4,
     },
 });

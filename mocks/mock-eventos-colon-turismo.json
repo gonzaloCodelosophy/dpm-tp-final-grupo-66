@@ -266,6 +266,7 @@
     "lugarId": null,
     "direccionLibre": "Laprida 29, Colón, Entre Ríos, Argentina",
     "coordenadas": {"latitud": -32.220547, "longitud": -58.137020},
+    "inicio": "2026-09-05T19:00:00-03:00",
     "fin": null,
     "imagenUrl": null,
     "precio": null,
