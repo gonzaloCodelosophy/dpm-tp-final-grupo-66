@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Evento } from '../../types/evento';
-import { obtenerEventos } from '../../services/eventos.service';
-import TarjetaEvento from '../../components/tarjeta-evento';
+import { Evento } from '../../../types/evento';
+import { obtenerEventos } from '../../../services/eventos.service';
+import TarjetaEvento from '../../../components/tarjeta-evento';
 
 export default function AgendaScreen() {
     const [eventos, setEventos] = useState<Evento[]>([]);
-    const router = useRouter(); // Hook de enrutamiento
+    const router = useRouter();
 
     useEffect(() => {
         obtenerEventos()
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',
-        paddingTop: 40, // Espacio para la barra de estado si no hay header
+        paddingTop: 40,
     },
     headerTitle: {
         fontSize: 22,

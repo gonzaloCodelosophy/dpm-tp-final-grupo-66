@@ -1,10 +1,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
+import { HapticTab } from '../../components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-// 1. Importamos Ionicons como exige el documento
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 
 export default function TabLayout() {
@@ -21,7 +20,6 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Inicio',
-          // 2. Reemplazamos IconSymbol por Ionicons
           tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color={color} />,
         }}
       />

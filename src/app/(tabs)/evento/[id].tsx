@@ -3,12 +3,11 @@ import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image, Linking, 
 import { useLocalSearchParams, Stack } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
-import { Evento } from '../../types/evento';
-import { obtenerEventoPorId } from '../../services/eventos.service';
+import { Evento } from '../../../types/evento';
+import { obtenerEventoPorId } from '../../../services/eventos.service';
 import * as Notifications from 'expo-notifications'; //! importado únicamente para botón de prueba de notificaciones
 
-// 1. Importamos el nuevo componente
-import BotonEventoFavorito from '../../components/boton-evento-favorito';
+import BotonEventoFavorito from '../../../components/boton-evento-favorito';
 
 export default function PantallaDetalleEvento() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -91,7 +90,6 @@ export default function PantallaDetalleEvento() {
             )}
 
             <View style={styles.content}>
-                {/* 2. Envolvemos el título y el botón favorito en una fila */}
                 <View style={styles.titleRow}>
                     <Text style={styles.title}>{evento.titulo}</Text>
                     <BotonEventoFavorito evento={evento} />
@@ -161,7 +159,6 @@ const styles = StyleSheet.create({
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     headerImage: { width: '100%', aspectRatio: 16 / 9 },
     content: { padding: 20 },
-    // 3. Añadimos el estilo para la fila del título
     titleRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -169,7 +166,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     title: {
-        flex: 1, // Permite que el título ocupe el espacio disponible sin empujar la estrella fuera
+        flex: 1,
         fontSize: 24,
         fontWeight: 'bold',
         color: '#111',
