@@ -114,7 +114,7 @@
     "fin": null,
     "imagenUrl": null,
     "precio": null,
-    "estado": "programado"
+    "estado": "suspendido"
   },
   {
     "id": "evt-010",
@@ -296,7 +296,7 @@
     "fin": null,
     "imagenUrl": "https://www.colonturismo.tur.ar/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-04-at-07.19.20.jpeg",
     "precio": 0,
-    "estado": "programado"
+    "estado": "cancelado"
   },
   {
     "id": "evt-024",

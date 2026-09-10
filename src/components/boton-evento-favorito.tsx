@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import * as Notifications from 'expo-notifications';
 import { Evento } from '../types/evento';
@@ -23,10 +23,8 @@ export default function BotonEventoFavorito({ evento }: BotonEventoFavoritoProps
 
         if (nuevoEstado) {
             await guardarFavoritoLocal(evento.id);
-
             const fechaEvento = new Date(evento.inicio);
             const esSinHorario = evento.inicio.includes("T00:00:00");
-
             let triggerDate = new Date(fechaEvento.getTime());
 
             if (esSinHorario) {
@@ -50,7 +48,6 @@ export default function BotonEventoFavorito({ evento }: BotonEventoFavoritoProps
             }
         } else {
             await removerFavoritoLocal(evento.id);
-
             if (notificacionId) {
                 await Notifications.cancelScheduledNotificationAsync(notificacionId);
                 setNotificacionId(null);
@@ -59,21 +56,50 @@ export default function BotonEventoFavorito({ evento }: BotonEventoFavoritoProps
     };
 
     return (
-        <TouchableOpacity onPress={toggleFavorito} activeOpacity={0.7} style={styles.starButton}>
+        <TouchableOpacity 
+            onPress={toggleFavorito} 
+            activeOpacity={0.7} 
+            style={[styles.button, esFavorito ? styles.buttonAdded : styles.buttonAdd]}
+        >
             <Ionicons
-                name={esFavorito ? "star" : "star-outline"}
-                size={28}
-                color={esFavorito ? "#FFD700" : "#999"}
+                name={esFavorito ? "calendar-clear" : "calendar-outline"}
+                size={20}
+                color={esFavorito ? "#fff" : "#FF6B35"}
             />
+            <Text style={[styles.text, esFavorito ? styles.textAdded : styles.textAdd]}>
+                {esFavorito ? "Agregado a mi agenda" : "Agregar a mi agenda"}
+            </Text>
         </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    starButton: {
-        paddingLeft: 12,
-        paddingBottom: 8,
-        paddingTop: 4,
-        paddingRight: 4,
+    button: {
+        width: '100%',
+        paddingVertical: 14,
+        borderRadius: 12,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
     },
+    buttonAdd: {
+        backgroundColor: '#fff',
+        borderColor: '#FF6B35',
+    },
+    buttonAdded: {
+        backgroundColor: '#FF6B35',
+        borderColor: '#FF6B35',
+    },
+    text: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
+    textAdd: {
+        color: '#FF6B35',
+    },
+    textAdded: {
+        color: '#fff',
+    }
 });

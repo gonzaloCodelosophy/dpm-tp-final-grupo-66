@@ -1,7 +1,6 @@
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Evento } from '../types/evento';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { Evento } from '../types/evento';
 
 interface TarjetaEventoProps {
     evento: Evento;
@@ -9,21 +8,26 @@ interface TarjetaEventoProps {
 }
 
 export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
-    const fechaObj = new Date(evento.inicio);
-    const esSinHorario = evento.inicio.includes("T00:00:00");
+    if (!evento || !evento.inicio) return null;
 
-    const textoFecha = esSinHorario
+    const fechaObj = new Date(evento.inicio);
+    const textoFecha = evento.inicio.includes("T00:00:00")
         ? `${fechaObj.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })} - Sin horario`
-        : fechaObj.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+        : fechaObj.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ' ·');
+
+    // Asumimos 'Programado' por defecto si el backend no lo envía
+    const estado = evento.estado || 'Programado';
+
+    const getBadgeStyle = () => {
+        if (estado === 'cancelado') return [styles.badge, styles.badgeCancelado];
+        if (estado === 'suspendido') return [styles.badge, styles.badgeSuspendido];
+        return [styles.badge, styles.badgeProgramado];
+    };
 
     return (
         <TouchableOpacity style={styles.tarjeta} onPress={onPress} activeOpacity={0.8}>
             {evento.imagenUrl ? (
-                <Image
-                    source={{ uri: evento.imagenUrl }}
-                    style={styles.image}
-                    resizeMode="cover"
-                />
+                <Image source={{ uri: evento.imagenUrl }} style={styles.image} resizeMode="cover" />
             ) : (
                 <View style={[styles.image, styles.placeholder]}>
                     <Ionicons name="image-outline" size={32} color="#ccc" />
@@ -32,10 +36,24 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
 
             <View style={styles.infoContainer}>
                 <Text style={styles.title} numberOfLines={2}>{evento.titulo}</Text>
+
                 <View style={styles.detailRow}>
                     <Ionicons name="calendar-outline" size={14} color="#666" />
-                    <Text style={styles.date}>{textoFecha}</Text>
+                    <Text style={styles.detailText}>{textoFecha}</Text>
                 </View>
+
+                <View style={styles.detailRow}>
+                    <Ionicons name="location-outline" size={14} color="#666" />
+                    <Text style={styles.detailText} numberOfLines={1}>{evento.direccionLibre || 'Colón, Entre Ríos'}</Text>
+                </View>
+
+                <View style={getBadgeStyle()}>
+                    <Text style={styles.badgeText}>{estado.toUpperCase()}</Text>
+                </View>
+            </View>
+
+            <View style={styles.chevronContainer}>
+                <Ionicons name="chevron-forward" size={20} color="#ccc" />
             </View>
         </TouchableOpacity>
     );
@@ -43,20 +61,21 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
 
 const styles = StyleSheet.create({
     tarjeta: {
-        width: '48%',
+        flexDirection: 'row',
         backgroundColor: '#fff',
-        borderRadius: 8,
+        borderRadius: 16,
         marginBottom: 16,
         overflow: 'hidden',
         elevation: 2,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowRadius: 4,
+        width: '100%',
     },
     image: {
-        width: '100%',
-        aspectRatio: 4 / 3,
+        width: 100,
+        height: '100%',
     },
     placeholder: {
         backgroundColor: '#eaeaea',
@@ -64,22 +83,43 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     infoContainer: {
-        padding: 10,
+        flex: 1,
+        padding: 12,
+        justifyContent: 'center',
     },
     title: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 6,
-        lineHeight: 18,
+        color: '#111',
+        marginBottom: 8,
     },
     detailRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: 4,
     },
-    date: {
-        fontSize: 12,
-        color: '#666',
-        marginLeft: 4,
+    detailText: {
+        fontSize: 13,
+        color: '#555',
+        marginLeft: 6,
     },
+    badge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        marginTop: 6,
+    },
+    badgeProgramado: { backgroundColor: '#17A2B8' },
+    badgeSuspendido: { backgroundColor: '#FFC107' },
+    badgeCancelado: { backgroundColor: '#DC3545' },
+    badgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+    chevronContainer: {
+        justifyContent: 'center',
+        paddingRight: 12,
+    }
 });
