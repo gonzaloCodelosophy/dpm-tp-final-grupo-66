@@ -1,4 +1,3 @@
-import type { Region } from 'react-native-maps';
 import type { Coordenadas } from '../src/types/Coordenadas';
 
 
@@ -9,9 +8,9 @@ export const CENTRO_COLON: Coordenadas = {
 };
 
 
-export const REGION_INICIAL_COLON: Region = {
-  latitude: CENTRO_COLON.latitud,
-  longitude: CENTRO_COLON.longitud,
-  latitudeDelta: 0.06,
-  longitudeDelta: 0.06,
+export const REGION_INICIAL_COLON = {
+  lat: CENTRO_COLON.latitud,
+  lon: CENTRO_COLON.longitud,
+  latDelta: 0.06,
+  lonDelta: 0.06,
 };
