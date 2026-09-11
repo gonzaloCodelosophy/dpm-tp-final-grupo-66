@@ -41,13 +41,7 @@ export function TarjetaLugar({
           </View>
         )}
 
-        <Pressable
-          style={styles.favorito}
-          onPress={() => {
-            // La funcionalidad de favoritos se integrará más adelante.
-          }}
-          hitSlop={8}
-        >
+        <Pressable style={styles.favorito} onPress={() => {}} hitSlop={8}>
           <Ionicons name="heart-outline" size={24} color={colors.text} />
         </Pressable>
       </View>

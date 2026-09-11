@@ -92,6 +92,7 @@ export default function ExploreScreen() {
 
         <Text style={styles.headerLogo}>Colón</Text>
 
+        {/*Usuario Provicional*/}
         <View style={styles.headerAvatar}>
           <Ionicons name="person" size={20} color={colors.textSecondary} />
         </View>

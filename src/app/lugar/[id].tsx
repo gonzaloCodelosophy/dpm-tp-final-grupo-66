@@ -80,7 +80,6 @@ export default function DetalleLugarScreen() {
       />
 
       <View style={styles.container}>
-        {/* HEADER DE LA PANTALLA */}
         <View
           style={[
             styles.header,
@@ -101,15 +100,12 @@ export default function DetalleLugarScreen() {
             {lugar.nombre}
           </Text>
 
-          {/* Avatar provisional.
-              Más adelante podemos reemplazarlo
-              por el componente real del usuario. */}
+          {/*Usuario Provicional*/}
           <View style={styles.headerAvatar}>
             <Ionicons name="person" size={20} color={colors.textSecondary} />
           </View>
         </View>
 
-        {/* CONTENIDO SCROLLABLE */}
         <ScrollView
           contentContainerStyle={styles.contenidoScroll}
           showsVerticalScrollIndicator={false}
@@ -160,7 +156,6 @@ export default function DetalleLugarScreen() {
             <Text style={styles.descripcion}>{lugar.descripcion}</Text>
 
             <View style={styles.info}>
-              {/* HORARIOS */}
               <View style={styles.infoItem}>
                 <View style={styles.infoIcono}>
                   <Ionicons
@@ -181,7 +176,6 @@ export default function DetalleLugarScreen() {
                 </View>
               </View>
 
-              {/* ACCESIBILIDAD */}
               <View style={styles.infoItem}>
                 <View style={styles.infoIcono}>
                   <Ionicons
@@ -200,7 +194,6 @@ export default function DetalleLugarScreen() {
                 </View>
               </View>
 
-              {/* TELÉFONO */}
               {lugar.telefono && (
                 <View style={styles.infoItem}>
                   <View style={styles.infoIcono}>
@@ -219,7 +212,6 @@ export default function DetalleLugarScreen() {
                 </View>
               )}
 
-              {/* PRECIO */}
               {lugar.precioEntrada !== null && (
                 <View style={styles.infoItem}>
                   <View style={styles.infoIcono}>

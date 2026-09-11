@@ -4,9 +4,9 @@ export interface Coordenadas {
 }
 
 export interface Horario {
-  dia: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = domingo
-  abre: string; // "09:00"
-  cierra: string; // "19:00"
+  dia: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  abre: string;
+  cierra: string;
 }
 
 export interface Audioguia {

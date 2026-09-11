@@ -239,7 +239,9 @@ export const lugares: Lugar[] = [
       longitud: -58.1417,
     },
     direccion: "12 de Abril 461, Colón, Entre Ríos",
-    imagenes: ["https://placehold.co/600x400/png?text=Museo+Histórico+Regional"],
+    imagenes: [
+      "https://placehold.co/600x400/png?text=Museo+Histórico+Regional",
+    ],
     horarios: [
       {
         dia: 1,
@@ -298,7 +300,9 @@ export const lugares: Lugar[] = [
       longitud: -58.25,
     },
     direccion: "Autovía 14 Km 199, Entre Ríos",
-    imagenes: ["https://placehold.co/600x400/png?text=Parque+Nacional+El+Palmar"],
+    imagenes: [
+      "https://placehold.co/600x400/png?text=Parque+Nacional+El+Palmar",
+    ],
     horarios: [
       {
         dia: 0,
@@ -387,7 +391,9 @@ export const lugares: Lugar[] = [
       longitud: -58.1448,
     },
     direccion: "12 de Abril 106, Colón, Entre Ríos",
-    imagenes: ["https://placehold.co/600x400/png?text=Centro+de+Artesanos+La+Casona"],
+    imagenes: [
+      "https://placehold.co/600x400/png?text=Centro+de+Artesanos+La+Casona",
+    ],
     horarios: [
       {
         dia: 0,
