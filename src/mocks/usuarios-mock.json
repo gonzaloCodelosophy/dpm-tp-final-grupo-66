@@ -1,0 +1,20 @@
+[
+  {
+    "id": "usr-201",
+    "nombre": "Lucía Méndez",
+    "email": "lucia@mail.com",
+    "password": "123456password",
+    "avatarUrl": null,
+    "creadoEn": "2026-09-02T18:20:00-03:00",
+    "token": "mock-bearer-token-usr-201"
+  },
+  {
+    "id": "usr-202",
+    "nombre": "Carlos Gómez",
+    "email": "carlos@mail.com",
+    "password": "123456password",
+    "avatarUrl": null,
+    "creadoEn": "2026-09-03T10:15:00-03:00",
+    "token": "mock-bearer-token-usr-202"
+  }
+]

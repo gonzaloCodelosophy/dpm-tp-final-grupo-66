@@ -107,7 +107,7 @@ export default function ExploreScreen() {
             nombreCategoria={obtenerNombreCategoria(item.categoriaId)}
             onPress={() =>
               router.push({
-                pathname: "/lugar/[id]",
+                pathname: "/lugar/[id]" as any,
                 params: { id: item.id },
               })
             }
