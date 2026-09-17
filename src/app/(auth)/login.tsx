@@ -15,18 +15,33 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../context/auth.context';
+import { loginSchema, LoginFormData } from '../../schemas/auth.schema';
 import { borderRadius, colors, fontSize, spacing } from '../../styles/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { iniciarSesion, soportaBiometria, desbloquearConBiometria } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   // modal flotante personalizado
   const [modalConfig, setModalConfig] = useState<{
@@ -47,16 +62,11 @@ export default function LoginScreen() {
     setModalConfig((prev) => ({ ...prev, visible: false }));
   }
 
-  async function handleIngresar() {
-    if (!email.trim() || !password.trim()) {
-      setErrorMsg('Por favor completá todos los campos.');
-      return;
-    }
-
+  async function handleIngresar(data: LoginFormData) {
     try {
       setErrorMsg(null);
       setCargando(true);
-      await iniciarSesion({ email: email.trim(), password: password.trim() });
+      await iniciarSesion({ email: data.email.trim(), password: data.password.trim() });
       router.replace('/(tabs)' as any);
     } catch (err: any) {
       setErrorMsg(err.message || 'Ocurrió un error al iniciar sesión.');
@@ -130,38 +140,58 @@ export default function LoginScreen() {
               </View>
             ) : null}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Correo electrónico"
-                placeholderTextColor={colors.textSecondary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={[styles.inputContainer, errors.email && styles.inputContainerError]}>
+                  <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Correo electrónico"
+                    placeholderTextColor={colors.textSecondary}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+              )}
+            />
+            {errors.email ? (
+              <Text style={styles.fieldErrorText}>{errors.email.message}</Text>
+            ) : null}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Contraseña"
-                placeholderTextColor={colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!mostrarPassword}
-              />
-              <TouchableOpacity onPress={() => setMostrarPassword(!mostrarPassword)} hitSlop={10}>
-                <Ionicons
-                  name={mostrarPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={colors.textSecondary}
-                />
-              </TouchableOpacity>
-            </View>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={[styles.inputContainer, errors.password && styles.inputContainerError]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Contraseña"
+                    placeholderTextColor={colors.textSecondary}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    secureTextEntry={!mostrarPassword}
+                  />
+                  <TouchableOpacity onPress={() => setMostrarPassword(!mostrarPassword)} hitSlop={10}>
+                    <Ionicons
+                      name={mostrarPassword ? 'eye-outline' : 'eye-off-outline'}
+                      size={20}
+                      color={colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.password ? (
+              <Text style={styles.fieldErrorText}>{errors.password.message}</Text>
+            ) : null}
 
             <TouchableOpacity
               onPress={() => router.push('/(auth)/recuperar-cuenta' as any)}
@@ -172,7 +202,7 @@ export default function LoginScreen() {
 
             <TouchableOpacity
               style={styles.btnPrimary}
-              onPress={handleIngresar}
+              onPress={handleSubmit(handleIngresar)}
               disabled={cargando}
               activeOpacity={0.85}
             >
@@ -307,6 +337,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     height: 52,
     marginBottom: spacing.md,
+  },
+  inputContainerError: {
+    borderColor: colors.error,
+  },
+  fieldErrorText: {
+    color: colors.error,
+    fontSize: fontSize.caption,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.sm,
+    marginLeft: spacing.md,
   },
   inputIcon: {
     marginRight: spacing.sm,

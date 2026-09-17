@@ -13,53 +13,47 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../context/auth.context';
+import { registroSchema, RegistroFormData } from '../../schemas/auth.schema';
 import { borderRadius, colors, fontSize, spacing } from '../../styles/theme';
 
 export default function RegistroScreen() {
   const router = useRouter();
   const { registrarse } = useAuth();
 
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmarPassword, setConfirmarPassword] = useState('');
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
-  const [aceptaTerminos, setAceptaTerminos] = useState(false);
-
   const [cargando, setCargando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  async function handleRegistro() {
-    if (!nombre.trim() || !email.trim() || !password.trim() || !confirmarPassword.trim()) {
-      setErrorMsg('Por favor completá todos los campos.');
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegistroFormData>({
+    resolver: zodResolver(registroSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
+    defaultValues: {
+      nombre: '',
+      email: '',
+      password: '',
+      confirmarPassword: '',
+      aceptaTerminos: false,
+    },
+  });
 
-    if (password !== confirmarPassword) {
-      setErrorMsg('Las contraseñas no coinciden.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-
-    if (!aceptaTerminos) {
-      setErrorMsg('Debés aceptar los términos y la política de privacidad.');
-      return;
-    }
-
+  async function handleRegistro(data: RegistroFormData) {
     try {
       setErrorMsg(null);
       setCargando(true);
       await registrarse({
-        nombre: nombre.trim(),
-        email: email.trim(),
-        password: password.trim(),
-        confirmarPassword: confirmarPassword.trim(),
+        nombre: data.nombre.trim(),
+        email: data.email.trim(),
+        password: data.password.trim(),
+        confirmarPassword: data.confirmarPassword.trim(),
       });
       router.replace('/(tabs)' as any);
     } catch (err: any) {
@@ -108,86 +102,135 @@ export default function RegistroScreen() {
               </View>
             ) : null}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Nombre"
-                placeholderTextColor={colors.textSecondary}
-                value={nombre}
-                onChangeText={setNombre}
-              />
-            </View>
+            <Controller
+              control={control}
+              name="nombre"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={[styles.inputContainer, errors.nombre && styles.inputContainerError]}>
+                  <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Nombre"
+                    placeholderTextColor={colors.textSecondary}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                  />
+                </View>
+              )}
+            />
+            {errors.nombre ? (
+              <Text style={styles.fieldErrorText}>{errors.nombre.message}</Text>
+            ) : null}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Correo electrónico"
-                placeholderTextColor={colors.textSecondary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={[styles.inputContainer, errors.email && styles.inputContainerError]}>
+                  <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Correo electrónico"
+                    placeholderTextColor={colors.textSecondary}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+              )}
+            />
+            {errors.email ? (
+              <Text style={styles.fieldErrorText}>{errors.email.message}</Text>
+            ) : null}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Contraseña"
-                placeholderTextColor={colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!mostrarPassword}
-              />
-              <TouchableOpacity onPress={() => setMostrarPassword(!mostrarPassword)} hitSlop={10}>
-                <Ionicons
-                  name={mostrarPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={colors.textSecondary}
-                />
-              </TouchableOpacity>
-            </View>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={[styles.inputContainer, errors.password && styles.inputContainerError]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Contraseña"
+                    placeholderTextColor={colors.textSecondary}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    secureTextEntry={!mostrarPassword}
+                  />
+                  <TouchableOpacity onPress={() => setMostrarPassword(!mostrarPassword)} hitSlop={10}>
+                    <Ionicons
+                      name={mostrarPassword ? 'eye-outline' : 'eye-off-outline'}
+                      size={20}
+                      color={colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.password ? (
+              <Text style={styles.fieldErrorText}>{errors.password.message}</Text>
+            ) : null}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Confirmar contraseña"
-                placeholderTextColor={colors.textSecondary}
-                value={confirmarPassword}
-                onChangeText={setConfirmarPassword}
-                secureTextEntry={!mostrarConfirmar}
-              />
-              <TouchableOpacity onPress={() => setMostrarConfirmar(!mostrarConfirmar)} hitSlop={10}>
-                <Ionicons
-                  name={mostrarConfirmar ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={colors.textSecondary}
-                />
-              </TouchableOpacity>
-            </View>
+            <Controller
+              control={control}
+              name="confirmarPassword"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={[styles.inputContainer, errors.confirmarPassword && styles.inputContainerError]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Confirmar contraseña"
+                    placeholderTextColor={colors.textSecondary}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    secureTextEntry={!mostrarConfirmar}
+                  />
+                  <TouchableOpacity onPress={() => setMostrarConfirmar(!mostrarConfirmar)} hitSlop={10}>
+                    <Ionicons
+                      name={mostrarConfirmar ? 'eye-outline' : 'eye-off-outline'}
+                      size={20}
+                      color={colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.confirmarPassword ? (
+              <Text style={styles.fieldErrorText}>{errors.confirmarPassword.message}</Text>
+            ) : null}
 
-            <TouchableOpacity
-              style={styles.termsRow}
-              onPress={() => setAceptaTerminos(!aceptaTerminos)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.checkbox, aceptaTerminos && styles.checkboxActive]}>
-                {aceptaTerminos ? <Ionicons name="checkmark" size={14} color={colors.surface} /> : null}
-              </View>
-              <Text style={styles.termsText}>
-                Acepto los <Text style={styles.termsLink}>términos</Text> y la{' '}
-                <Text style={styles.termsLink}>política de privacidad</Text>
-              </Text>
-            </TouchableOpacity>
+            <Controller
+              control={control}
+              name="aceptaTerminos"
+              render={({ field: { onChange, value } }) => (
+                <TouchableOpacity
+                  style={styles.termsRow}
+                  onPress={() => onChange(!value)}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.checkbox, value && styles.checkboxActive, errors.aceptaTerminos && styles.checkboxError]}>
+                    {value ? <Ionicons name="checkmark" size={14} color={colors.surface} /> : null}
+                  </View>
+                  <Text style={styles.termsText}>
+                    Acepto los <Text style={styles.termsLink}>términos</Text> y la{' '}
+                    <Text style={styles.termsLink}>política de privacidad</Text>
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+            {errors.aceptaTerminos ? (
+              <Text style={styles.fieldErrorText}>{errors.aceptaTerminos.message}</Text>
+            ) : null}
 
             <TouchableOpacity
               style={styles.btnPrimary}
-              onPress={handleRegistro}
+              onPress={handleSubmit(handleRegistro)}
               disabled={cargando}
               activeOpacity={0.85}
             >
@@ -287,6 +330,16 @@ const styles = StyleSheet.create({
     height: 52,
     marginBottom: spacing.md,
   },
+  inputContainerError: {
+    borderColor: colors.error,
+  },
+  fieldErrorText: {
+    color: colors.error,
+    fontSize: fontSize.caption,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.sm,
+    marginLeft: spacing.md,
+  },
   inputIcon: {
     marginRight: spacing.sm,
   },
@@ -314,6 +367,9 @@ const styles = StyleSheet.create({
   checkboxActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
+  },
+  checkboxError: {
+    borderColor: colors.error,
   },
   termsText: {
     fontSize: fontSize.caption,
