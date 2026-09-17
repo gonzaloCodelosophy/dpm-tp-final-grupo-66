@@ -14,20 +14,30 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { recuperarCuentaSchema, RecuperarCuentaFormData } from '../../schemas/auth.schema';
 import { borderRadius, colors, fontSize, spacing } from '../../styles/theme';
 
 export default function RecuperarCuentaScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
   const [cargando, setCargando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  async function handleEnviarEnlace() {
-    if (!email.trim()) {
-      setErrorMsg('Por favor ingresá tu correo electrónico.');
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RecuperarCuentaFormData>({
+    resolver: zodResolver(recuperarCuentaSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
+    defaultValues: {
+      email: '',
+    },
+  });
 
+  async function handleEnviarEnlace(data: RecuperarCuentaFormData) {
     try {
       setErrorMsg(null);
       setCargando(true);
@@ -35,7 +45,7 @@ export default function RecuperarCuentaScreen() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       Alert.alert(
         'Enlace enviado',
-        'Revisá tu bandeja de entrada para restablecer tu contraseña.',
+        `Revisá tu bandeja de entrada (${data.email.trim()}) para restablecer tu contraseña.`,
         [{ text: 'Entendido', onPress: () => router.replace('/(auth)/login' as any) }]
       );
     } catch (err: any) {
@@ -82,23 +92,33 @@ export default function RecuperarCuentaScreen() {
               </View>
             ) : null}
 
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Correo electrónico"
-                placeholderTextColor={colors.textSecondary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View style={[styles.inputContainer, errors.email && styles.inputContainerError]}>
+                  <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Correo electrónico"
+                    placeholderTextColor={colors.textSecondary}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+              )}
+            />
+            {errors.email ? (
+              <Text style={styles.fieldErrorText}>{errors.email.message}</Text>
+            ) : null}
 
             <TouchableOpacity
               style={styles.btnPrimary}
-              onPress={handleEnviarEnlace}
+              onPress={handleSubmit(handleEnviarEnlace)}
               disabled={cargando}
               activeOpacity={0.85}
             >
@@ -190,7 +210,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     backgroundColor: colors.surface,
     height: 52,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  inputContainerError: {
+    borderColor: colors.error,
+  },
+  fieldErrorText: {
+    color: colors.error,
+    fontSize: fontSize.caption,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+    marginLeft: spacing.md,
   },
   inputIcon: {
     marginRight: spacing.sm,
