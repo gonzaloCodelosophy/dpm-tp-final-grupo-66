@@ -1,7 +1,5 @@
-export interface Coordenadas {
-  latitud: number;
-  longitud: number;
-}
+import type { Coordenadas } from "./Coordenadas";
+export type { Coordenadas } from "./Coordenadas";
 
 export interface Horario {
   dia: 0 | 1 | 2 | 3 | 4 | 5 | 6;

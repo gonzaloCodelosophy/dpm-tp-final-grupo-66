@@ -1,13 +1,11 @@
+import type { Coordenadas } from "./Coordenadas";
+export type { Coordenadas } from "./Coordenadas";
+
 export type EstadoEvento =
     | "programado"
     | "suspendido"
     | "cancelado"
     | "finalizado";
-
-export interface Coordenadas {
-    latitud: number;
-    longitud: number;
-}
 
 export interface Evento {
     id: string;

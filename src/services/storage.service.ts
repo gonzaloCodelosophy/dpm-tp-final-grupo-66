@@ -21,11 +21,11 @@ export async function obtenerToken(): Promise<string | null> {
   try {
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined') {
-        return localStorage.getItem(AUTH_TOKEN_KEY);
+        return leerTokenCompatible(localStorage.getItem(AUTH_TOKEN_KEY));
       }
       return null;
     }
-    return await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+    return leerTokenCompatible(await SecureStore.getItemAsync(AUTH_TOKEN_KEY));
   } catch (error) {
     console.error('Error al recuperar el token de autenticación:', error);
     return null;
@@ -70,4 +70,11 @@ export async function esFavoritoLocal(id: string): Promise<boolean> {
         console.error(`Error al consultar el favorito ${id}:`, error);
         return false;
     }
+}
+
+// Admitir tokens escritos por la versión anterior sin forzar un nuevo login.
+function leerTokenCompatible(valor: string | null): string | null {
+  if (!valor?.startsWith('{')) return valor;
+  const sesion = JSON.parse(valor);
+  return typeof sesion.token === 'string' ? sesion.token : null;
 }

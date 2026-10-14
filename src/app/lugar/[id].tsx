@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Image } from "expo-image";
+import { Audioguia } from "../../components/audioguia";
+import { ImagenPersistente } from "../../components/imagen-persistente";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import {
   ActivityIndicator,
@@ -12,33 +12,17 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 
-import { categorias } from "../../mocks/categorias";
-import { obtenerLugarPorId } from "../../services/lugares.service";
-import type { Lugar } from "../../types/Lugar";
+import { useCatalogo } from "../../hooks/use-catalogo";
+import { EstadoCatalogo } from "../../components/estado-catalogo";
 import { borderRadius, colors, fontSize, spacing } from "../../styles/theme";
 
 export default function DetalleLugarScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [lugar, setLugar] = useState<Lugar | null>(null);
-  const [cargando, setCargando] = useState(true);
-
-  useEffect(() => {
-    async function cargarLugar() {
-      if (!id) {
-        setCargando(false);
-        return;
-      }
-
-      const datos = await obtenerLugarPorId(id);
-
-      setLugar(datos);
-      setCargando(false);
-    }
-
-    cargarLugar();
-  }, [id]);
+  const { datos, sinConexion, cargando } = useCatalogo();
+  const lugar = datos?.lugares.find(item => item.id === id) ?? null;
+  const categorias = datos?.categorias ?? [];
 
   if (cargando) {
     return (
@@ -59,7 +43,8 @@ export default function DetalleLugarScreen() {
           color={colors.textSecondary}
         />
 
-        <Text style={styles.errorTitulo}>Lugar no encontrado</Text>
+        <Text style={styles.errorTitulo}>{datos === null ? "Detalle aún no descargado" : "Lugar no encontrado"}</Text>
+        <EstadoCatalogo sinConexion={sinConexion} />
 
         <Pressable style={styles.botonVolver} onPress={() => router.back()}>
           <Text style={styles.botonVolverTexto}>Volver</Text>
@@ -106,14 +91,15 @@ export default function DetalleLugarScreen() {
           </View>
         </View>
 
+        <EstadoCatalogo sinConexion={sinConexion} />
         <ScrollView
           contentContainerStyle={styles.contenidoScroll}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.imagenContainer}>
             {lugar.imagenes.length > 0 ? (
-              <Image
-                source={{ uri: lugar.imagenes[0] }}
+              <ImagenPersistente
+                url={lugar.imagenes[0]}
                 style={styles.imagen}
                 contentFit="cover"
               />
@@ -131,6 +117,7 @@ export default function DetalleLugarScreen() {
           </View>
 
           <View style={styles.contenido}>
+            {!lugar.activo && <Text style={styles.infoTexto}>Este lugar ya no está activo en el catálogo.</Text>}
             {categoria && (
               <View style={styles.categoria}>
                 <Text style={styles.categoriaTexto}>{categoria.nombre}</Text>
@@ -154,6 +141,8 @@ export default function DetalleLugarScreen() {
             <Text style={styles.seccionTitulo}>Sobre el lugar</Text>
 
             <Text style={styles.descripcion}>{lugar.descripcion}</Text>
+
+            {lugar.audioguia && <Audioguia key={lugar.audioguia.url} url={lugar.audioguia.url} />}
 
             <View style={styles.info}>
               <View style={styles.infoItem}>

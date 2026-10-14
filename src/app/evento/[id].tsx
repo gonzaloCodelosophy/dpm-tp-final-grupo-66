@@ -1,30 +1,21 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image, Linking, Platform, TouchableOpacity } from 'react-native';
+import { ImagenPersistente } from "../../components/imagen-persistente";
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Linking, Platform, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
-import { Evento } from '../../types/evento';
-import { obtenerEventoPorId } from '../../services/eventos.service';
+import { useEventos } from '../../hooks/use-eventos';
+import { EstadoCatalogo } from '../../components/estado-catalogo';
 import BotonEventoFavorito from '../../components/boton-evento-favorito';
 import * as Notifications from 'expo-notifications';
 
 export default function PantallaDetalleEvento() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const [evento, setEvento] = useState<Evento | null>(null);
-    const [cargando, setCargando] = useState(true);
-
-    useEffect(() => {
-        if (id) {
-            obtenerEventoPorId(id).then(data => {
-                setEvento(data || null);
-                setCargando(false);
-            });
-        }
-    }, [id]);
+    const { datos, sinConexion, cargando } = useEventos();
+    const evento = datos?.find(item => item.id === id) ?? null;
 
     if (cargando) return <View style={styles.center}><ActivityIndicator size="large" color="#FF6B35" /></View>;
-    if (!evento) return <View style={styles.center}><Text>Evento no encontrado.</Text></View>;
+    if (!evento) return <View style={styles.center}><Text>{datos === null ? "Agenda aún no descargada." : "Evento no encontrado."}</Text><EstadoCatalogo sinConexion={sinConexion} /></View>;
 
     const fechaObj = new Date(evento.inicio);
     const textoFecha = evento.inicio.includes("T00:00:00")
@@ -68,8 +59,9 @@ export default function PantallaDetalleEvento() {
                 }}
             />
 
+            <EstadoCatalogo sinConexion={sinConexion} />
             {evento.imagenUrl ? (
-                <Image source={{ uri: evento.imagenUrl }} style={styles.headerImage} resizeMode="cover" />
+                <ImagenPersistente url={evento.imagenUrl} style={styles.headerImage} />
             ) : (
                 <View style={[styles.headerImage, { backgroundColor: '#ccc' }]} />
             )}
@@ -86,7 +78,7 @@ export default function PantallaDetalleEvento() {
                         <Ionicons name="alert-circle" size={24} color="#856404" />
                         <View style={styles.warningTextContainer}>
                             <Text style={[styles.warningTitle, { color: '#856404' }]}>Evento suspendido</Text>
-                            <Text style={[styles.warningDesc, { color: '#856404' }]}>La actividad se reprogramará. Te avisaremos cuando haya una nueva fecha.</Text>
+                            <Text style={[styles.warningDesc, { color: '#856404' }]}>La actividad se reprogramará. Actualizá la agenda para consultar cambios de fecha.</Text>
                         </View>
                     </View>
                 )}

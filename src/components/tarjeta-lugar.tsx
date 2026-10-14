@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { ImagenPersistente } from "./imagen-persistente";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 
@@ -26,8 +26,8 @@ export function TarjetaLugar({
     >
       <View style={styles.imagenContainer}>
         {lugar.imagenes.length > 0 ? (
-          <Image
-            source={{ uri: lugar.imagenes[0] }}
+          <ImagenPersistente
+            url={lugar.imagenes[0]}
             style={styles.imagen}
             contentFit="cover"
           />

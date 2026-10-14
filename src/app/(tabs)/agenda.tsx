@@ -1,32 +1,19 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { useMemo, useState } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Evento } from '../../types/evento';
-import { obtenerEventos } from '../../services/eventos.service';
+import { useEventos } from '../../hooks/use-eventos';
+import { EstadoCatalogo } from '../../components/estado-catalogo';
 import TarjetaEvento from '../../components/tarjeta-evento';
 
-const ESTADOS = ['Todos', 'Programados', 'Suspendidos', 'Cancelados'];
+const ESTADOS = ['Todos', 'Programados', 'Suspendidos', 'Cancelados', 'Finalizados'];
 
 export default function AgendaScreen() {
-    const [eventos, setEventos] = useState<Evento[]>([]);
-    const [fechasUnicas, setFechasUnicas] = useState<string[]>([]);
+    const { datos, sinConexion, cargando } = useEventos();
+    const eventos = datos ?? [];
+    const fechasUnicas = useMemo(() => [...new Set((datos ?? []).map(e => e.inicio.split("T")[0]))].sort(), [datos]);
     const [filtroFecha, setFiltroFecha] = useState<string | null>(null);
     const [filtroEstado, setFiltroEstado] = useState('Todos');
     const router = useRouter();
-
-    useEffect(() => {
-        obtenerEventos()
-            .then((data) => {
-                const validos = data.filter(e => e.inicio);
-                const ordenados = validos.sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime());
-                setEventos(ordenados);
-
-                const fechas = [...new Set(ordenados.map(e => e.inicio.split('T')[0]))];
-                setFechasUnicas(fechas);
-                if (fechas.length > 0) setFiltroFecha(fechas[0]);
-            })
-            .catch((error) => console.error("Error al cargar eventos:", error));
-    }, []);
 
     const eventosFiltrados = eventos.filter(evento => {
         const coincideFecha = filtroFecha === null || evento.inicio.startsWith(filtroFecha);
@@ -35,6 +22,7 @@ export default function AgendaScreen() {
         let coincideEstado = true;
         if (filtroEstado === 'Programados') coincideEstado = estadoEv === 'programado';
         if (filtroEstado === 'Suspendidos') coincideEstado = estadoEv === 'suspendido';
+        if (filtroEstado === 'Finalizados') coincideEstado = estadoEv === 'finalizado';
         if (filtroEstado === 'Cancelados') coincideEstado = estadoEv === 'cancelado';
 
         return coincideFecha && coincideEstado;
@@ -49,11 +37,17 @@ export default function AgendaScreen() {
 
     return (
         <View style={styles.container}>
+            <EstadoCatalogo sinConexion={sinConexion} />
             <Text style={styles.headerTitle}>Agenda</Text>
             <Text style={styles.headerSubtitle}>Qué hacer en Colón</Text>
 
+            <View style={{ paddingHorizontal: 16 }}>
+                
+                {cargando && <ActivityIndicator color="#FF6B35" />}
+            </View>
             <View style={styles.filtersContainer}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateTabs}>
+                    <TouchableOpacity style={styles.dateTab} onPress={() => setFiltroFecha(null)}><Text>Todos los días</Text></TouchableOpacity>
                     {fechasUnicas.map(fecha => {
                         const { diaSemana, numero } = formatearDiaTab(fecha);
                         const isSelected = filtroFecha === fecha;
@@ -90,7 +84,7 @@ export default function AgendaScreen() {
                     <TarjetaEvento evento={item} onPress={() => router.push(`/evento/${item.id}`)} />
                 )}
                 contentContainerStyle={styles.listContainer}
-                ListEmptyComponent={<Text style={styles.emptyText}>No hay eventos para esta selección.</Text>}
+                ListEmptyComponent={<Text style={styles.emptyText}>{cargando ? "Cargando agenda…" : datos === null ? "Agenda aún no descargada. Conectate para descargarla." : "No hay eventos para esta selección."}</Text>}
             />
         </View>
     )

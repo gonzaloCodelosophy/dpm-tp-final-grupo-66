@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,36 +14,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
 import { TarjetaLugar } from "../../components/tarjeta-lugar";
-import { categorias } from "../../mocks/categorias";
-import { obtenerLugares } from "../../services/lugares.service";
+import { useCatalogo } from "../../hooks/use-catalogo";
+import { EstadoCatalogo } from "../../components/estado-catalogo";
 import type { Categoria } from "../../types/Categoria";
-import type { Lugar } from "../../types/Lugar";
 import { borderRadius, colors, fontSize, spacing } from "../../styles/theme";
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
-  const [lugares, setLugares] = useState<Lugar[]>([]);
+  const { datos, sinConexion, cargando } = useCatalogo();
+  const lugares = datos?.lugares;
+  const categorias = datos?.categorias ?? [];
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<
     string | null
   >(null);
   const [busqueda, setBusqueda] = useState("");
-  const [cargando, setCargando] = useState(true);
-
-  useEffect(() => {
-    async function cargarLugares() {
-      const datos = await obtenerLugares();
-
-      setLugares(datos);
-      setCargando(false);
-    }
-
-    cargarLugares();
-  }, []);
-
   const lugaresFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
 
-    return lugares.filter((lugar) => {
+    return (lugares ?? []).filter((lugar) => {
       const coincideCategoria =
         categoriaSeleccionada === null ||
         lugar.categoriaId === categoriaSeleccionada;
@@ -51,7 +39,7 @@ export default function ExploreScreen() {
       const coincideBusqueda =
         texto.length === 0 || lugar.nombre.toLowerCase().includes(texto);
 
-      return coincideCategoria && coincideBusqueda;
+      return lugar.activo && coincideCategoria && coincideBusqueda;
     });
   }, [lugares, categoriaSeleccionada, busqueda]);
 
@@ -74,6 +62,7 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
+
       <View
         style={[
           styles.header,
@@ -97,6 +86,7 @@ export default function ExploreScreen() {
           <Ionicons name="person" size={20} color={colors.textSecondary} />
         </View>
       </View>
+        <EstadoCatalogo sinConexion={sinConexion} />
 
       <FlatList
         data={lugaresFiltrados}
@@ -209,10 +199,10 @@ export default function ExploreScreen() {
               color={colors.textSecondary}
             />
 
-            <Text style={styles.vacioTitulo}>No encontramos lugares</Text>
+            <Text style={styles.vacioTitulo}>{datos === null ? "Catálogo aún no descargado" : "No encontramos lugares"}</Text>
 
             <Text style={styles.vacioTexto}>
-              Probá con otra búsqueda o categoría.
+              {datos === null ? "Conectate para descargar los lugares." : "Probá con otra búsqueda o categoría."}
             </Text>
           </View>
         }

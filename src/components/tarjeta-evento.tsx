@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { ImagenPersistente } from "./imagen-persistente";
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { Evento } from '../types/evento';
 
@@ -26,13 +27,15 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
 
     return (
         <TouchableOpacity style={styles.tarjeta} onPress={onPress} activeOpacity={0.8}>
-            {evento.imagenUrl ? (
-                <Image source={{ uri: evento.imagenUrl }} style={styles.image} resizeMode="cover" />
-            ) : (
-                <View style={[styles.image, styles.placeholder]}>
-                    <Ionicons name="image-outline" size={32} color="#ccc" />
-                </View>
-            )}
+            <View style={styles.imageContainer}>
+                {evento.imagenUrl ? (
+                    <ImagenPersistente url={evento.imagenUrl} style={styles.image} />
+                ) : (
+                    <View style={[styles.image, styles.placeholder]}>
+                        <Ionicons name="image-outline" size={32} color="#ccc" />
+                    </View>
+                )}
+            </View>
 
             <View style={styles.infoContainer}>
                 <Text style={styles.title} numberOfLines={2}>{evento.titulo}</Text>
@@ -73,9 +76,14 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         width: '100%',
     },
-    image: {
+    imageContainer: {
         width: 100,
-        height: '100%',
+        minHeight: 120,
+        alignSelf: 'stretch',
+        overflow: 'hidden',
+    },
+    image: {
+        ...StyleSheet.absoluteFillObject,
     },
     placeholder: {
         backgroundColor: '#eaeaea',
@@ -99,6 +107,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     detailText: {
+        flex: 1,
         fontSize: 13,
         color: '#555',
         marginLeft: 6,
