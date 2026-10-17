@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -32,7 +33,8 @@ export default function ExploreScreen() {
   >(null);
   const [busqueda, setBusqueda] = useState("");
   const lugaresFiltrados = useMemo(() => {
-    const texto = busqueda.trim().toLowerCase();
+    const normalizar = (valor: string) => valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const texto = normalizar(busqueda.trim());
 
     return (lugares ?? []).filter((lugar) => {
       const coincideCategoria =
@@ -40,7 +42,7 @@ export default function ExploreScreen() {
         lugar.categoriaId === categoriaSeleccionada;
 
       const coincideBusqueda =
-        texto.length === 0 || lugar.nombre.toLowerCase().includes(texto);
+        texto.length === 0 || normalizar(lugar.nombre).includes(texto);
 
       return lugar.activo && coincideCategoria && coincideBusqueda;
     });
@@ -108,10 +110,45 @@ export default function ExploreScreen() {
       {mostrarMapa ? (
         <View style={styles.contenedorMapa}>
           <Text style={styles.tituloMapa}>Mapa de Colón</Text>
-          <MapaLugares lugares={lugares ?? []} categorias={categorias} />
-          {lugares?.every(lugar => !lugar.activo) && (
-            <Text style={styles.avisoMapa}>Todavía no hay lugares cargados para mostrar.</Text>
-          )}
+          <View style={styles.controlesMapa}>
+            <View style={styles.buscador}>
+              <Ionicons name="search-outline" size={21} color={colors.textSecondary} />
+              <TextInput
+                value={busqueda}
+                onChangeText={setBusqueda}
+                accessibilityLabel="Buscar lugares en el mapa"
+                placeholder="¿Qué querés descubrir?"
+                placeholderTextColor={colors.textSecondary}
+                style={styles.input}
+                returnKeyType="search"
+              />
+              {!!busqueda && (
+                <Pressable accessibilityRole="button" accessibilityLabel="Borrar búsqueda" onPress={() => setBusqueda("")} style={styles.borrarMapa}>
+                  <Ionicons name="close-circle" size={21} color={colors.textSecondary} />
+                </Pressable>
+              )}
+            </View>
+            <ScrollView horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtrosMapa}>
+              <Pressable accessibilityRole="button" accessibilityState={{ selected: categoriaSeleccionada === null }} onPress={() => setCategoriaSeleccionada(null)} style={[styles.filtro, categoriaSeleccionada === null && styles.filtroSeleccionado]}>
+                <Text style={[styles.filtroTexto, categoriaSeleccionada === null && styles.filtroTextoSeleccionado]}>Todos</Text>
+              </Pressable>
+              {categorias.map(categoria => {
+                const activa = categoria.id === categoriaSeleccionada;
+
+                return (
+                  <Pressable key={categoria.id} accessibilityRole="button" accessibilityState={{ selected: activa }} onPress={() => setCategoriaSeleccionada(activa ? null : categoria.id)} style={[styles.filtro, activa && styles.filtroSeleccionado]}>
+                    <Text style={[styles.filtroTexto, activa && styles.filtroTextoSeleccionado]}>{categoria.nombre}</Text>
+                  </Pressable>
+                );
+              })}
+              {hayMasCategorias && (
+                <Pressable accessibilityRole="button" disabled={actualizando || sinConexion} onPress={() => { void cargarMasCategorias(); }} style={styles.filtro}>
+                  <Text style={styles.filtroTexto}>Más categorías</Text>
+                </Pressable>
+              )}
+            </ScrollView>
+          </View>
+          <MapaLugares lugares={lugaresFiltrados} categorias={categorias} />
           {hayMasLugares && (
             <Pressable accessibilityRole="button" disabled={actualizando || sinConexion} onPress={() => { void cargarMasLugares(); }} style={styles.cargarMapa}>
               <Text style={styles.filtroTexto}>{actualizando ? "Cargando…" : "Cargar más lugares"}</Text>
@@ -266,6 +303,10 @@ const styles = StyleSheet.create({
   },
 
   contenedorMapa: { flex: 1 },
+
+  controlesMapa: { paddingHorizontal: spacing.md },
+  filtrosMapa: { gap: spacing.sm, paddingVertical: spacing.sm },
+  borrarMapa: { minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "center" },
 
   tituloMapa: {
     fontSize: fontSize.title,

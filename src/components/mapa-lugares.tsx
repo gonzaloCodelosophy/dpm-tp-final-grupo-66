@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 
-import { REGION_INICIAL_COLON } from '../../constants/mapa';
+import { REGION_INICIAL_COLON, DELTA_CERCANIA } from '../../constants/mapa';
+import { TarjetaMapa } from './tarjeta-mapa';
+import { BotonLugarFavorito } from './boton-lugar-favorito';
+import { distanciaMetros, textoDistancia } from '../services/distancias';
 import { useUbicacion } from '../hooks/use-ubicacion';
 import type { Lugar } from '../types/Lugar';
 import type { Categoria } from '../types/Categoria';
@@ -18,6 +21,9 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
 
   const mapa = useRef<MapView>(null);
   const ubicacion = useUbicacion();
+  const [seleccionId, setSeleccionId] = useState<string | null>(null);
+  const [verTodos, setVerTodos] = useState(false);
+  const [altoPanel, setAltoPanel] = useState(0);
   const [mapReady, setMapReady] = useState(false);
   const [centrarPendiente, setCentrarPendiente] = useState(false);
   const [seguirSinUbicacion, setSeguirSinUbicacion] = useState(false);
@@ -36,8 +42,8 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
     mapa.current.animateToRegion({
       latitude: ubicacion.coordenadas.latitud,
       longitude: ubicacion.coordenadas.longitud,
-      latitudeDelta: 0.015,
-      longitudeDelta: 0.015,
+      latitudeDelta: DELTA_CERCANIA,
+      longitudeDelta: DELTA_CERCANIA,
     }, 500);
 
     setCentrarPendiente(false);
@@ -46,6 +52,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
   const centrar = async () => {
     if (ubicacion.cargando) return;
 
+    setSeleccionId(null);
     setSeguirSinUbicacion(false);
     setCentrarPendiente(true);
 
@@ -54,6 +61,32 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
 
       if (!coordenadas && mapa.current) setCentrarPendiente(false);
     }
+  };
+
+  const cercanos = useMemo(() => lugares.filter(lugar => lugar.activo).map(lugar => ({
+    lugar,
+    distancia: ubicacion.coordenadas ? distanciaMetros(ubicacion.coordenadas, lugar.coordenadas) : null,
+  })).sort((a, b) => a.distancia !== null && b.distancia !== null
+    ? a.distancia - b.distancia || a.lugar.nombre.localeCompare(b.lugar.nombre)
+    : a.lugar.nombre.localeCompare(b.lugar.nombre)), [lugares, ubicacion.coordenadas]);
+
+  // Si el filtro o la actualización quita un lugar, también se cierra su tarjeta.
+  const seleccionado = cercanos.find(item => item.lugar.id === seleccionId);
+
+  useEffect(() => {
+    if (seleccionId && !seleccionado) setSeleccionId(null);
+  }, [seleccionId, seleccionado]);
+
+  const seleccionar = (lugar: Lugar) => {
+    Keyboard.dismiss();
+    setSeleccionId(lugar.id);
+
+    if (mapReady) mapa.current?.animateToRegion({
+      latitude: lugar.coordenadas.latitud,
+      longitude: lugar.coordenadas.longitud,
+      latitudeDelta: DELTA_CERCANIA,
+      longitudeDelta: DELTA_CERCANIA,
+    }, 500);
   };
 
   const mostrarPanel = !seguirSinUbicacion && !ubicacion.coordenadas && ubicacion.permiso !== null && !ubicacion.cargando;
@@ -68,6 +101,10 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
         style={styles.mapa}
         initialRegion={regionInicial}
         onMapReady={() => setMapReady(true)}
+        mapPadding={{ top: 12, right: 12, left: 12, bottom: altoPanel + 12 }}
+        onPress={evento => {
+          if (evento.nativeEvent.action !== 'marker-press') setSeleccionId(null);
+        }}
         showsUserLocation={ubicacion.permiso === 'granted' && ubicacion.coordenadas !== null}
         showsMyLocationButton={false}
         showsCompass
@@ -81,8 +118,12 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
               key={place.id}
               identifier={place.id}
               coordinate={{ latitude: place.coordenadas.latitud, longitude: place.coordenadas.longitud }}
-              title={place.nombre}
-              description={place.direccion}
+              accessibilityLabel={place.nombre}
+              onPress={evento => {
+                evento.stopPropagation();
+                seleccionar(place);
+              }}
+              opacity={seleccionado && seleccionado.lugar.id !== place.id ? 0.55 : 1}
               pinColor={categoria?.color ?? colors.primary}
             />
           );
@@ -94,13 +135,22 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
         accessibilityLabel="Centrar en mi ubicación"
         disabled={ubicacion.cargando}
         onPress={() => { void centrar(); }}
-        style={[styles.centrar, mostrarPanel && styles.centrarConPanel]}
+        style={styles.centrar}
       >
         {ubicacion.cargando ? <ActivityIndicator color={colors.secondary} /> : <Ionicons name="locate-outline" size={26} color={colors.secondary} />}
       </Pressable>
 
-      {mostrarPanel && (
-        <View style={styles.panel}>
+      {seleccionado ? (
+        <ScrollView style={styles.panelLugar} onLayout={evento => setAltoPanel(evento.nativeEvent.layout.height)}>
+          <TarjetaMapa
+            lugar={seleccionado.lugar}
+            categoria={categorias.find(item => item.id === seleccionado.lugar.categoriaId)?.nombre}
+            distancia={seleccionado.distancia}
+            onCerrar={() => setSeleccionId(null)}
+          />
+        </ScrollView>
+      ) : mostrarPanel ? (
+        <View style={styles.panel} onLayout={evento => setAltoPanel(evento.nativeEvent.layout.height)}>
           <Ionicons name="location-outline" size={32} color={colors.primary} />
           <Text style={styles.titulo}>{ubicacion.error ? 'No pudimos ubicarte' : 'Activá tu ubicación'}</Text>
           <Text style={styles.mensaje} accessibilityLiveRegion="polite">
@@ -113,6 +163,30 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
             <Text style={styles.enlace}>Seguir sin ubicación</Text>
           </Pressable>
         </View>
+      ) : (
+        <View style={styles.panelCercanos} onLayout={evento => setAltoPanel(evento.nativeEvent.layout.height)}>
+          <View style={styles.cabeceraCercanos}>
+            <Text style={styles.titulo}>{ubicacion.coordenadas ? 'Cerca tuyo' : 'Lugares'}</Text>
+            {cercanos.length > 2 && (
+              <Pressable accessibilityRole="button" onPress={() => setVerTodos(!verTodos)} style={styles.continuar}>
+                <Text style={styles.enlace}>{verTodos ? 'Ver menos' : 'Ver todos'}</Text>
+              </Pressable>
+            )}
+          </View>
+          <ScrollView style={styles.listaCercanos} keyboardShouldPersistTaps="handled">
+            {(verTodos ? cercanos : cercanos.slice(0, 2)).map(({ lugar, distancia }) => (
+              <View key={lugar.id} style={styles.filaCercana}>
+                <Pressable accessibilityRole="button" onPress={() => seleccionar(lugar)} style={styles.lugarCercano}>
+                  <Ionicons name="location-outline" size={22} color={categorias.find(item => item.id === lugar.categoriaId)?.color ?? colors.primary} />
+                  <Text style={styles.nombreCercano}>{lugar.nombre}</Text>
+                  {distancia !== null && <Text style={styles.distancia}>{textoDistancia(distancia)}</Text>}
+                </Pressable>
+                <BotonLugarFavorito id={lugar.id} />
+              </View>
+            ))}
+            {!cercanos.length && <Text style={styles.mensaje}>No hay lugares para esta búsqueda o categoría.</Text>}
+          </ScrollView>
+        </View>
       )}
     </View>
   );
@@ -122,17 +196,24 @@ const styles = StyleSheet.create({
   contenedor: { flex: 1 },
 	mapa: { flex: 1 },
   centrar: {
-    position: 'absolute', bottom: spacing.md, right: spacing.md,
+    position: 'absolute', top: spacing.md, right: spacing.md,
     width: 52, height: 52, borderRadius: 26,
     backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center',
     elevation: 3,
   },
-  centrarConPanel: { bottom: undefined, top: spacing.md },
   panel: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: colors.surface, padding: spacing.md, alignItems: 'center', gap: spacing.sm,
     borderTopLeftRadius: borderRadius.lg, borderTopRightRadius: borderRadius.lg,
   },
+  panelLugar: { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '55%', backgroundColor: colors.surface, borderTopLeftRadius: borderRadius.lg, borderTopRightRadius: borderRadius.lg },
+  panelCercanos: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.sm, backgroundColor: colors.surface, borderTopLeftRadius: borderRadius.lg, borderTopRightRadius: borderRadius.lg },
+  cabeceraCercanos: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.sm },
+  listaCercanos: { maxHeight: 170 },
+  filaCercana: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border },
+  lugarCercano: { flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: spacing.sm, paddingHorizontal: spacing.sm },
+  nombreCercano: { flex: 1, color: colors.text, fontSize: fontSize.caption },
+  distancia: { color: colors.textSecondary, fontSize: fontSize.caption },
   titulo: { fontSize: fontSize.subtitle, fontWeight: '700', color: colors.secondary },
   mensaje: { fontSize: fontSize.body, color: colors.textSecondary, textAlign: 'center' },
   permitir: {

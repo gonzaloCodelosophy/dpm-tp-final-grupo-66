@@ -25,6 +25,7 @@ export function useUbicacion() {
       if (!activo.current) return null;
       setPermiso(estado.status);
       setPuedeSolicitar(estado.canAskAgain);
+      if (!estado.granted) setCoordenadas(null);
 
       if (solicitar && !estado.granted) {
         if (!estado.canAskAgain) {
