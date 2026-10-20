@@ -1,3 +1,4 @@
+import { BotonLugarFavorito } from "./boton-lugar-favorito";
 import { ImagenPersistente } from "./imagen-persistente";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
@@ -38,12 +39,13 @@ export function TarjetaLugar({
               size={40}
               color={colors.textSecondary}
             />
+            <Text style={styles.imagenTexto}>Imagen no disponible</Text>
           </View>
         )}
 
-        <Pressable style={styles.favorito} onPress={() => {}} hitSlop={8}>
-          <Ionicons name="heart-outline" size={24} color={colors.text} />
-        </Pressable>
+        <View style={styles.favorito}>
+          <BotonLugarFavorito id={lugar.id} />
+        </View>
       </View>
 
       <View style={styles.contenido}>
@@ -53,7 +55,7 @@ export function TarjetaLugar({
               {lugar.nombre}
             </Text>
 
-            <Text style={styles.categoria}>{nombreCategoria}</Text>
+            <Text style={styles.categoria} numberOfLines={2}>{nombreCategoria}</Text>
           </View>
 
           <Ionicons
@@ -114,12 +116,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: spacing.sm,
     right: spacing.sm,
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 21,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  imagenTexto: {
+    color: colors.textSecondary,
+    fontSize: fontSize.caption,
+    marginTop: spacing.sm,
   },
 
   contenido: {

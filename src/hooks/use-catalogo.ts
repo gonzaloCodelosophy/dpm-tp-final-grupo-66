@@ -61,5 +61,5 @@ export function useCatalogo() {
 
   }, []);
 
-  return { datos, sinConexion: datos !== null && (sinRed || estado.error?.tipo === 'red' || estado.error?.tipo === 'http'), cargando: cargando || (datos === null && estado.actualizando) };
+  return { datos, error: estado.error, reintentar: actualizarCatalogo, sinConexion: (sinRed || estado.error?.tipo === 'red'), cargando: cargando || (datos === null && estado.actualizando) };
 }

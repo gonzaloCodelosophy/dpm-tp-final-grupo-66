@@ -51,7 +51,15 @@
           "enableBackgroundRemoteNotifications": false
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos tu ubicación para mostrar los lugares cercanos y sus distancias.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,6 +1,6 @@
+import { EstadoPantalla } from "../../components/estado-pantalla";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   StyleSheet,
@@ -21,7 +21,7 @@ import { borderRadius, colors, fontSize, spacing } from "../../styles/theme";
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
-  const { datos, sinConexion, cargando } = useCatalogo();
+  const { datos, sinConexion, cargando, error, reintentar } = useCatalogo();
   const lugares = datos?.lugares;
   const categorias = datos?.categorias ?? [];
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<
@@ -51,14 +51,8 @@ export default function ExploreScreen() {
     return categoria?.nombre ?? "Sin categoría";
   };
 
-  if (cargando) {
-    return (
-      <View style={styles.cargando}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.textoCargando}>Cargando lugares...</Text>
-      </View>
-    );
-  }
+  if (cargando) return <EstadoPantalla tipo="cargando" titulo="Cargando lugares..." />;
+  if (datos === null) return <EstadoPantalla tipo={sinConexion ? "sinConexion" : "error"} onPress={() => { void reintentar(); }} />;
 
   return (
     <View style={styles.container}>
@@ -86,7 +80,7 @@ export default function ExploreScreen() {
           <Ionicons name="person" size={20} color={colors.textSecondary} />
         </View>
       </View>
-        <EstadoCatalogo sinConexion={sinConexion} />
+        <EstadoCatalogo sinConexion={sinConexion} error={error !== null} />
 
       <FlatList
         data={lugaresFiltrados}
@@ -123,6 +117,7 @@ export default function ExploreScreen() {
               <TextInput
                 value={busqueda}
                 onChangeText={setBusqueda}
+                accessibilityLabel="Buscar lugares"
                 placeholder="Buscar lugares..."
                 placeholderTextColor={colors.textSecondary}
                 style={styles.input}
@@ -130,7 +125,7 @@ export default function ExploreScreen() {
               />
 
               {busqueda.length > 0 && (
-                <Pressable onPress={() => setBusqueda("")} hitSlop={8}>
+                <Pressable accessibilityLabel="Borrar búsqueda" accessibilityRole="button" onPress={() => setBusqueda("")} hitSlop={8}>
                   <Ionicons
                     name="close-circle"
                     size={21}
@@ -151,6 +146,8 @@ export default function ExploreScreen() {
 
                 return (
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: seleccionada }}
                     onPress={() =>
                       setCategoriaSeleccionada(seleccionada ? null : item.id)
                     }
@@ -192,19 +189,8 @@ export default function ExploreScreen() {
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.vacio}>
-            <Ionicons
-              name="search-outline"
-              size={42}
-              color={colors.textSecondary}
-            />
-
-            <Text style={styles.vacioTitulo}>{datos === null ? "Catálogo aún no descargado" : "No encontramos lugares"}</Text>
-
-            <Text style={styles.vacioTexto}>
-              {datos === null ? "Conectate para descargar los lugares." : "Probá con otra búsqueda o categoría."}
-            </Text>
-          </View>
+          <EstadoPantalla tipo="vacio" titulo={busqueda.trim() || categoriaSeleccionada ? "No encontramos lugares" : "Todavía no hay lugares disponibles"}
+            mensaje={busqueda.trim() || categoriaSeleccionada ? "Probá con otra búsqueda o categoría." : "Volvé a consultar más tarde."} />
         }
       />
     </View>
@@ -299,7 +285,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
-    minHeight: 42,
+    minHeight: 44,
+    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.pill,
     backgroundColor: colors.secondaryLight,
@@ -310,6 +297,8 @@ const styles = StyleSheet.create({
   },
 
   filtroTexto: {
+    flexShrink: 1,
+    maxWidth: 220,
     fontSize: fontSize.caption,
     fontWeight: "600",
     color: colors.secondary,
@@ -327,6 +316,8 @@ const styles = StyleSheet.create({
   },
 
   tituloResultados: {
+    flex: 1,
+    marginRight: spacing.sm,
     fontSize: fontSize.subtitle,
     fontWeight: "700",
     color: colors.text,
@@ -344,34 +335,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  cargando: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    backgroundColor: colors.background,
-  },
 
-  textoCargando: {
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-  },
 
-  vacio: {
-    alignItems: "center",
-    paddingVertical: spacing.xl,
-    gap: spacing.sm,
-  },
 
-  vacioTitulo: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "700",
-    color: colors.text,
-  },
 
-  vacioTexto: {
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-    textAlign: "center",
-  },
 });

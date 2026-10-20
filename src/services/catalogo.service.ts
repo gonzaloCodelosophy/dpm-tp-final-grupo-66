@@ -68,6 +68,7 @@ export function actualizarCatalogo(): Promise<ResultadoActualizacion> {
       return { ok: true, descargadoEn };
     } catch (error) {
       const detalle = errorDatos(error);
+      if (__DEV__) console.warn('[Catálogo]', detalle.codigo, detalle.mensaje);
       publicar({ error: detalle });
       return { ok: false, error: detalle };
     } finally {

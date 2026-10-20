@@ -24,6 +24,7 @@ export async function solicitarJson(ruta: string): Promise<unknown> {
     return cuerpo;
   } catch (error) {
     if (error instanceof FalloDatos) throw error;
+    if (__DEV__) console.warn('[API] No se pudo acceder a', `${base}${ruta}`, error);
     throw new FalloDatos({ tipo: 'red', codigo: controller.signal.aborted ? 'TIEMPO_AGOTADO' : 'RED_NO_DISPONIBLE', mensaje: controller.signal.aborted ? 'El servidor tardó demasiado en responder.' : 'No se pudo contactar al servidor.', reintentable: true });
   } finally {
     clearTimeout(timeout);

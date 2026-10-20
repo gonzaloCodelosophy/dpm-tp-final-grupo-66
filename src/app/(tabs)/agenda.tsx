@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useEventos } from '../../hooks/use-eventos';
 import { EstadoCatalogo } from '../../components/estado-catalogo';
 import TarjetaEvento from '../../components/tarjeta-evento';
+import { colors } from '../../styles/theme';
 
 const ESTADOS = ['Todos', 'Programados', 'Suspendidos', 'Cancelados', 'Finalizados'];
 
@@ -91,7 +92,7 @@ export default function AgendaScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f9f9f9', paddingTop: 40 },
+    container: { flex: 1, backgroundColor: colors.background, paddingTop: 40 },
     headerTitle: { fontSize: 28, fontWeight: 'bold', marginHorizontal: 16, color: '#111' },
     headerSubtitle: { fontSize: 16, marginHorizontal: 16, color: '#666', marginBottom: 16 },
     filtersContainer: { borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 10 },

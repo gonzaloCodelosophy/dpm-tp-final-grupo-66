@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '../styles/theme';
 
-export function EstadoCatalogo({ sinConexion }: { sinConexion: boolean }) {
+export function EstadoCatalogo({ sinConexion, error = false }: { sinConexion: boolean; error?: boolean }) {
 
-  if (!sinConexion) return null;
-  return <View accessibilityRole="alert" style={styles.aviso}><Text style={styles.texto}>Sin conexion al servidor</Text></View>;
+  if (!sinConexion && !error) return null;
+  return <View accessibilityRole="alert" style={styles.aviso}><Text style={styles.texto}>No pudimos actualizar los lugares. Mostramos la información guardada.</Text></View>;
 }
 
 const styles = StyleSheet.create({

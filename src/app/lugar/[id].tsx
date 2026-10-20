@@ -1,8 +1,9 @@
+import { BotonLugarFavorito } from "../../components/boton-lugar-favorito";
+import { EstadoPantalla } from "../../components/estado-pantalla";
 import { Audioguia } from "../../components/audioguia";
 import { ImagenPersistente } from "../../components/imagen-persistente";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,38 +21,13 @@ export default function DetalleLugarScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const { datos, sinConexion, cargando } = useCatalogo();
+  const { datos, sinConexion, cargando, error, reintentar } = useCatalogo();
   const lugar = datos?.lugares.find(item => item.id === id) ?? null;
   const categorias = datos?.categorias ?? [];
 
-  if (cargando) {
-    return (
-      <View style={styles.cargando}>
-        <ActivityIndicator size="large" color={colors.primary} />
-
-        <Text style={styles.textoCargando}>Cargando lugar...</Text>
-      </View>
-    );
-  }
-
-  if (!lugar) {
-    return (
-      <View style={styles.error}>
-        <Ionicons
-          name="location-outline"
-          size={48}
-          color={colors.textSecondary}
-        />
-
-        <Text style={styles.errorTitulo}>{datos === null ? "Detalle aún no descargado" : "Lugar no encontrado"}</Text>
-        <EstadoCatalogo sinConexion={sinConexion} />
-
-        <Pressable style={styles.botonVolver} onPress={() => router.back()}>
-          <Text style={styles.botonVolverTexto}>Volver</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  if (cargando) return <EstadoPantalla tipo="cargando" titulo="Cargando lugar..." />;
+  if (datos === null) return <EstadoPantalla tipo={sinConexion ? "sinConexion" : "error"} onPress={() => { void reintentar(); }} />;
+  if (!lugar || !lugar.activo) return <EstadoPantalla tipo="vacio" titulo="Lugar no disponible" mensaje="Este lugar ya no está disponible en el catálogo." accion="Explorar lugares" onPress={() => router.replace('/(tabs)/explore')} />;
 
   const categoria = categorias.find((item) => item.id === lugar.categoriaId);
 
@@ -85,13 +61,10 @@ export default function DetalleLugarScreen() {
             {lugar.nombre}
           </Text>
 
-          {/*Usuario Provicional*/}
-          <View style={styles.headerAvatar}>
-            <Ionicons name="person" size={20} color={colors.textSecondary} />
-          </View>
+          <BotonLugarFavorito id={lugar.id} />
         </View>
 
-        <EstadoCatalogo sinConexion={sinConexion} />
+        <EstadoCatalogo sinConexion={sinConexion} error={error !== null} />
         <ScrollView
           contentContainerStyle={styles.contenidoScroll}
           showsVerticalScrollIndicator={false}
@@ -111,13 +84,12 @@ export default function DetalleLugarScreen() {
                   color={colors.textSecondary}
                 />
 
-                <Text style={styles.imagenVaciaTexto}>Imagen próximamente</Text>
+                <Text style={styles.imagenVaciaTexto}>Imagen no disponible</Text>
               </View>
             )}
           </View>
 
           <View style={styles.contenido}>
-            {!lugar.activo && <Text style={styles.infoTexto}>Este lugar ya no está activo en el catálogo.</Text>}
             {categoria && (
               <View style={styles.categoria}>
                 <Text style={styles.categoriaTexto}>{categoria.nombre}</Text>
@@ -142,7 +114,7 @@ export default function DetalleLugarScreen() {
 
             <Text style={styles.descripcion}>{lugar.descripcion}</Text>
 
-            {lugar.audioguia && <Audioguia key={lugar.audioguia.url} url={lugar.audioguia.url} />}
+            {lugar.audioguia ? <Audioguia key={lugar.audioguia.url} url={lugar.audioguia.url} /> : <Text style={styles.infoTexto}>Este lugar no tiene audioguía disponible.</Text>}
 
             <View style={styles.info}>
               <View style={styles.infoItem}>
@@ -159,7 +131,7 @@ export default function DetalleLugarScreen() {
 
                   <Text style={styles.infoTexto}>
                     {lugar.horarios.length > 0
-                      ? "Consultar horarios"
+                      ? lugar.horarios.map(horario => `${["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][horario.dia]}: ${horario.abre} a ${horario.cierra}`).join("\n")
                       : "Horarios no disponibles"}
                   </Text>
                 </View>
@@ -183,7 +155,7 @@ export default function DetalleLugarScreen() {
                 </View>
               </View>
 
-              {lugar.telefono && (
+              {(
                 <View style={styles.infoItem}>
                   <View style={styles.infoIcono}>
                     <Ionicons
@@ -196,7 +168,7 @@ export default function DetalleLugarScreen() {
                   <View style={styles.infoTextoContainer}>
                     <Text style={styles.infoTitulo}>Teléfono</Text>
 
-                    <Text style={styles.infoTexto}>{lugar.telefono}</Text>
+                    <Text style={styles.infoTexto}>{lugar.telefono || "Teléfono no disponible"}</Text>
                   </View>
                 </View>
               )}
@@ -265,14 +237,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
 
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primaryLight,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 
   contenidoScroll: {
     paddingBottom: spacing.xl,
@@ -402,45 +366,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
-  cargando: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    backgroundColor: colors.background,
-  },
 
-  textoCargando: {
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-  },
 
-  error: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.lg,
-    backgroundColor: colors.background,
-    gap: spacing.sm,
-  },
 
-  errorTitulo: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "700",
-    color: colors.text,
-  },
 
-  botonVolver: {
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.pill,
-    backgroundColor: colors.primary,
-  },
 
-  botonVolverTexto: {
-    color: colors.surface,
-    fontSize: fontSize.body,
-    fontWeight: "700",
-  },
 });

@@ -63,6 +63,7 @@ export function actualizarEventos(): Promise<ResultadoActualizacion> {
       return { ok: true, descargadoEn };
     } catch (error) {
       const detalle = errorDatos(error);
+      if (__DEV__) console.warn('[Agenda]', detalle.codigo, detalle.mensaje);
       publicar({ error: detalle });
       return { ok: false, error: detalle };
     } finally {
