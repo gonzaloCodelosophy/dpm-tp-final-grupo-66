@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
+import * as Haptics from 'expo-haptics';
 import { ActivityIndicator, Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 
@@ -46,6 +47,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
       longitudeDelta: DELTA_CERCANIA,
     }, 500);
 
+    void Haptics.selectionAsync().catch(() => undefined);
     setCentrarPendiente(false);
   }, [centrarPendiente, mapReady, ubicacion.coordenadas]);
 
@@ -79,6 +81,9 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
 
   const seleccionar = (lugar: Lugar) => {
     Keyboard.dismiss();
+
+    if (seleccionId !== lugar.id) void Haptics.selectionAsync().catch(() => undefined);
+
     setSeleccionId(lugar.id);
 
     if (mapReady) mapa.current?.animateToRegion({
@@ -134,6 +139,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
         accessibilityRole="button"
         accessibilityLabel="Centrar en mi ubicación"
         disabled={ubicacion.cargando}
+        accessibilityState={{ disabled: ubicacion.cargando, busy: ubicacion.cargando }}
         onPress={() => { void centrar(); }}
         style={styles.centrar}
       >
@@ -150,7 +156,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
           />
         </ScrollView>
       ) : mostrarPanel ? (
-        <View style={styles.panel} onLayout={evento => setAltoPanel(evento.nativeEvent.layout.height)}>
+        <ScrollView style={styles.panel} contentContainerStyle={styles.contenidoPermiso} onLayout={evento => setAltoPanel(evento.nativeEvent.layout.height)}>
           <Ionicons name="location-outline" size={32} color={colors.primary} />
           <Text style={styles.titulo}>{ubicacion.error ? 'No pudimos ubicarte' : 'Activá tu ubicación'}</Text>
           <Text style={styles.mensaje} accessibilityLiveRegion="polite">
@@ -162,7 +168,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
           <Pressable accessibilityRole="button" onPress={() => setSeguirSinUbicacion(true)} style={styles.continuar}>
             <Text style={styles.enlace}>Seguir sin ubicación</Text>
           </Pressable>
-        </View>
+        </ScrollView>
       ) : (
         <View style={styles.panelCercanos} onLayout={evento => setAltoPanel(evento.nativeEvent.layout.height)}>
           <View style={styles.cabeceraCercanos}>
@@ -203,13 +209,14 @@ const styles = StyleSheet.create({
   },
   panel: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: colors.surface, padding: spacing.md, alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.surface, maxHeight: '75%',
     borderTopLeftRadius: borderRadius.lg, borderTopRightRadius: borderRadius.lg,
   },
-  panelLugar: { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '55%', backgroundColor: colors.surface, borderTopLeftRadius: borderRadius.lg, borderTopRightRadius: borderRadius.lg },
-  panelCercanos: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.sm, backgroundColor: colors.surface, borderTopLeftRadius: borderRadius.lg, borderTopRightRadius: borderRadius.lg },
+  contenidoPermiso: { padding: spacing.sm, alignItems: 'center', gap: spacing.xs },
+  panelLugar: { position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '70%', backgroundColor: colors.surface, borderTopLeftRadius: borderRadius.lg, borderTopRightRadius: borderRadius.lg },
+  panelCercanos: { maxHeight: '60%', position: 'absolute', bottom: 0, left: 0, right: 0, padding: spacing.sm, backgroundColor: colors.surface, borderTopLeftRadius: borderRadius.lg, borderTopRightRadius: borderRadius.lg },
   cabeceraCercanos: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.sm },
-  listaCercanos: { maxHeight: 170 },
+  listaCercanos: { maxHeight: 170, flexShrink: 1 },
   filaCercana: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border },
   lugarCercano: { flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 52, gap: spacing.sm, paddingHorizontal: spacing.sm },
   nombreCercano: { flex: 1, color: colors.text, fontSize: fontSize.caption },
