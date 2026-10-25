@@ -21,7 +21,7 @@ import { borderRadius, colors, fontSize, spacing } from "../../styles/theme";
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
-  const { datos, sinConexion, cargando, error, reintentar } = useCatalogo();
+  const { datos, sinConexion, cargando, error, reintentar, hayMasLugares, hayMasCategorias, cargarMasLugares, cargarMasCategorias, actualizando } = useCatalogo();
   const lugares = datos?.lugares;
   const categorias = datos?.categorias ?? [];
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<
@@ -99,6 +99,12 @@ export default function ExploreScreen() {
         )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.lista}
+        //@Itati revisa si queda bien el diseño de "Cargar más lugares"
+        ListFooterComponent={hayMasLugares ? (
+          <Pressable accessibilityRole="button" disabled={actualizando || sinConexion} onPress={() => { void cargarMasLugares(); }} style={styles.filtro}>
+            <Text style={styles.filtroTexto}>{actualizando ? "Cargando…" : "Cargar más lugares"}</Text>
+          </Pressable>
+        ) : null}
         ListHeaderComponent={
           <View>
             <Text style={styles.titulo}>Lugares</Text>
@@ -138,6 +144,11 @@ export default function ExploreScreen() {
             <FlatList
               horizontal
               data={categorias}
+              ListFooterComponent={hayMasCategorias ? (
+                <Pressable accessibilityRole="button" disabled={actualizando || sinConexion} onPress={() => { void cargarMasCategorias(); }} style={styles.filtro}>
+                  <Text style={styles.filtroTexto}>Más categorías</Text>
+                </Pressable>
+              ) : null}
               keyExtractor={(categoria) => categoria.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categorias}

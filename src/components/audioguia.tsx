@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 
@@ -15,6 +15,18 @@ function tiempo(segundos: number): string {
 }
 
 export function Audioguia({ url }: { url: string }) {
+
+  //@todos, fijense si les da error en la audioguia al volver hacia atras.
+  const enfocada = useIsFocused();
+  const puedeReproducir = useRef(false);
+
+  useLayoutEffect(() => {
+    puedeReproducir.current = enfocada;
+
+    return () => {
+      puedeReproducir.current = false;
+    };
+  }, [enfocada]);
 
   const player = useAudioPlayer(null);
   const estado = useAudioPlayerStatus(player);
@@ -45,13 +57,18 @@ export function Audioguia({ url }: { url: string }) {
     return () => { activo = false; cancelar(); };
   }, [url, player]);
 
-  useFocusEffect(useCallback(() => {
-    // Pausar al salir del detalle; el hook libera el reproductor al desmontarse.
-    return () => player.pause();
-  }, [player]));
+  useEffect(() => {
+    // Pausar si la pantalla sigue montada pero pierde el foco.
+    // Al desmontar, useAudioPlayer libera el audio: no llamar a pause en el cleanup.
+    // @todos, puede que el sonido quede reproduciendo al volver atras, probar con la app compilada.
+    if (!enfocada) player.pause();
+    setOcupado(false);
+  }, [enfocada, player]);
 
   const reproducir = async () => {
-    if (!estado.isLoaded || ocupado) return;
+    
+    //@todos no estoy seguro donde ocurre el error, meto la comprobacion de puedeReproducir, ayudenve a validar luego
+    if (!puedeReproducir.current || !estado.isLoaded || ocupado) return;
 
     setOcupado(true);
     setError(null);
@@ -61,22 +78,23 @@ export function Audioguia({ url }: { url: string }) {
         player.pause();
       } else {
         await setAudioModeAsync({ playsInSilentMode: true });
+        if (!puedeReproducir.current) return;
 
         if (estado.didJustFinish || (estado.duration > 0 && estado.currentTime >= estado.duration)) {
           await player.seekTo(0);
         }
 
-        player.play();
+        if (puedeReproducir.current) player.play();
       }
     } catch {
-      setError('No se pudo reproducir la audioguía.');
+      if (puedeReproducir.current) setError('No se pudo reproducir la audioguía.');
     } finally {
-      setOcupado(false);
+      if (puedeReproducir.current) setOcupado(false);
     }
   };
 
   const desplazar = async (segundos: number) => {
-    if (!estado.isLoaded || ocupado) return;
+    if (!puedeReproducir.current || !estado.isLoaded || ocupado) return;
 
     setOcupado(true);
     setError(null);
@@ -84,9 +102,9 @@ export function Audioguia({ url }: { url: string }) {
     try {
       await player.seekTo(Math.max(0, Math.min(estado.duration, estado.currentTime + segundos)));
     } catch {
-      setError('No se pudo cambiar la posición del audio.');
+      if (puedeReproducir.current) setError('No se pudo cambiar la posición del audio.');
     } finally {
-      setOcupado(false);
+      if (puedeReproducir.current) setOcupado(false);
     }
   };
 

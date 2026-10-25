@@ -1,4 +1,5 @@
 import { openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
+import { Directory, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
 import { FalloDatos, errorDatos } from '../services/errores';
 let apertura: Promise<SQLiteDatabase> | null = null;
@@ -38,7 +39,7 @@ async function inicializar(): Promise<SQLiteDatabase> {
 
   try {
     const version = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
-    if ((version?.user_version ?? 0) > 6) throw new Error('La base local requiere una versión más reciente de la app.');
+    if ((version?.user_version ?? 0) > 7) throw new Error('La base local requiere una versión más reciente de la app.');
 
     if ((version?.user_version ?? 0) === 0) {
       await db.withExclusiveTransactionAsync(async tx => {
@@ -76,6 +77,28 @@ async function inicializar(): Promise<SQLiteDatabase> {
         await tx.execAsync(`
           CREATE TABLE IF NOT EXISTS audios (url TEXT PRIMARY KEY NOT NULL, nombreArchivo TEXT NOT NULL, descargadoEn TEXT NOT NULL);
           PRAGMA user_version = 6;
+        `);
+      });
+    }
+
+    // @todos, haganme acordar de sacar esto, lo dejo aca para que no les quede guardado en memoria el cache de la api demo.
+    if ((version?.user_version ?? 0) < 7) {
+      for (const nombre of ['imagenes-catalogo', 'audioguias']) {
+        const carpeta = new Directory(Paths.document, nombre);
+
+        if (carpeta.exists) carpeta.delete();
+      }
+
+      await db.withExclusiveTransactionAsync(async tx => {
+        await tx.execAsync(`
+          DROP TABLE lugares;
+          DROP TABLE categorias;
+          DROP TABLE eventos;
+          DROP TABLE catalogos;
+          DELETE FROM imagenes;
+          DELETE FROM audios;
+          CREATE TABLE paginas (recurso TEXT NOT NULL, pagina INTEGER NOT NULL, datosJson TEXT NOT NULL, descargadoEn TEXT NOT NULL, PRIMARY KEY(recurso, pagina));
+          PRAGMA user_version = 7;
         `);
       });
     }

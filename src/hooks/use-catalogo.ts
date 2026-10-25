@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
-import { actualizarCatalogo, leerCatalogoLocal, observarEstadoCatalogo } from '../services/catalogo.service';
+import { actualizarCatalogo, cargarMasLugares, cargarMasCategorias, leerCatalogoLocal, observarEstadoCatalogo } from '../services/catalogo.service';
 import { observarRed } from '../services/red.service';
 import { errorDatos } from '../services/errores';
 
 import type { Catalogo, EstadoRecurso } from '../types/persistencia';
 
+//Agrego 2 states nuevos para manejar la paginacion.
+
 export function useCatalogo() {
 
   const [datos, setDatos] = useState<Catalogo | null>(null);
+  const [hayMasLugares, setHayMasLugares] = useState(false);
+  const [hayMasCategorias, setHayMasCategorias] = useState(false);
   const [sinRed, setSinRed] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [estado, setEstado] = useState<EstadoRecurso>({ disponible: false, actualizando: false, ultimaActualizacion: null, error: null });
@@ -22,7 +26,11 @@ export function useCatalogo() {
     const leer = async () => {
       try {
         const local = await leerCatalogoLocal();
-        if (montado) setDatos(local.disponible ? local.datos : null);
+        if (montado) {
+          setDatos(local.disponible ? local.datos : null);
+          setHayMasLugares(local.siguientePaginaLugares !== null);
+          setHayMasCategorias(local.siguientePaginaCategorias !== null);
+        }
       } catch (error) {
         if (montado) setEstado(anterior => ({ ...anterior, error: errorDatos(error) }));
       } finally { if (montado) setCargando(false); }
@@ -61,5 +69,5 @@ export function useCatalogo() {
 
   }, []);
 
-  return { datos, error: estado.error, reintentar: actualizarCatalogo, sinConexion: (sinRed || estado.error?.tipo === 'red'), cargando: cargando || (datos === null && estado.actualizando) };
+  return { datos, hayMasLugares, hayMasCategorias, cargarMasLugares, cargarMasCategorias, actualizando: estado.actualizando, error: estado.error, reintentar: actualizarCatalogo, sinConexion: (sinRed || estado.error?.tipo === 'red'), cargando: cargando || (datos === null && estado.actualizando) };
 }

@@ -3,7 +3,7 @@ import { FalloDatos } from '../errores';
 export async function solicitarJson(ruta: string): Promise<unknown> {
 
   const base = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
-  if (!base) throw new FalloDatos({ tipo: 'contrato', codigo: 'API_NO_CONFIGURADA', mensaje: 'Configurar EXPO_PUBLIC_API_URL con la dirección del backend demo.', reintentable: false });
+  if (!base) throw new FalloDatos({ tipo: 'contrato', codigo: 'API_NO_CONFIGURADA', mensaje: 'Configurar con la api que pasaron los profesores.', reintentable: false });
   const controller = new AbortController();
 
   const timeout = setTimeout(() => controller.abort(), 10000);

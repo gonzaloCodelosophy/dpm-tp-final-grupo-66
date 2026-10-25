@@ -1,8 +1,10 @@
 import { precargarImagenes } from './imagenes.service';
-import { leerEventosLocal as leerLocal, guardarEventosLocal } from '../data/repositories/eventos.repository';
+import { leerEventosLocal as leerLocal } from '../data/repositories/eventos.repository';
 import { descargarEventos } from './api/eventos.api';
+import { leerPaginas, guardarPaginas } from '../data/repositories/paginas.repository';
+import type { Evento } from '../types/evento';
 import { FalloDatos, errorDatos } from './errores';
-import type { EstadoRecurso, ResultadoActualizacion } from '../types/persistencia';
+import type { EstadoRecurso, ResultadoActualizacion, Pagina } from '../types/persistencia';
 let estado: EstadoRecurso = { disponible: false, actualizando: false, ultimaActualizacion: null, error: null };
 const oyentes = new Set<(estado: EstadoRecurso) => void>();
 let actualizacion: Promise<ResultadoActualizacion> | null = null;
@@ -45,7 +47,16 @@ export async function leerEventosLocal() {
   }
 }
 
-export function actualizarEventos(): Promise<ResultadoActualizacion> {
+//@Alejo o @Ariel La api nueva esta paginada, asi que ahora guardo por pagina, ya no es la lista completa de eventos @Ariel, asi que tenes que pasar a la siguiente pagina para guardar.
+//Ya no se deberian guardar eventos pasados.
+//Lo hice con push, aun que esto muta el arreglo
+
+export function cargarMasEventos() {
+
+  return actualizarEventos(true);
+}
+
+export function actualizarEventos(mas = false): Promise<ResultadoActualizacion> {
 
   if (actualizacion) return actualizacion;
 
@@ -53,12 +64,24 @@ export function actualizarEventos(): Promise<ResultadoActualizacion> {
     publicar({ actualizando: true });
 
     try {
-      const datos = await descargarEventos();
-      const descargadoEn = new Date().toISOString();
-      await guardarEventosLocal(datos, descargadoEn);
-      publicar({ disponible: true, ultimaActualizacion: descargadoEn, error: null });
+      const local = await leerPaginas<Evento>('eventos');
+      const numeros = mas ? (local.siguientePagina ? [local.siguientePagina] : []) : (local.exploradas.length ? local.exploradas : [1]);
+      const paginas: Pagina<Evento>[] = [];
 
-      void precargarImagenes(datos.map(e => e.imagenUrl).filter((url): url is string => url !== null)).catch(error => console.error("No se pudieron preparar las imágenes", error));
+      for (const numero of numeros) {
+        if (paginas[0] && (numero - 1) * paginas[0].meta.porPagina >= paginas[0].meta.total) break;
+
+        paginas.push(await descargarEventos(numero));
+      }
+
+      const descargadoEn = new Date().toISOString();
+
+      if (paginas.length) await guardarPaginas('eventos', paginas, descargadoEn);
+
+      const agenda = await leerLocal();
+      publicar({ disponible: agenda.disponible, ultimaActualizacion: descargadoEn, error: null });
+
+      if (agenda.disponible) void precargarImagenes(agenda.datos.map(e => e.imagenUrl).filter((url): url is string => url !== null)).catch(error => console.error('No se pudieron preparar las imágenes', error));
 
       return { ok: true, descargadoEn };
     } catch (error) {

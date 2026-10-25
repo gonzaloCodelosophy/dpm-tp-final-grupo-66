@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { solicitarJson } from './http';
+import { POR_PAGINA, validarPagina } from './paginacion';
 import { FalloDatos } from '../errores';
 import type { Evento } from '../../types/evento';
 const fecha = z.iso.datetime({ offset: true });
@@ -18,9 +19,7 @@ export function validarEventos(entrada: unknown): Evento[] {
   return resultado.data.sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio) || a.id.localeCompare(b.id));
 }
 
-export async function descargarEventos(): Promise<Evento[]> {
+export async function descargarEventos(pagina: number) {
 
-  const resultado = z.object({ datos: z.array(eventoSchema), meta: z.object({ total: z.number().int().nonnegative() }) }).safeParse(await solicitarJson('/api/eventos'));
-  if (!resultado.success || resultado.data.meta.total !== resultado.data.datos.length) throw new FalloDatos({ tipo: 'contrato', codigo: 'AGENDA_INCOMPLETA', mensaje: 'El servidor no devolvió la agenda completa.', reintentable: true });
-  return validarEventos(resultado.data.datos);
+  return validarPagina(await solicitarJson(`/eventos?pagina=${pagina}&porPagina=${POR_PAGINA}`), eventoSchema, pagina);
 }

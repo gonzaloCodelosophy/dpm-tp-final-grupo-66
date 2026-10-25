@@ -25,7 +25,7 @@ export function validarCatalogo(entrada: unknown): Catalogo {
 
   const categorias = new Set(datos.categorias.map(c => c.id));
 
-  if (categorias.size !== datos.categorias.length || new Set(datos.lugares.map(l => l.id)).size !== datos.lugares.length || datos.lugares.some(l => !categorias.has(l.categoriaId))) throw new FalloDatos({ tipo: 'contrato', codigo: 'CATALOGO_INCONSISTENTE', mensaje: 'El catálogo contiene IDs duplicados o categorías desconocidas.', reintentable: false });
+  if (categorias.size !== datos.categorias.length || new Set(datos.lugares.map(l => l.id)).size !== datos.lugares.length) throw new FalloDatos({ tipo: 'contrato', codigo: 'CATALOGO_INCONSISTENTE', mensaje: 'El catálogo contiene IDs duplicados.', reintentable: false });
 
   return datos;
 }

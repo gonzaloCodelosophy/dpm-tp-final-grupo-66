@@ -10,3 +10,9 @@ export type LecturaLocal<T> = { disponible: false; datos: null; descargadoEn: nu
 export interface EstadoRecurso { disponible: boolean; actualizando: boolean; ultimaActualizacion: string | null; error: ErrorDatos | null }
 
 export type ResultadoActualizacion = { ok: true; descargadoEn: string } | { ok: false; error: ErrorDatos };
+
+export interface MetaPagina { total: number; pagina: number; porPagina: number }
+
+export interface Pagina<T> { datos: T[]; meta: MetaPagina }
+
+export type RecursoPaginado = 'lugares' | 'categorias' | 'eventos';

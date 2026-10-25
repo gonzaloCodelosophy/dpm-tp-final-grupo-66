@@ -1,14 +1,17 @@
 import type { Evento } from "../types/evento";
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
-import { actualizarEventos, leerEventosLocal, observarEstadoEventos } from '../services/eventos.service';
+import { actualizarEventos, cargarMasEventos, leerEventosLocal, observarEstadoEventos } from '../services/eventos.service';
 import { observarRed } from '../services/red.service';
 import { errorDatos } from '../services/errores';
 import type { EstadoRecurso } from '../types/persistencia';
 
+//agrego 1 state nuevo para paginacion de eventos.
 export function useEventos() {
 
+
   const [datos, setDatos] = useState<Evento[] | null>(null);
+  const [hayMas, setHayMas] = useState(false);
   const [sinRed, setSinRed] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [estado, setEstado] = useState<EstadoRecurso>({ disponible: false, actualizando: false, ultimaActualizacion: null, error: null });
@@ -22,7 +25,10 @@ export function useEventos() {
     const leer = async () => {
       try {
         const local = await leerEventosLocal();
-        if (montado) setDatos(local.disponible ? local.datos : null);
+        if (montado) {
+          setDatos(local.disponible ? local.datos : null);
+          setHayMas(local.siguientePagina !== null);
+        }
       } catch (error) {
         if (montado) setEstado(anterior => ({ ...anterior, error: errorDatos(error) }));
       } finally {
@@ -70,5 +76,5 @@ export function useEventos() {
     };
   }, []);
 
-  return { datos, sinConexion: datos !== null && (sinRed || estado.error?.tipo === 'red' || estado.error?.tipo === 'http'), cargando: cargando || (datos === null && estado.actualizando) };
+  return { datos, hayMas, cargarMas: cargarMasEventos, actualizando: estado.actualizando, error: estado.error, reintentar: actualizarEventos, sinConexion: datos !== null && (sinRed || estado.error?.tipo === 'red' || estado.error?.tipo === 'http'), cargando: cargando || (datos === null && estado.actualizando) };
 }

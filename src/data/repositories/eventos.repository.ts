@@ -1,29 +1,22 @@
-import { conBase } from '../database';
+import { leerPaginas } from './paginas.repository';
 import type { Evento } from '../../types/evento';
 import type { LecturaLocal } from '../../types/persistencia';
 import { validarEventos } from '../../services/api/eventos.api';
 
-export function leerEventosLocal(): Promise<LecturaLocal<Evento[]>> {
+//Reescribo casi completo al igual que el otro (Si, paginacion...)
+export async function leerEventosLocal(): Promise<LecturaLocal<Evento[]> & { siguientePagina: number | null }> {
 
-  return conBase(async db => {
-    const meta = await db.getFirstAsync<{ descargadoEn: string; cantidad: number }>("SELECT descargadoEn, cantidad FROM catalogos WHERE recurso = 'eventos' AND alcance = 'completo'");
-    if (!meta) return { disponible: false, datos: null, descargadoEn: null };
-    const filas = await db.getAllAsync<{ datosJson: string }>('SELECT datosJson FROM eventos');
-    if (filas.length !== meta.cantidad) throw new Error('La agenda local está incompleta.');
+  const local = await leerPaginas<Evento>('eventos');
 
-    return { disponible: true, datos: validarEventos(filas.map(f => JSON.parse(f.datosJson))), descargadoEn: meta.descargadoEn };
-  });
-}
+  if (!local.disponible) return { disponible: false, datos: null, descargadoEn: null, siguientePagina: null };
 
-export function guardarEventosLocal(entrada: Evento[], descargadoEn: string): Promise<void> {
+  const partes = new Intl.DateTimeFormat('en', { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const valor = (tipo: string) => partes.find(parte => parte.type === tipo)!.value;
+  const hoy = `${valor('year')}-${valor('month')}-${valor('day')}`;
+  const desde = Date.parse(`${hoy}T00:00:00-03:00`);
+  const datos = validarEventos(local.datos).filter(evento => evento.fin
+    ? Date.parse(evento.fin) > desde || Date.parse(evento.inicio) >= desde
+    : evento.inicio.slice(0, 10) >= hoy);
 
-  const eventos = validarEventos(entrada);
-
-  return conBase(async db => {
-    await db.withExclusiveTransactionAsync(async tx => {
-      await tx.execAsync('DELETE FROM eventos;');
-      for (const e of eventos) await tx.runAsync('INSERT INTO eventos VALUES (?, ?, ?, ?, ?)', e.id, e.inicio, e.estado, e.lugarId, JSON.stringify(e));
-      await tx.runAsync("INSERT OR REPLACE INTO catalogos VALUES ('eventos', 'completo', ?, ?)", descargadoEn, eventos.length);
-    });
-  });
+  return { disponible: true, datos, descargadoEn: local.descargadoEn!, siguientePagina: local.siguientePagina };
 }

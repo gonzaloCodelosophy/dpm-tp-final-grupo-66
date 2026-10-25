@@ -9,7 +9,7 @@ import { colors } from '../../styles/theme';
 const ESTADOS = ['Todos', 'Programados', 'Suspendidos', 'Cancelados', 'Finalizados'];
 
 export default function AgendaScreen() {
-    const { datos, sinConexion, cargando } = useEventos();
+    const { datos, sinConexion, cargando, hayMas, cargarMas, actualizando, error, reintentar } = useEventos();
     const eventos = datos ?? [];
     const fechasUnicas = useMemo(() => [...new Set((datos ?? []).map(e => e.inicio.split("T")[0]))].sort(), [datos]);
     const [filtroFecha, setFiltroFecha] = useState<string | null>(null);
@@ -85,6 +85,14 @@ export default function AgendaScreen() {
                     <TarjetaEvento evento={item} onPress={() => router.push(`/evento/${item.id}`)} />
                 )}
                 contentContainerStyle={styles.listContainer}
+                //@Itati aca hay otro bloque para revisar diseño, "Cargar más lugares"
+                ListFooterComponent={hayMas ? (
+                    <TouchableOpacity accessibilityRole="button" disabled={actualizando || sinConexion} onPress={() => { void cargarMas(); }} style={styles.dateTab}>
+                        <Text>{actualizando ? "Cargando…" : "Cargar más eventos"}</Text>
+                    </TouchableOpacity>
+                ) : error && !sinConexion ? (
+                    <TouchableOpacity accessibilityRole="button" onPress={() => { void reintentar(); }} style={styles.dateTab}><Text>Reintentar</Text></TouchableOpacity>
+                ) : null}
                 ListEmptyComponent={<Text style={styles.emptyText}>{cargando ? "Cargando agenda…" : datos === null ? "Agenda aún no descargada. Conectate para descargarla." : "No hay eventos para esta selección."}</Text>}
             />
         </View>
