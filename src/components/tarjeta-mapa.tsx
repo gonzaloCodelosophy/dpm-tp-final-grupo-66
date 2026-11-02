@@ -2,6 +2,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { router } from 'expo-router';
 
+import { BotonVisitaCercana } from './boton-visita-cercana';
 import { ImagenPersistente } from './imagen-persistente';
 import { BotonLugarFavorito } from './boton-lugar-favorito';
 import { abrirIndicaciones } from '../services/navegacion.service';
@@ -51,6 +52,7 @@ export function TarjetaMapa({ lugar, categoria, distancia, onCerrar }: TarjetaMa
           <Text style={styles.textoSecundario}>Cómo llegar</Text>
         </Pressable>
       </View>
+      <BotonVisitaCercana key={lugar.id} lugar={lugar} />
     </View>
   );
 }

@@ -17,3 +17,6 @@ export const REGION_INICIAL_COLON = {
 
 // Encuadre cercano para centrar la posición o seleccionar un lugar.
 export const DELTA_CERCANIA = 0.015;
+
+// Radio de registro GPS acordado con Gonzalo.
+export const RADIO_REGISTRO_METROS = 50;
