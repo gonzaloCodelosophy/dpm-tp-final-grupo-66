@@ -1,5 +1,5 @@
 import { Directory, File, Paths } from 'expo-file-system';
-import { fetch } from 'expo/fetch';
+import axios from 'axios';
 import { leerImagenLocal, guardarImagenLocal } from '../data/repositories/imagenes.repository';
 const pendientes = new Map<string, Promise<string>>();
 const listeners = new Set<(url: string) => void>();
@@ -46,18 +46,15 @@ export function descargarImagen(url: string): Promise<string> {
     const nombre = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const temporal = new File(carpeta, `${nombre}.parcial`);
     let definitivo: File | null = null;
-    const controller = new AbortController();
-
-    const tiempo = setTimeout(() => controller.abort(), 15000);
 
     try {
-      const respuesta = await fetch(urlImagenRemota(url), { signal: controller.signal });
-      if (!respuesta.ok || !respuesta.headers.get('content-type')?.toLowerCase().startsWith('image/')) throw new Error('El servidor no devolvió una imagen válida.');
-      const tipo = respuesta.headers.get('content-type')?.split(';')[0].toLowerCase() ?? '';
+      const respuesta = await axios.get<ArrayBuffer>(urlImagenRemota(url), { responseType: 'arraybuffer', timeout: 15000 });
+      if (!String(respuesta.headers['content-type'] ?? '').toLowerCase().startsWith('image/')) throw new Error('El servidor no devolvió una imagen válida.');
+      const tipo = String(respuesta.headers['content-type'] ?? '').split(';')[0].toLowerCase();
       const extension = ({ 'image/svg+xml': 'svg', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' } as Record<string, string>)[tipo] ?? 'img';
       const nombreArchivo = `${nombre}.${extension}`;
       definitivo = new File(carpeta, nombreArchivo);
-      const bytes = await respuesta.bytes();
+      const bytes = new Uint8Array(respuesta.data);
       if (!bytes.length) throw new Error('La imagen descargada está vacía.');
       temporal.create();
       temporal.write(bytes);
@@ -75,8 +72,6 @@ export function descargarImagen(url: string): Promise<string> {
       if (temporal.exists) temporal.delete();
       if (definitivo?.exists) definitivo.delete();
       throw error;
-    } finally {
-      clearTimeout(tiempo);
     }
   }).finally(() => {
     pendientes.delete(url);

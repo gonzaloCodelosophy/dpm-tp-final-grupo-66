@@ -1,5 +1,5 @@
 import { Directory, File, Paths } from 'expo-file-system';
-import { fetch } from 'expo/fetch';
+import axios from 'axios';
 import { leerAudioLocal, guardarAudioLocal } from '../data/repositories/audios.repository';
 const pendientes = new Map<string, Promise<string>>();
 const listeners = new Set<(url: string) => void>();
@@ -46,17 +46,14 @@ export function descargarAudio(url: string): Promise<string> {
     const nombre = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const temporal = new File(carpeta, `${nombre}.parcial`);
     let definitivo: File | null = null;
-    const controller = new AbortController();
-
-    const tiempo = setTimeout(() => controller.abort(), 15000);
 
     try {
-      const respuesta = await fetch(urlAudioRemoto(url), { signal: controller.signal });
-      if (!respuesta.ok || !respuesta.headers.get('content-type')?.toLowerCase().startsWith('audio/')) throw new Error('El servidor no devolvió un audio válido.');
+      const respuesta = await axios.get<ArrayBuffer>(urlAudioRemoto(url), { responseType: 'arraybuffer', timeout: 15000 });
+      if (!String(respuesta.headers['content-type'] ?? '').toLowerCase().startsWith('audio/')) throw new Error('El servidor no devolvió un audio válido.');
       const extension = 'mp3';
       const nombreArchivo = `${nombre}.${extension}`;
       definitivo = new File(carpeta, nombreArchivo);
-      const bytes = await respuesta.bytes();
+      const bytes = new Uint8Array(respuesta.data);
       if (!bytes.length) throw new Error('El audio descargado está vacío.');
       temporal.create();
       temporal.write(bytes);
@@ -74,8 +71,6 @@ export function descargarAudio(url: string): Promise<string> {
       if (temporal.exists) temporal.delete();
       if (definitivo?.exists) definitivo.delete();
       throw error;
-    } finally {
-      clearTimeout(tiempo);
     }
   }).finally(() => {
     pendientes.delete(url);
