@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '../context/auth.context';
+import { ModalReingresoBiometrico } from '../components/auth/modal-reingreso-biometrico';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -22,13 +23,13 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-export default function RootLayout() {
+function RootNavigation() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
     async function solicitarPermisosNotificaciones() {
       const { status: statusActual } = await Notifications.getPermissionsAsync();
-      
+
       if (statusActual !== 'granted') {
         const { status: nuevoStatus } = await Notifications.requestPermissionsAsync();
         if (nuevoStatus !== 'granted') {
@@ -40,15 +41,22 @@ export default function RootLayout() {
   }, []);
 
   return (
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+      </Stack>
+      <ModalReingresoBiometrico />
+      <StatusBar style="auto" />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <RootNavigation />
     </AuthProvider>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,7 +18,9 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../context/auth.context';
 import { registroSchema, RegistroFormData } from '../../schemas/auth.schema';
+import { FalloDatos } from '../../services/errores';
 import { borderRadius, colors, fontSize, spacing } from '../../styles/theme';
+import { fuenteTitulo } from '../../styles/inicio';
 
 export default function RegistroScreen() {
   const router = useRouter();
@@ -57,7 +60,26 @@ export default function RegistroScreen() {
       });
       router.replace('/(tabs)' as any);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Ocurrió un error al registrar la cuenta.');
+      if (err instanceof FalloDatos || err?.detalle) {
+        const codigo = err?.detalle?.codigo;
+        if (codigo === 'EMAIL_YA_REGISTRADO' || codigo === 'HTTP_409') {
+          setErrorMsg('El correo electrónico ya se encuentra registrado.');
+          return;
+        }
+        if (codigo === 'VALIDACION_FALLIDA' || codigo === 'HTTP_400') {
+          setErrorMsg('Los datos ingresados no cumplen con el formato requerido (la contraseña debe tener al menos 8 caracteres).');
+          return;
+        }
+        if (codigo === 'RED_NO_DISPONIBLE' || codigo === 'TIEMPO_AGOTADO') {
+          setErrorMsg('No se pudo conectar con el servidor. Comprobá tu conexión a internet.');
+          return;
+        }
+        if (codigo === 'API_NO_CONFIGURADA') {
+          setErrorMsg('El servicio no se encuentra disponible temporalmente. Por favor, intentá más tarde.');
+          return;
+        }
+      }
+      setErrorMsg(err?.message || 'Ocurrió un error al registrar la cuenta.');
     } finally {
       setCargando(false);
     }
@@ -74,25 +96,35 @@ export default function RegistroScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <TouchableOpacity
-            style={styles.btnBack}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="chevron-back" size={26} color={colors.secondary} />
-          </TouchableOpacity>
+          <View style={styles.navBar}>
+            <TouchableOpacity
+              style={styles.btnBackCircle}
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chevron-back" size={20} color={colors.text} />
+            </TouchableOpacity>
+            <Image
+              source={require('../../../assets/images/logo-colon.png')}
+              style={styles.topLogo}
+              resizeMode="contain"
+            />
+            <View style={styles.navBarPlaceholder} />
+          </View>
 
-          <View style={styles.headerRow}>
-            <View style={styles.headerText}>
+          <View style={styles.heroRow}>
+            <View style={styles.heroText}>
               <Text style={styles.title}>Crear cuenta</Text>
               <Text style={styles.subtitle}>
                 Guardá tus lugares favoritos y registrá cada experiencia
               </Text>
             </View>
+            <Image
+              source={require('../../../assets/images/ilustracion_crear_cuenta.png')}
+              style={styles.heroImageFaro}
+              resizeMode="contain"
+            />
           </View>
-
-          {/* imagen */}
-          <View style={styles.imagePlaceholderSlot} />
 
           <View style={styles.formContainer}>
             {errorMsg ? (
@@ -257,53 +289,69 @@ export default function RegistroScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   container: {
     flexGrow: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xl * 1.5,
-    justifyContent: 'space-between',
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.lg,
   },
-  btnBack: {
-    alignSelf: 'flex-start',
-    width: 40,
-    height: 40,
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+  },
+  btnBackCircle: {
+    width: 38,
+    height: 38,
     borderRadius: borderRadius.pill,
-    backgroundColor: colors.secondaryLight,
+    borderWidth: 1,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    backgroundColor: colors.surface,
   },
-  headerRow: {
+  topLogo: {
+    width: 145,
+    height: 54,
+  },
+  navBarPlaceholder: {
+    width: 38,
+  },
+  heroRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    marginTop: spacing.xs,
     marginBottom: spacing.xs,
   },
-  headerText: {
+  heroText: {
     flex: 1,
-    paddingRight: spacing.xs,
+    paddingRight: 6,
+  },
+  heroImageFaro: {
+    width: 195,
+    height: 155,
+    marginRight: -spacing.lg,
   },
   title: {
-    fontSize: fontSize.title,
+    fontFamily: fuenteTitulo,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.secondary,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: fontSize.body,
+    fontSize: 14,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  imagePlaceholderSlot: {
-    width: '100%',
-    height: spacing.sm,
+    lineHeight: 19,
   },
   formContainer: {
     width: '100%',
-    marginVertical: spacing.sm,
+    marginTop: spacing.xs,
   },
   errorBox: {
     flexDirection: 'row',
@@ -324,7 +372,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: borderRadius.pill,
+    borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.surface,
     height: 52,
@@ -338,14 +386,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     marginTop: -spacing.sm,
     marginBottom: spacing.sm,
-    marginLeft: spacing.md,
+    marginLeft: spacing.sm,
   },
   inputIcon: {
     marginRight: spacing.sm,
   },
   input: {
     flex: 1,
-    fontSize: fontSize.body,
+    fontSize: 15,
     color: colors.text,
   },
   termsRow: {
@@ -357,9 +405,9 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: borderRadius.sm / 2,
+    borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: colors.textSecondary,
+    borderColor: colors.border,
     marginRight: spacing.sm,
     justifyContent: 'center',
     alignItems: 'center',
@@ -372,7 +420,7 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   termsText: {
-    fontSize: fontSize.caption,
+    fontSize: 12,
     color: colors.text,
     flex: 1,
   },
@@ -383,19 +431,15 @@ const styles = StyleSheet.create({
   btnPrimary: {
     backgroundColor: colors.primary,
     height: 52,
-    borderRadius: borderRadius.pill,
+    borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.md,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
   },
   btnPrimaryText: {
     color: colors.surface,
-    fontSize: fontSize.body,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   footer: {
@@ -407,11 +451,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: colors.textSecondary,
-    fontSize: fontSize.caption,
+    fontSize: 14,
   },
   linkText: {
     color: colors.primary,
-    fontSize: fontSize.caption,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });
