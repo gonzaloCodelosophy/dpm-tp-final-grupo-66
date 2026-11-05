@@ -25,7 +25,7 @@ export const registroSchema = z
     password: z
       .string()
       .min(1, 'La contraseña es requerida')
-      .min(6, 'La contraseña debe tener al menos 6 caracteres'),
+      .min(8, 'La contraseña debe tener al menos 8 caracteres'),
     confirmarPassword: z
       .string()
       .min(1, 'Confirmá tu contraseña'),
@@ -39,12 +39,3 @@ export const registroSchema = z
   });
 
 export type RegistroFormData = z.infer<typeof registroSchema>;
-
-export const recuperarCuentaSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'El correo electrónico es requerido')
-    .email('Ingresá un correo electrónico válido'),
-});
-
-export type RecuperarCuentaFormData = z.infer<typeof recuperarCuentaSchema>;

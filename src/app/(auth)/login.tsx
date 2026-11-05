@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -19,7 +20,9 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../context/auth.context';
 import { loginSchema, LoginFormData } from '../../schemas/auth.schema';
+import { FalloDatos } from '../../services/errores';
 import { borderRadius, colors, fontSize, spacing } from '../../styles/theme';
+import { fuenteTitulo } from '../../styles/inicio';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -69,24 +72,22 @@ export default function LoginScreen() {
       await iniciarSesion({ email: data.email.trim(), password: data.password.trim() });
       router.replace('/(tabs)' as any);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Ocurrió un error al iniciar sesión.');
-    } finally {
-      setCargando(false);
-    }
-  }
-
-  async function handleGoogleLogin() {
-    try {
-      setCargando(true);
-      // simulación de inicio de sesión con google, opcional?
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      await iniciarSesion({ email: 'usuario.google@gmail.com', password: 'google-auth-pass' });
-      router.replace('/(tabs)' as any);
-    } catch (error) {
-      mostrarModalNotificacion(
-        'Autenticación con Google',
-        'No se pudo completar el inicio de sesión con Google. Por favor, intentá nuevamente.'
-      );
+      if (err instanceof FalloDatos || err?.detalle) {
+        const codigo = err?.detalle?.codigo;
+        if (codigo === 'CREDENCIALES_INVALIDAS' || codigo === 'HTTP_401') {
+          setErrorMsg('Correo o contraseña incorrectos. Verificá tus credenciales.');
+          return;
+        }
+        if (codigo === 'RED_NO_DISPONIBLE' || codigo === 'TIEMPO_AGOTADO') {
+          setErrorMsg('No se pudo conectar con el servidor. Comprobá tu conexión a internet.');
+          return;
+        }
+        if (codigo === 'API_NO_CONFIGURADA') {
+          setErrorMsg('El servicio no se encuentra disponible temporalmente. Por favor, intentá más tarde.');
+          return;
+        }
+      }
+      setErrorMsg(err?.message || 'Ocurrió un error al iniciar sesión.');
     } finally {
       setCargando(false);
     }
@@ -103,7 +104,7 @@ export default function LoginScreen() {
           'No se encontró una sesión iniciada en este dispositivo. Primero debés iniciar sesión o registrarte manualmente.'
         );
       }
-    } catch (error) {
+    } catch {
       mostrarModalNotificacion(
         'Autenticación biométrica',
         'No se pudo verificar la identidad en este dispositivo.'
@@ -122,15 +123,33 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-
+          <View style={styles.navBar}>
+            <TouchableOpacity
+              style={styles.btnBackCircle}
+              onPress={() => router.replace('/(tabs)/perfil' as any)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chevron-back" size={20} color={colors.text} />
+            </TouchableOpacity>
+            <Image
+              source={require('../../../assets/images/logo-colon.png')}
+              style={styles.topLogo}
+              resizeMode="contain"
+            />
+            <View style={styles.navBarPlaceholder} />
+          </View>
           <View style={styles.header}>
             <Text style={styles.title}>Mi Ciudad{'\n'}Colón</Text>
             <Text style={styles.subtitle}>Volvé a descubrir Colón</Text>
           </View>
 
-          {/* espacio para iilustracion posterior */}
-          <View style={styles.imagePlaceholderSlot} />
-
+          <View style={styles.bridgeContainer}>
+            <Image
+              source={require('../../../assets/images/ilustracion-colon-puente.png')}
+              style={styles.heroImagePuente}
+              resizeMode="contain"
+            />
+          </View>
 
           <View style={styles.formContainer}>
             {errorMsg ? (
@@ -194,13 +213,6 @@ export default function LoginScreen() {
             ) : null}
 
             <TouchableOpacity
-              onPress={() => router.push('/(auth)/recuperar-cuenta' as any)}
-              style={styles.forgotBtn}
-            >
-              <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
               style={styles.btnPrimary}
               onPress={handleSubmit(handleIngresar)}
               disabled={cargando}
@@ -212,30 +224,13 @@ export default function LoginScreen() {
                 <Text style={styles.btnPrimaryText}>Iniciar sesión</Text>
               )}
             </TouchableOpacity>
-
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>o continuá con</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity
-              style={styles.btnGoogle}
-              onPress={handleGoogleLogin}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="logo-google" size={18} color={colors.error} style={{ marginRight: spacing.xs }} />
-              <Text style={styles.btnGoogleText}>Continuar con Google</Text>
-            </TouchableOpacity>
-
-            {/* Biometría (si está disponible) */}
             {soportaBiometria ? (
               <TouchableOpacity
                 style={styles.btnBiometric}
                 onPress={handleBiometria}
                 activeOpacity={0.8}
               >
-                <Ionicons name="finger-print-outline" size={20} color={colors.secondary} />
+                <Ionicons name="finger-print-outline" size={18} color={colors.secondary} />
                 <Text style={styles.btnBiometricText}>Ingresar con Huella / Rostro</Text>
               </TouchableOpacity>
             ) : null}
@@ -282,36 +277,67 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   container: {
     flexGrow: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xl * 1.5,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.lg,
+  },
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+  },
+  btnBackCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: borderRadius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+  },
+  topLogo: {
+    width: 145,
+    height: 54,
+  },
+  navBarPlaceholder: {
+    width: 38,
   },
   header: {
-    marginBottom: spacing.xs,
+    marginTop: spacing.xs,
+    marginBottom: 4,
   },
   title: {
-    fontSize: fontSize.title,
+    fontFamily: fuenteTitulo,
+    fontSize: 32,
     fontWeight: 'bold',
     color: colors.secondary,
+    lineHeight: 38,
   },
   subtitle: {
-    fontSize: fontSize.body,
+    fontSize: 15,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: 4,
   },
-  imagePlaceholderSlot: {
+  bridgeContainer: {
     width: '100%',
-    height: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 6,
+  },
+  heroImagePuente: {
+    width: '100%',
+    height: 105,
   },
   formContainer: {
     width: '100%',
-    marginVertical: spacing.sm,
+    marginTop: spacing.xs,
   },
   errorBox: {
     flexDirection: 'row',
@@ -332,7 +358,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: borderRadius.pill,
+    borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.surface,
     height: 52,
@@ -346,89 +372,41 @@ const styles = StyleSheet.create({
     fontSize: fontSize.caption,
     marginTop: -spacing.sm,
     marginBottom: spacing.sm,
-    marginLeft: spacing.md,
+    marginLeft: spacing.sm,
   },
   inputIcon: {
     marginRight: spacing.sm,
   },
   input: {
     flex: 1,
-    fontSize: fontSize.body,
+    fontSize: 15,
     color: colors.text,
-  },
-  forgotBtn: {
-    alignSelf: 'center',
-    marginBottom: spacing.lg,
-    marginTop: spacing.xs,
-  },
-  forgotText: {
-    color: colors.primary,
-    fontSize: fontSize.caption,
-    fontWeight: 'bold',
   },
   btnPrimary: {
     backgroundColor: colors.primary,
     height: 52,
-    borderRadius: borderRadius.pill,
+    borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
   },
   btnPrimaryText: {
     color: colors.surface,
-    fontSize: fontSize.body,
-    fontWeight: 'bold',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: spacing.md,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    marginHorizontal: spacing.sm,
-    fontSize: fontSize.caption,
-    color: colors.textSecondary,
-  },
-  btnGoogle: {
-    flexDirection: 'row',
-    height: 50,
-    borderRadius: borderRadius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnGoogleText: {
-    color: colors.text,
-    fontSize: fontSize.body,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   btnBiometric: {
     flexDirection: 'row',
-    height: 48,
-    borderRadius: borderRadius.pill,
-    borderWidth: 1,
-    borderColor: colors.secondary,
-    backgroundColor: colors.secondaryLight,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.md,
-    gap: spacing.xs,
+    justifyContent: 'center',
+    paddingVertical: 8,
+    gap: 6,
   },
   btnBiometricText: {
     color: colors.secondary,
-    fontSize: fontSize.body,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
@@ -439,15 +417,13 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: colors.textSecondary,
-    fontSize: fontSize.caption,
+    fontSize: 14,
   },
   linkText: {
     color: colors.primary,
-    fontSize: fontSize.caption,
+    fontSize: 14,
     fontWeight: 'bold',
   },
-
-  /* Modal flotante de notificación unificado */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',

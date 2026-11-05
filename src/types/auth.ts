@@ -1,12 +1,18 @@
+export interface Preferencias {
+  categoriasFavoritas: string[];
+  avisarProximidad: boolean;
+  radioAvisoMetros: number;
+  tema: 'claro' | 'oscuro' | 'sistema';
+}
+
 export interface Usuario {
   id: string;
   nombre: string;
   email: string;
   avatarUrl: string | null;
   creadoEn: string;
-  preferencias?: unknown;
+  preferencias?: Preferencias;
 }
-// preferencias aún en curso REVISAR cuando esté listo.
 
 export interface CredencialesLogin {
   email: string;
