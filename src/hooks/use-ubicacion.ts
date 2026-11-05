@@ -19,6 +19,7 @@ export function useUbicacion() {
     ocupado.current = true;
     setCargando(true);
     setError(null);
+    let tiempo: ReturnType<typeof setTimeout> | undefined;
 
     try {
       let estado = await Location.getForegroundPermissionsAsync();
@@ -45,9 +46,13 @@ export function useUbicacion() {
       if (!await Location.hasServicesEnabledAsync()) throw new Error("Ubicación desactivada");
       if (!activo.current) return null;
 
-      const ubicacion = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      // Evitar que el botón quede ocupado indefinidamente si el GPS no responde.
+      const ubicacion = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        new Promise<never>((_, rechazar) => {
+          tiempo = setTimeout(() => rechazar(new Error("Tiempo de ubicación agotado")), 15000);
+        }),
+      ]);
       if (!activo.current) return null;
 
       const coordenadasActuales = {
@@ -66,6 +71,7 @@ export function useUbicacion() {
       }
       return null;
     } finally {
+      if (tiempo) clearTimeout(tiempo);
       ocupado.current = false;
       if (activo.current) setCargando(false);
     }
