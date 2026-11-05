@@ -14,3 +14,6 @@ export const REGION_INICIAL_COLON = {
   latDelta: 0.06,
   lonDelta: 0.06,
 };
+
+// Encuadre cercano para centrar la posición o seleccionar un lugar.
+export const DELTA_CERCANIA = 0.015;
