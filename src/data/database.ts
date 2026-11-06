@@ -39,7 +39,7 @@ async function inicializar(): Promise<SQLiteDatabase> {
 
   try {
     const version = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
-    if ((version?.user_version ?? 0) > 7) throw new Error('La base local requiere una versión más reciente de la app.');
+    if ((version?.user_version ?? 0) > 8) throw new Error('La base local requiere una versión más reciente de la app.');
 
     if ((version?.user_version ?? 0) === 0) {
       await db.withExclusiveTransactionAsync(async tx => {
@@ -99,6 +99,16 @@ async function inicializar(): Promise<SQLiteDatabase> {
           DELETE FROM audios;
           CREATE TABLE paginas (recurso TEXT NOT NULL, pagina INTEGER NOT NULL, datosJson TEXT NOT NULL, descargadoEn TEXT NOT NULL, PRIMARY KEY(recurso, pagina));
           PRAGMA user_version = 7;
+        `);
+      });
+    }
+
+    if ((version?.user_version ?? 0) < 8) {
+      await db.withExclusiveTransactionAsync(async tx => {
+        await tx.execAsync(`
+          CREATE TABLE visitas_gps (id TEXT PRIMARY KEY NOT NULL, usuarioId TEXT NOT NULL, lugarId TEXT NOT NULL, fechaHora TEXT NOT NULL, sincronizada INTEGER NOT NULL CHECK(sincronizada IN (0,1)), datosJson TEXT NOT NULL, errorJson TEXT NULL);
+          CREATE INDEX visitas_gps_usuario ON visitas_gps(usuarioId, sincronizada);
+          PRAGMA user_version = 8;
         `);
       });
     }

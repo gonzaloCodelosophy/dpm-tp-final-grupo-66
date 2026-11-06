@@ -8,40 +8,60 @@ export function useUbicacion() {
   const [permiso, setPermiso] = useState<Location.PermissionStatus | null>(
     null,
   );
+  const [puedeSolicitar, setPuedeSolicitar] = useState(true);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const activo = useRef(false);
   const ocupado = useRef(false);
 
-  const consultar = useCallback(async (solicitar: boolean) => {
-    if (ocupado.current) return;
+  const consultar = useCallback(async (solicitar: boolean): Promise<Coordenadas | null> => {
+    if (ocupado.current || !activo.current) return null;
     ocupado.current = true;
     setCargando(true);
     setError(null);
+    let tiempo: ReturnType<typeof setTimeout> | undefined;
 
     try {
       let estado = await Location.getForegroundPermissionsAsync();
+      if (!activo.current) return null;
+      setPermiso(estado.status);
+      setPuedeSolicitar(estado.canAskAgain);
+      if (!estado.granted) setCoordenadas(null);
+
       if (solicitar && !estado.granted) {
         if (!estado.canAskAgain) {
           await Linking.openSettings();
-          return;
+          return null;
         }
         estado = await Location.requestForegroundPermissionsAsync();
       }
-      if (!activo.current) return;
+      if (!activo.current) return null;
       setPermiso(estado.status);
+      setPuedeSolicitar(estado.canAskAgain);
       if (!estado.granted) {
         setCoordenadas(null);
-        return;
+        return null;
       }
-      const ubicacion = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      if (activo.current)
-        setCoordenadas({
-          latitud: ubicacion.coords.latitude,
-          longitud: ubicacion.coords.longitude,
-        });
+
+      if (!await Location.hasServicesEnabledAsync()) throw new Error("Ubicación desactivada");
+      if (!activo.current) return null;
+
+      // Evitar que el botón quede ocupado indefinidamente si el GPS no responde.
+      const ubicacion = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        new Promise<never>((_, rechazar) => {
+          tiempo = setTimeout(() => rechazar(new Error("Tiempo de ubicación agotado")), 15000);
+        }),
+      ]);
+      if (!activo.current) return null;
+
+      const coordenadasActuales = {
+        latitud: ubicacion.coords.latitude,
+        longitud: ubicacion.coords.longitude,
+      };
+
+      setCoordenadas(coordenadasActuales);
+      return coordenadasActuales;
     } catch {
       if (activo.current) {
         setCoordenadas(null);
@@ -49,7 +69,9 @@ export function useUbicacion() {
           "No pudimos obtener tu ubicación. Revisá que esté activada e intentá de nuevo.",
         );
       }
+      return null;
     } finally {
+      if (tiempo) clearTimeout(tiempo);
       ocupado.current = false;
       if (activo.current) setCargando(false);
     }
@@ -70,6 +92,7 @@ export function useUbicacion() {
   return {
     coordenadas,
     permiso,
+    puedeSolicitar,
     cargando,
     error,
     solicitar: () => consultar(true),

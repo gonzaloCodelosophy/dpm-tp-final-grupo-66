@@ -39,7 +39,6 @@ import { colorsInicio as colors, fuenteTitulo } from "../../styles/inicio";
 import { borderRadius, fontSize, spacing } from "../../styles/theme";
 
 type PanelInicio =
-  | "mapa"
   | "visitas"
   | "recorridos"
   | "clima"
@@ -48,11 +47,6 @@ type PanelInicio =
   | "avisos";
 
 const paneles = {
-  mapa: {
-    titulo: "Mapa de Colón",
-    mensaje:
-      "El mapa dentro de la app estará disponible próximamente. Mientras tanto, podés consultar la ubicación de los lugares en Explorar.",
-  },
   visitas: {
     titulo: "Mis visitas",
     mensaje:
@@ -334,7 +328,11 @@ export default function HomeScreen() {
             icono="map-outline"
             color={colors.secondary}
             fondo={colors.blueLight}
-            onPress={() => setPanel("mapa")}
+            onPress={() => {
+                const destino = { pathname: "/(tabs)/explore" as const, params: { vista: "mapa" } };
+
+                  router.push(destino);
+              }}
           />
           <AccesoInicio
             titulo="Visitas"
@@ -677,7 +675,7 @@ export default function HomeScreen() {
                     }}
                   />
                 )}
-                {(panel === "mapa" || panel === "visitas") && (
+                {panel === "visitas" && (
                   <BotonInicio
                     texto="Explorar lugares"
                     onPress={() => {

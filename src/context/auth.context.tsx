@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { CredencialesLogin, DatosRegistro, Usuario } from '../types/auth';
 import { cerrarSesion as apiCerrarSesion, iniciarSesion as apiIniciarSesion, obtenerSesion, registrarse as apiRegistrarse } from '../services/auth.service';
+import { useSincronizacionVisitas } from '../hooks/use-sincronizacion-visitas';
 import { autenticarConBiometria, comprobarSoporteBiometrico } from '../services/biometrics.service';
 
 export type EstadoAuth = 'cargando' | 'autenticado' | 'no_autenticado' | 'biometria_requerida';
@@ -22,6 +23,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [status, setStatus] = useState<EstadoAuth>('cargando');
   const [soportaBiometria, setSoportaBiometria] = useState<boolean>(false);
+
+  useSincronizacionVisitas(status === 'autenticado' ? usuario?.id ?? null : null);
 
   useEffect(() => {
     inicializarSesion();
