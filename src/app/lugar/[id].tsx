@@ -1,3 +1,4 @@
+import { useTema } from "../../context/tema.context";
 import { BotonRegistrarVisita } from "../../components/boton-visita-cercana";
 import { BotonLugarFavorito } from "../../components/boton-lugar-favorito";
 import { EstadoPantalla } from "../../components/estado-pantalla";
@@ -11,9 +12,16 @@ import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useDetallesLugares } from "../../hooks/use-detalles-lugares";
 import { useCatalogo } from "../../hooks/use-catalogo";
 import { EstadoCatalogo } from "../../components/estado-catalogo";
-import { borderRadius, colors, fontSize, spacing } from "../../styles/theme";
+import {
+        borderRadius,
+        colors as paletaColors,
+        fontSize,
+        spacing,
+} from "../../styles/theme";
 
 export default function DetalleLugarScreen() {
+        const { colors, styles } = useEstilos();
+
         const insets = useSafeAreaInsets();
         const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -514,7 +522,7 @@ export default function DetalleLugarScreen() {
                                                                                         24
                                                                                 }
                                                                                 color={
-                                                                                        colors.surface
+                                                                                        colors.onPrimary
                                                                                 }
                                                                         />
                                                                 </View>
@@ -563,203 +571,210 @@ export default function DetalleLugarScreen() {
         );
 }
 
-const styles = StyleSheet.create({
-        container: {
-                flex: 1,
-                backgroundColor: colors.background,
-        },
+const crearEstilos = (colors: typeof paletaColors) =>
+        StyleSheet.create({
+                container: {
+                        flex: 1,
+                        backgroundColor: colors.background,
+                },
 
-        header: {
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingHorizontal: spacing.md,
-                paddingBottom: spacing.sm,
-                backgroundColor: colors.background,
-        },
+                header: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        paddingHorizontal: spacing.md,
+                        paddingBottom: spacing.sm,
+                        backgroundColor: colors.background,
+                },
 
-        tituloHeader: {
-                flex: 1,
-                marginHorizontal: spacing.sm,
-                textAlign: "center",
-                fontSize: fontSize.body,
-                fontWeight: "700",
-                color: colors.text,
-        },
+                tituloHeader: {
+                        flex: 1,
+                        marginHorizontal: spacing.sm,
+                        textAlign: "center",
+                        fontSize: fontSize.body,
+                        fontWeight: "700",
+                        color: colors.text,
+                },
 
-        botonHeader: {
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: colors.surface,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: colors.border,
-        },
+                botonHeader: {
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: colors.surface,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                },
 
-        contenidoScroll: {
-                paddingBottom: spacing.xl,
-        },
+                contenidoScroll: {
+                        paddingBottom: spacing.xl,
+                },
 
-        imagenContainer: {
-                marginHorizontal: spacing.md,
-                borderRadius: borderRadius.md,
-                overflow: "hidden",
-        },
+                imagenContainer: {
+                        marginHorizontal: spacing.md,
+                        borderRadius: borderRadius.md,
+                        overflow: "hidden",
+                },
 
-        imagen: {
-                width: "100%",
-                height: 230,
-        },
+                imagen: {
+                        width: "100%",
+                        height: 230,
+                },
 
-        imagenVacia: {
-                width: "100%",
-                height: 230,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: colors.secondaryLight,
-                gap: spacing.sm,
-        },
+                imagenVacia: {
+                        width: "100%",
+                        height: 230,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: colors.secondaryLight,
+                        gap: spacing.sm,
+                },
 
-        imagenVaciaTexto: {
-                fontSize: fontSize.caption,
-                color: colors.textSecondary,
-        },
+                imagenVaciaTexto: {
+                        fontSize: fontSize.caption,
+                        color: colors.textSecondary,
+                },
 
-        contenido: {
-                padding: spacing.md,
-        },
+                contenido: {
+                        padding: spacing.md,
+                },
 
-        categoria: {
-                alignSelf: "flex-start",
-                paddingHorizontal: spacing.sm,
-                paddingVertical: spacing.xs,
-                borderRadius: borderRadius.pill,
-                backgroundColor: colors.greenLight,
-        },
+                categoria: {
+                        alignSelf: "flex-start",
+                        paddingHorizontal: spacing.sm,
+                        paddingVertical: spacing.xs,
+                        borderRadius: borderRadius.pill,
+                        backgroundColor: colors.greenLight,
+                },
 
-        categoriaTexto: {
-                fontSize: fontSize.caption,
-                fontWeight: "700",
-                color: colors.green,
-        },
+                categoriaTexto: {
+                        fontSize: fontSize.caption,
+                        fontWeight: "700",
+                        color: colors.green,
+                },
 
-        nombre: {
-                marginTop: spacing.sm,
-                fontSize: 30,
-                lineHeight: 36,
-                fontWeight: "700",
-                color: colors.text,
-        },
+                nombre: {
+                        marginTop: spacing.sm,
+                        fontSize: 30,
+                        lineHeight: 36,
+                        fontWeight: "700",
+                        color: colors.text,
+                },
 
-        ubicacion: {
-                flexDirection: "row",
-                alignItems: "flex-start",
-                gap: spacing.xs,
-                marginTop: spacing.sm,
-        },
+                ubicacion: {
+                        flexDirection: "row",
+                        alignItems: "flex-start",
+                        gap: spacing.xs,
+                        marginTop: spacing.sm,
+                },
 
-        ubicacionTexto: {
-                flex: 1,
-                fontSize: fontSize.body,
-                color: colors.textSecondary,
-        },
+                ubicacionTexto: {
+                        flex: 1,
+                        fontSize: fontSize.body,
+                        color: colors.textSecondary,
+                },
 
-        separador: {
-                height: 1,
-                backgroundColor: colors.border,
-                marginVertical: spacing.lg,
-        },
+                separador: {
+                        height: 1,
+                        backgroundColor: colors.border,
+                        marginVertical: spacing.lg,
+                },
 
-        seccionTitulo: {
-                fontSize: fontSize.subtitle,
-                fontWeight: "700",
-                color: colors.secondary,
-                marginBottom: spacing.sm,
-        },
+                seccionTitulo: {
+                        fontSize: fontSize.subtitle,
+                        fontWeight: "700",
+                        color: colors.secondary,
+                        marginBottom: spacing.sm,
+                },
 
-        descripcion: {
-                fontSize: fontSize.body,
-                lineHeight: 24,
-                color: colors.text,
-        },
+                descripcion: {
+                        fontSize: fontSize.body,
+                        lineHeight: 24,
+                        color: colors.text,
+                },
 
-        info: {
-                marginTop: spacing.lg,
-                gap: spacing.sm,
-        },
+                info: {
+                        marginTop: spacing.lg,
+                        gap: spacing.sm,
+                },
 
-        infoItem: {
-                flexDirection: "row",
-                alignItems: "center",
-                padding: spacing.md,
-                backgroundColor: colors.surface,
-                borderRadius: borderRadius.md,
-                borderWidth: 1,
-                borderColor: colors.border,
-        },
+                infoItem: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        padding: spacing.md,
+                        backgroundColor: colors.surface,
+                        borderRadius: borderRadius.md,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                },
 
-        infoIcono: {
-                width: 42,
-                height: 42,
-                borderRadius: 21,
-                backgroundColor: colors.secondaryLight,
-                alignItems: "center",
-                justifyContent: "center",
-                marginRight: spacing.sm,
-        },
+                infoIcono: {
+                        width: 42,
+                        height: 42,
+                        borderRadius: 21,
+                        backgroundColor: colors.secondaryLight,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: spacing.sm,
+                },
 
-        infoTextoContainer: {
-                flex: 1,
-        },
+                infoTextoContainer: {
+                        flex: 1,
+                },
 
-        infoTitulo: {
-                fontSize: fontSize.caption,
-                fontWeight: "700",
-                color: colors.text,
-        },
+                infoTitulo: {
+                        fontSize: fontSize.caption,
+                        fontWeight: "700",
+                        color: colors.text,
+                },
 
-        infoTexto: {
-                marginTop: 2,
-                fontSize: fontSize.caption,
-                color: colors.textSecondary,
-        },
+                infoTexto: {
+                        marginTop: 2,
+                        fontSize: fontSize.caption,
+                        color: colors.textSecondary,
+                },
 
-        visitaCard: {
-                marginTop: spacing.lg,
-                gap: spacing.sm,
-                padding: spacing.md,
-                borderRadius: borderRadius.md,
-                backgroundColor: colors.primaryLight,
-        },
+                visitaCard: {
+                        marginTop: spacing.lg,
+                        gap: spacing.sm,
+                        padding: spacing.md,
+                        borderRadius: borderRadius.md,
+                        backgroundColor: colors.primaryLight,
+                },
 
-        visitaEncabezado: {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: spacing.sm,
-        },
+                visitaEncabezado: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: spacing.sm,
+                },
 
-        visitaIcono: {
-                width: 42,
-                height: 42,
-                borderRadius: 21,
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: colors.primary,
-        },
+                visitaIcono: {
+                        width: 42,
+                        height: 42,
+                        borderRadius: 21,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: colors.primarySolid,
+                },
 
-        visitaTextoContainer: { flex: 1 },
+                visitaTextoContainer: { flex: 1 },
 
-        visitaTitulo: {
-                fontSize: fontSize.body,
-                fontWeight: "700",
-                color: colors.primary,
-        },
+                visitaTitulo: {
+                        fontSize: fontSize.body,
+                        fontWeight: "700",
+                        color: colors.primary,
+                },
 
-        visitaDescripcion: {
-                marginTop: 2,
-                fontSize: fontSize.caption,
-                color: colors.textSecondary,
-        },
-});
+                visitaDescripcion: {
+                        marginTop: 2,
+                        fontSize: fontSize.caption,
+                        color: colors.textSecondary,
+                },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const colors = tema.colors;
+        return { colors, styles: crearEstilos(colors) };
+}

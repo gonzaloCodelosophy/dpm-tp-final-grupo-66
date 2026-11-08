@@ -1,3 +1,4 @@
+import { useTema } from "../../context/tema.context";
 import React, { useState } from "react";
 import {
         Alert,
@@ -11,13 +12,23 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colorsInicio, fuenteTitulo } from "../../styles/inicio";
+import {
+        colorsInicio as paletaColorsInicio,
+        fuenteTitulo,
+} from "../../styles/inicio";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useAuth } from "../../context/auth.context";
-import { borderRadius, colors, fontSize, spacing } from "../../styles/theme";
+import {
+        borderRadius,
+        colors as paletaColors,
+        fontSize,
+        spacing,
+} from "../../styles/theme";
 
 export default function PerfilScreen() {
+        const { colorsInicio, colors, styles } = useEstilos();
+
         const router = useRouter();
         const { usuario, status, cerrarSesion } = useAuth();
         const [modalVisible, setModalVisible] = useState(false);
@@ -91,15 +102,11 @@ export default function PerfilScreen() {
                 },
                 {
                         titulo: "Apariencia",
-                        descripcion: "Tema claro, oscuro o del sistema",
+                        descripcion: "Tema claro u oscuro",
                         icono: "moon-outline",
                         grupo: "Preferencias",
                         color: "#24657C",
-                        onPress: () =>
-                                abrirSeccion(
-                                        "Apariencia",
-                                        "La selección del tema estará disponible próximamente.",
-                                ),
+                        onPress: () => router.push("../apariencia"),
                 },
                 {
                         titulo: "Ayuda y soporte",
@@ -228,15 +235,43 @@ export default function PerfilScreen() {
                                                                         styles.userInfo
                                                                 }
                                                         >
-                                                                <Text
+                                                                <View
                                                                         style={
-                                                                                styles.userName
+                                                                                styles.nombreFila
                                                                         }
                                                                 >
-                                                                        {
-                                                                                usuario.nombre
-                                                                        }
-                                                                </Text>
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.userName
+                                                                                }
+                                                                        >
+                                                                                {
+                                                                                        usuario.nombre
+                                                                                }
+                                                                        </Text>
+                                                                        <TouchableOpacity
+                                                                                accessibilityRole="button"
+                                                                                accessibilityLabel="Editar perfil"
+                                                                                style={
+                                                                                        styles.editButton
+                                                                                }
+                                                                                onPress={() =>
+                                                                                        router.push(
+                                                                                                "../editar-perfil",
+                                                                                        )
+                                                                                }
+                                                                        >
+                                                                                <Ionicons
+                                                                                        name="create-outline"
+                                                                                        size={
+                                                                                                18
+                                                                                        }
+                                                                                        color={
+                                                                                                colors.primary
+                                                                                        }
+                                                                                />
+                                                                        </TouchableOpacity>
+                                                                </View>
                                                                 <View
                                                                         style={
                                                                                 styles.role
@@ -272,35 +307,6 @@ export default function PerfilScreen() {
                                                                         }
                                                                 </Text>
                                                         </View>
-                                                        <TouchableOpacity
-                                                                accessibilityRole="button"
-                                                                style={
-                                                                        styles.editButton
-                                                                }
-                                                                onPress={() =>
-                                                                        router.push(
-                                                                                "../editar-perfil",
-                                                                        )
-                                                                }
-                                                        >
-                                                                <Ionicons
-                                                                        name="create-outline"
-                                                                        size={
-                                                                                18
-                                                                        }
-                                                                        color={
-                                                                                colors.primary
-                                                                        }
-                                                                />
-                                                                <Text
-                                                                        style={
-                                                                                styles.editText
-                                                                        }
-                                                                >
-                                                                        Editar
-                                                                        perfil
-                                                                </Text>
-                                                        </TouchableOpacity>
                                                 </View>
 
                                                 {(
@@ -490,265 +496,291 @@ export default function PerfilScreen() {
         );
 }
 
-const styles = StyleSheet.create({
-        logo: { width: 95, height: 62, position: "absolute", top: 0, left: 0 },
-        puente: {
-                width: 205,
-                height: 115,
-                position: "absolute",
-                right: -24,
-                top: 0,
-                opacity: 0.85,
-        },
-        headerSubtitle: {
-                fontSize: 14,
-                color: colorsInicio.secondary,
-                marginTop: 2,
-        },
-        userInfo: { flex: 1, minWidth: 120 },
-        role: {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 6,
-                marginTop: 4,
-        },
-        email: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
-        editButton: {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 4,
-                paddingHorizontal: 12,
-                paddingVertical: 10,
-                borderRadius: 24,
-                borderWidth: 1,
-                borderColor: colors.primaryLight,
-        },
-        editText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
-        menu: { marginBottom: spacing.lg },
-        sectionTitle: {
-                fontSize: 13,
-                fontWeight: "600",
-                color: colors.textSecondary,
-                marginBottom: spacing.sm,
-                marginTop: spacing.sm,
-        },
-        option: {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                paddingVertical: 14,
-                minHeight: 70,
-                borderBottomWidth: StyleSheet.hairlineWidth,
-                borderBottomColor: colors.border,
-        },
-        optionIcon: {
-                width: 32,
-                height: 32,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        optionText: { flex: 1 },
-        optionTitle: {
-                fontSize: 16,
-                fontWeight: "600",
-                color: colorsInicio.secondary,
-        },
-        optionDescription: {
-                fontSize: fontSize.caption,
-                color: colors.textSecondary,
-                marginTop: 3,
-                lineHeight: 20,
-        },
-        container: {
-                flexGrow: 1,
-                backgroundColor: colors.background,
-                paddingHorizontal: 18,
-                paddingTop: spacing.sm,
-                paddingBottom: spacing.xl,
-        },
-        header: {
-                marginBottom: spacing.lg,
-                minHeight: 130,
-                justifyContent: "flex-end",
-        },
-        headerTitle: {
-                fontSize: 24,
-                fontFamily: fuenteTitulo,
-                fontWeight: "bold",
-                color: colors.secondary,
-        },
+const crearEstilos = (
+        colorsInicio: typeof paletaColorsInicio,
+        colors: typeof paletaColors,
+) =>
+        StyleSheet.create({
+                logo: {
+                        width: 95,
+                        height: 62,
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                },
+                puente: {
+                        width: 205,
+                        height: 115,
+                        position: "absolute",
+                        right: -24,
+                        top: 0,
+                        opacity: 0.85,
+                },
+                headerSubtitle: {
+                        fontSize: 14,
+                        color: colorsInicio.secondary,
+                        marginTop: 2,
+                },
+                userInfo: { flex: 1, minWidth: 120 },
+                role: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                        marginTop: 4,
+                },
+                email: {
+                        fontSize: 12,
+                        color: colors.textSecondary,
+                        marginTop: 4,
+                },
+                nombreFila: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                },
+                editButton: {
+                        width: 44,
+                        height: 44,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                menu: { marginBottom: spacing.lg },
+                sectionTitle: {
+                        fontSize: 13,
+                        fontWeight: "600",
+                        color: colors.textSecondary,
+                        marginBottom: spacing.sm,
+                        marginTop: spacing.sm,
+                },
+                option: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 12,
+                        paddingVertical: 14,
+                        minHeight: 70,
+                        borderBottomWidth: StyleSheet.hairlineWidth,
+                        borderBottomColor: colors.border,
+                },
+                optionIcon: {
+                        width: 32,
+                        height: 32,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                optionText: { flex: 1 },
+                optionTitle: {
+                        fontSize: 16,
+                        fontWeight: "600",
+                        color: colorsInicio.secondary,
+                },
+                optionDescription: {
+                        fontSize: fontSize.caption,
+                        color: colors.textSecondary,
+                        marginTop: 3,
+                        lineHeight: 20,
+                },
+                container: {
+                        flexGrow: 1,
+                        backgroundColor: colors.background,
+                        paddingHorizontal: 18,
+                        paddingTop: spacing.sm,
+                        paddingBottom: spacing.xl,
+                },
+                header: {
+                        marginBottom: spacing.lg,
+                        minHeight: 130,
+                        justifyContent: "flex-end",
+                },
+                headerTitle: {
+                        fontSize: 24,
+                        fontFamily: fuenteTitulo,
+                        fontWeight: "bold",
+                        color: colors.secondary,
+                },
 
-        profileCard: {
-                backgroundColor: colors.surface,
-                borderRadius: borderRadius.md,
-                padding: spacing.md,
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: spacing.sm,
-                alignItems: "center",
-                marginBottom: spacing.md,
-                borderWidth: 1,
-                borderColor: colors.border,
-                elevation: 2,
-                shadowColor: colors.text,
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.08,
-                shadowRadius: 6,
-        },
-        avatarCircle: {
-                width: 46,
-                height: 46,
-                borderRadius: borderRadius.pill,
-                backgroundColor: colors.primary,
-                justifyContent: "center",
-                alignItems: "center",
-        },
-        avatarImage: {
-                width: "100%",
-                height: "100%",
-                borderRadius: borderRadius.pill,
-        },
-        avatarText: {
-                color: colors.surface,
-                fontSize: 20,
-                fontWeight: "bold",
-        },
-        userName: {
-                fontSize: 17,
-                fontWeight: "bold",
-                color: colors.text,
-        },
-        userEmail: {
-                fontSize: 14,
-                color: colors.textSecondary,
-                marginTop: spacing.xs,
-        },
-        btnLogoutText: {
-                color: colors.error,
-                fontSize: 14,
-                fontWeight: "bold",
-        },
+                profileCard: {
+                        backgroundColor: colors.surface,
+                        borderRadius: borderRadius.md,
+                        padding: spacing.md,
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        gap: spacing.sm,
+                        alignItems: "center",
+                        marginBottom: spacing.md,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        elevation: 2,
+                        shadowColor: colors.text,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.08,
+                        shadowRadius: 6,
+                },
+                avatarCircle: {
+                        width: 46,
+                        height: 46,
+                        borderRadius: borderRadius.pill,
+                        backgroundColor: colors.primarySolid,
+                        justifyContent: "center",
+                        alignItems: "center",
+                },
+                avatarImage: {
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: borderRadius.pill,
+                },
+                avatarText: {
+                        color: colors.onPrimary,
+                        fontSize: 20,
+                        fontWeight: "bold",
+                },
+                userName: {
+                        flexShrink: 1,
+                        fontSize: 17,
+                        fontWeight: "bold",
+                        color: colors.text,
+                },
+                userEmail: {
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        marginTop: spacing.xs,
+                },
+                btnLogoutText: {
+                        color: colors.error,
+                        fontSize: 14,
+                        fontWeight: "bold",
+                },
 
-        guestCard: {
-                backgroundColor: colors.surface,
-                borderRadius: borderRadius.lg,
-                padding: spacing.xl,
-                alignItems: "center",
-                marginTop: spacing.md,
-                borderWidth: 1,
-                borderColor: colors.border,
-                elevation: 2,
-                shadowColor: colors.text,
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.08,
-                shadowRadius: 6,
-        },
-        guestIconCircle: {
-                width: 76,
-                height: 76,
-                borderRadius: borderRadius.pill,
-                backgroundColor: colors.secondaryLight,
-                justifyContent: "center",
-                alignItems: "center",
-                marginBottom: spacing.sm,
-        },
-        guestTitle: {
-                fontSize: fontSize.subtitle,
-                fontWeight: "bold",
-                color: colors.secondary,
-                marginBottom: spacing.xs,
-        },
-        guestSubtitle: {
-                fontSize: fontSize.body,
-                color: colors.textSecondary,
-                textAlign: "center",
-                lineHeight: 22,
-                marginBottom: spacing.xl,
-        },
-        btnLogin: {
-                backgroundColor: colors.primary,
-                height: 52,
-                width: "100%",
-                borderRadius: borderRadius.pill,
-                justifyContent: "center",
-                alignItems: "center",
-                shadowColor: colors.primary,
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-                elevation: 2,
-        },
-        btnLoginText: {
-                color: colors.surface,
-                fontSize: fontSize.body,
-                fontWeight: "bold",
-        },
+                guestCard: {
+                        backgroundColor: colors.surface,
+                        borderRadius: borderRadius.lg,
+                        padding: spacing.xl,
+                        alignItems: "center",
+                        marginTop: spacing.md,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        elevation: 2,
+                        shadowColor: colors.text,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.08,
+                        shadowRadius: 6,
+                },
+                guestIconCircle: {
+                        width: 76,
+                        height: 76,
+                        borderRadius: borderRadius.pill,
+                        backgroundColor: colors.secondaryLight,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        marginBottom: spacing.sm,
+                },
+                guestTitle: {
+                        fontSize: fontSize.subtitle,
+                        fontWeight: "bold",
+                        color: colors.secondary,
+                        marginBottom: spacing.xs,
+                },
+                guestSubtitle: {
+                        fontSize: fontSize.body,
+                        color: colors.textSecondary,
+                        textAlign: "center",
+                        lineHeight: 22,
+                        marginBottom: spacing.xl,
+                },
+                btnLogin: {
+                        backgroundColor: colors.primarySolid,
+                        height: 52,
+                        width: "100%",
+                        borderRadius: borderRadius.pill,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        shadowColor: colors.primary,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 4,
+                        elevation: 2,
+                },
+                btnLoginText: {
+                        color: colors.onPrimary,
+                        fontSize: fontSize.body,
+                        fontWeight: "bold",
+                },
 
-        modalOverlay: {
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.4)",
-                justifyContent: "center",
-                alignItems: "center",
-                paddingHorizontal: spacing.lg,
-        },
-        modalCard: {
-                width: "100%",
-                backgroundColor: colors.surface,
-                borderRadius: borderRadius.lg,
-                padding: spacing.xl,
-                alignItems: "center",
-                elevation: 4,
-                shadowColor: colors.text,
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.15,
-                shadowRadius: 8,
-        },
-        modalTitle: {
-                fontSize: fontSize.subtitle,
-                fontWeight: "bold",
-                color: colors.text,
-                textAlign: "center",
-                marginBottom: spacing.sm,
-        },
-        modalBody: {
-                fontSize: fontSize.body,
-                color: colors.textSecondary,
-                textAlign: "center",
-                lineHeight: 22,
-                marginBottom: spacing.lg,
-                paddingHorizontal: spacing.xs,
-        },
-        modalActions: {
-                flexDirection: "row",
-                width: "100%",
-                gap: spacing.sm,
-        },
-        btnCancel: {
-                flex: 1,
-                height: 48,
-                borderRadius: borderRadius.pill,
-                borderWidth: 1,
-                borderColor: colors.primary,
-                backgroundColor: colors.surface,
-                justifyContent: "center",
-                alignItems: "center",
-        },
-        btnCancelText: {
-                color: colors.primary,
-                fontSize: fontSize.body,
-                fontWeight: "bold",
-        },
-        btnConfirmLogout: {
-                flex: 1,
-                height: 48,
-                borderRadius: borderRadius.pill,
-                backgroundColor: colors.primary,
-                justifyContent: "center",
-                alignItems: "center",
-        },
-        btnConfirmLogoutText: {
-                color: colors.surface,
-                fontSize: fontSize.body,
-                fontWeight: "bold",
-        },
-});
+                modalOverlay: {
+                        flex: 1,
+                        backgroundColor: "rgba(0, 0, 0, 0.4)",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        paddingHorizontal: spacing.lg,
+                },
+                modalCard: {
+                        width: "100%",
+                        backgroundColor: colors.surface,
+                        borderRadius: borderRadius.lg,
+                        padding: spacing.xl,
+                        alignItems: "center",
+                        elevation: 4,
+                        shadowColor: colors.text,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 8,
+                },
+                modalTitle: {
+                        fontSize: fontSize.subtitle,
+                        fontWeight: "bold",
+                        color: colors.text,
+                        textAlign: "center",
+                        marginBottom: spacing.sm,
+                },
+                modalBody: {
+                        fontSize: fontSize.body,
+                        color: colors.textSecondary,
+                        textAlign: "center",
+                        lineHeight: 22,
+                        marginBottom: spacing.lg,
+                        paddingHorizontal: spacing.xs,
+                },
+                modalActions: {
+                        flexDirection: "row",
+                        width: "100%",
+                        gap: spacing.sm,
+                },
+                btnCancel: {
+                        flex: 1,
+                        height: 48,
+                        borderRadius: borderRadius.pill,
+                        borderWidth: 1,
+                        borderColor: colors.primary,
+                        backgroundColor: colors.surface,
+                        justifyContent: "center",
+                        alignItems: "center",
+                },
+                btnCancelText: {
+                        color: colors.primary,
+                        fontSize: fontSize.body,
+                        fontWeight: "bold",
+                },
+                btnConfirmLogout: {
+                        flex: 1,
+                        height: 48,
+                        borderRadius: borderRadius.pill,
+                        backgroundColor: colors.primarySolid,
+                        justifyContent: "center",
+                        alignItems: "center",
+                },
+                btnConfirmLogoutText: {
+                        color: colors.onPrimary,
+                        fontSize: fontSize.body,
+                        fontWeight: "bold",
+                },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const colorsInicio = tema.colorsInicio;
+        const colors = tema.colors;
+        return {
+                colorsInicio,
+                colors,
+                styles: crearEstilos(colorsInicio, colors),
+        };
+}

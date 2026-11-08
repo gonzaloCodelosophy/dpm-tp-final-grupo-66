@@ -1,13 +1,42 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing } from '../styles/theme';
+import { useTema } from "../context/tema.context";
+import { StyleSheet, Text, View } from "react-native";
+import { colors as paletaColors, spacing } from "../styles/theme";
 
-export function EstadoCatalogo({ sinConexion, error = false }: { sinConexion: boolean; error?: boolean }) {
+export function EstadoCatalogo({
+        sinConexion,
+        error = false,
+}: {
+        sinConexion: boolean;
+        error?: boolean;
+}) {
+        const { styles } = useEstilos();
 
-  if (!sinConexion && !error) return null;
-  return <View accessibilityRole="alert" style={styles.aviso}><Text style={styles.texto}>No pudimos actualizar los lugares. Mostramos la información guardada.</Text></View>;
+        if (!sinConexion && !error) return null;
+        return (
+                <View accessibilityRole="alert" style={styles.aviso}>
+                        <Text style={styles.texto}>
+                                No pudimos actualizar los lugares. Mostramos la
+                                información guardada.
+                        </Text>
+                </View>
+        );
 }
 
-const styles = StyleSheet.create({
-  aviso: { padding: spacing.sm, backgroundColor: colors.secondaryLight },
-  texto: { color: colors.textSecondary, textAlign: 'center', fontSize: 14 },
-});
+const crearEstilos = (colors: typeof paletaColors) =>
+        StyleSheet.create({
+                aviso: {
+                        padding: spacing.sm,
+                        backgroundColor: colors.secondaryLight,
+                },
+                texto: {
+                        color: colors.textSecondary,
+                        textAlign: "center",
+                        fontSize: 14,
+                },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const colors = tema.colors;
+        return { colors, styles: crearEstilos(colors) };
+}

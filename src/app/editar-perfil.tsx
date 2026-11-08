@@ -1,3 +1,4 @@
+import { useTema } from "../context/tema.context";
 import { useState } from "react";
 import {
         ActivityIndicator,
@@ -19,9 +20,11 @@ import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useVolverPerfil } from "../hooks/use-volver-perfil";
 import { useAuth } from "../context/auth.context";
 import { EstadoPantalla } from "../components/estado-pantalla";
-import { colorsInicio as colors, fuenteTitulo } from "../styles/inicio";
+import { colorsInicio as paletaColors, fuenteTitulo } from "../styles/inicio";
 
 export default function EditarPerfilScreen() {
+        const { colors, styles } = useEstilos();
+
         const { usuario, status, actualizarPerfil } = useAuth();
         const [nombre, setNombre] = useState(usuario?.nombre ?? "");
         const [foto, setFoto] = useState<
@@ -345,7 +348,7 @@ export default function EditarPerfilScreen() {
                                                 {guardando ? (
                                                         <ActivityIndicator
                                                                 color={
-                                                                        colors.surface
+                                                                        colors.onPrimary
                                                                 }
                                                         />
                                                 ) : (
@@ -374,122 +377,141 @@ export default function EditarPerfilScreen() {
         );
 }
 
-const styles = StyleSheet.create({
-        pantalla: { flex: 1, backgroundColor: colors.background },
-        contenido: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 32 },
-        cabecera: {
-                minHeight: 64,
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 16,
-        },
-        volver: {
-                position: "absolute",
-                left: 0,
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: colors.surface,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        logo: { width: 90, height: 48 },
-        titulo: {
-                fontFamily: fuenteTitulo,
-                fontSize: 24,
-                fontWeight: "700",
-                color: colors.secondary,
-        },
-        subtitulo: {
-                fontSize: 14,
-                color: colors.textSecondary,
-                marginTop: 4,
-                marginBottom: 8,
-        },
-        etiqueta: {
-                fontSize: 14,
-                fontWeight: "600",
-                color: colors.secondary,
-                marginTop: 24,
-                marginBottom: 10,
-        },
-        fotoSeccion: { flexDirection: "row", alignItems: "center", gap: 20 },
-        avatar: {
-                width: 88,
-                height: 88,
-                borderRadius: 44,
-                backgroundColor: colors.secondaryLight,
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-        },
-        imagen: { width: "100%", height: "100%" },
-        accionesFoto: { flex: 1 },
-        accionFoto: {
-                minHeight: 44,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-        },
-        enlace: { color: colors.primary, fontSize: 14, fontWeight: "600" },
-        eliminar: { color: colors.error, fontSize: 14 },
-        ayuda: {
-                color: colors.textSecondary,
-                fontSize: 12,
-                lineHeight: 18,
-                marginTop: 8,
-        },
-        campo: {
-                minHeight: 48,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                fontSize: 14,
-                color: colors.secondary,
-                backgroundColor: colors.surface,
-        },
-        correo: {
-                flexDirection: "row",
-                alignItems: "center",
-                minHeight: 48,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                backgroundColor: colors.secondaryLight,
-        },
-        correoTexto: {
-                flex: 1,
-                fontSize: 14,
-                color: colors.textSecondary,
-                paddingVertical: 12,
-        },
-        error: {
-                fontSize: 14,
-                lineHeight: 20,
-                color: colors.error,
-                marginTop: 20,
-        },
-        guardar: {
-                minHeight: 48,
-                borderRadius: 24,
-                backgroundColor: colors.primary,
-                alignItems: "center",
-                justifyContent: "center",
-                marginTop: 32,
-        },
-        guardarTexto: {
-                color: colors.surface,
-                fontWeight: "600",
-                fontSize: 14,
-        },
-        deshabilitado: { opacity: 0.5 },
-        cancelar: {
-                minHeight: 48,
-                alignItems: "center",
-                justifyContent: "center",
-                marginTop: 8,
-        },
-});
+const crearEstilos = (colors: typeof paletaColors) =>
+        StyleSheet.create({
+                pantalla: { flex: 1, backgroundColor: colors.background },
+                contenido: {
+                        paddingHorizontal: 18,
+                        paddingTop: 8,
+                        paddingBottom: 32,
+                },
+                cabecera: {
+                        minHeight: 64,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 16,
+                },
+                volver: {
+                        position: "absolute",
+                        left: 0,
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        backgroundColor: colors.surface,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                logo: { width: 90, height: 48 },
+                titulo: {
+                        fontFamily: fuenteTitulo,
+                        fontSize: 24,
+                        fontWeight: "700",
+                        color: colors.secondary,
+                },
+                subtitulo: {
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        marginTop: 4,
+                        marginBottom: 8,
+                },
+                etiqueta: {
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: colors.secondary,
+                        marginTop: 24,
+                        marginBottom: 10,
+                },
+                fotoSeccion: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 20,
+                },
+                avatar: {
+                        width: 88,
+                        height: 88,
+                        borderRadius: 44,
+                        backgroundColor: colors.secondaryLight,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                },
+                imagen: { width: "100%", height: "100%" },
+                accionesFoto: { flex: 1 },
+                accionFoto: {
+                        minHeight: 44,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                },
+                enlace: {
+                        color: colors.primary,
+                        fontSize: 14,
+                        fontWeight: "600",
+                },
+                eliminar: { color: colors.error, fontSize: 14 },
+                ayuda: {
+                        color: colors.textSecondary,
+                        fontSize: 12,
+                        lineHeight: 18,
+                        marginTop: 8,
+                },
+                campo: {
+                        minHeight: 48,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 12,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        fontSize: 14,
+                        color: colors.secondary,
+                        backgroundColor: colors.surface,
+                },
+                correo: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        minHeight: 48,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 12,
+                        paddingHorizontal: 14,
+                        backgroundColor: colors.secondaryLight,
+                },
+                correoTexto: {
+                        flex: 1,
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        paddingVertical: 12,
+                },
+                error: {
+                        fontSize: 14,
+                        lineHeight: 20,
+                        color: colors.error,
+                        marginTop: 20,
+                },
+                guardar: {
+                        minHeight: 48,
+                        borderRadius: 24,
+                        backgroundColor: colors.primarySolid,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginTop: 32,
+                },
+                guardarTexto: {
+                        color: colors.onPrimary,
+                        fontWeight: "600",
+                        fontSize: 14,
+                },
+                deshabilitado: { opacity: 0.5 },
+                cancelar: {
+                        minHeight: 48,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginTop: 8,
+                },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const colors = tema.colorsInicio;
+        return { colors, styles: crearEstilos(colors) };
+}

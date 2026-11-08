@@ -1,3 +1,4 @@
+import { useTema } from "../context/tema.context";
 import { useCallback, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
@@ -6,7 +7,12 @@ import { useAuth } from "../context/auth.context";
 import { EstadoPantalla } from "../components/estado-pantalla";
 import { obtenerLugares } from "../services/lugares.service";
 import { obtenerHistorialVisitas } from "../services/visitas.service";
-import { colors, spacing, fontSize, borderRadius } from "../styles/theme";
+import {
+        colors as paletaColors,
+        spacing,
+        fontSize,
+        borderRadius,
+} from "../styles/theme";
 import type { Visita } from "../types/Visita";
 
 interface VisitaConNombre extends Visita {
@@ -25,6 +31,8 @@ const origenLegible: Record<Visita["origen"], string> = {
 };
 
 export default function VisitasScreen() {
+        const { colors, styles } = useEstilos();
+
         const router = useRouter();
         const { usuario, status } = useAuth();
         const [visitas, setVisitas] = useState<VisitaConNombre[]>([]);
@@ -217,66 +225,76 @@ export default function VisitasScreen() {
         );
 }
 
-const styles = StyleSheet.create({
-        container: {
-                flex: 1,
-                backgroundColor: colors.background,
-                paddingTop: spacing.xl,
-        },
-        header: {
-                flexDirection: "row",
-                alignItems: "center",
-                paddingHorizontal: spacing.md,
-                paddingBottom: spacing.md,
-                gap: spacing.sm,
-        },
-        volver: {
-                width: 42,
-                height: 42,
-                borderRadius: borderRadius.pill,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.border,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        titulo: {
-                flex: 1,
-                color: colors.secondary,
-                fontSize: fontSize.title,
-                fontWeight: "700",
-        },
-        recargar: {
-                width: 42,
-                height: 42,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        lista: { padding: spacing.md, gap: spacing.sm },
-        tarjeta: {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: spacing.md,
-                padding: spacing.md,
-                borderRadius: borderRadius.md,
-                borderWidth: 1,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-        },
-        icono: {
-                width: 44,
-                height: 44,
-                borderRadius: borderRadius.pill,
-                backgroundColor: colors.secondaryLight,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        detalle: { flex: 1, gap: spacing.xs },
-        nombre: {
-                color: colors.text,
-                fontSize: fontSize.body,
-                fontWeight: "700",
-        },
-        fecha: { color: colors.textSecondary, fontSize: fontSize.caption },
-        origen: { color: colors.secondary, fontSize: fontSize.caption },
-});
+const crearEstilos = (colors: typeof paletaColors) =>
+        StyleSheet.create({
+                container: {
+                        flex: 1,
+                        backgroundColor: colors.background,
+                        paddingTop: spacing.xl,
+                },
+                header: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        paddingHorizontal: spacing.md,
+                        paddingBottom: spacing.md,
+                        gap: spacing.sm,
+                },
+                volver: {
+                        width: 42,
+                        height: 42,
+                        borderRadius: borderRadius.pill,
+                        backgroundColor: colors.surface,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                titulo: {
+                        flex: 1,
+                        color: colors.secondary,
+                        fontSize: fontSize.title,
+                        fontWeight: "700",
+                },
+                recargar: {
+                        width: 42,
+                        height: 42,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                lista: { padding: spacing.md, gap: spacing.sm },
+                tarjeta: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: spacing.md,
+                        padding: spacing.md,
+                        borderRadius: borderRadius.md,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        backgroundColor: colors.surface,
+                },
+                icono: {
+                        width: 44,
+                        height: 44,
+                        borderRadius: borderRadius.pill,
+                        backgroundColor: colors.secondaryLight,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                detalle: { flex: 1, gap: spacing.xs },
+                nombre: {
+                        color: colors.text,
+                        fontSize: fontSize.body,
+                        fontWeight: "700",
+                },
+                fecha: {
+                        color: colors.textSecondary,
+                        fontSize: fontSize.caption,
+                },
+                origen: { color: colors.secondary, fontSize: fontSize.caption },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const colors = tema.colors;
+        return { colors, styles: crearEstilos(colors) };
+}

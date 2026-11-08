@@ -9,6 +9,7 @@ import {
 import {
         guardarPreferencias,
         guardarPerfil,
+        guardarTema,
         type CambiosPerfil,
         type CambiosPreferencias,
 } from "../services/perfil.service";
@@ -32,6 +33,7 @@ interface AuthContextProps {
         desbloquearConBiometria: () => Promise<boolean>;
         saltarBiometria: () => void;
         actualizarPerfil: (cambios: CambiosPerfil) => Promise<void>;
+        actualizarTema: (tema: "claro" | "oscuro") => Promise<void>;
         actualizarPreferencias: (
                 preferencias: CambiosPreferencias,
         ) => Promise<void>;
@@ -124,6 +126,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 );
         }
 
+        async function actualizarTema(tema: "claro" | "oscuro") {
+                if (status !== "autenticado" || !usuario)
+                        throw new Error(
+                                "Iniciá sesión para cambiar la apariencia.",
+                        );
+                const actualizado = await guardarTema(usuario.id, tema);
+                setUsuario((actual) =>
+                        actual?.id === actualizado.id ? actualizado : actual,
+                );
+        }
+
         async function cerrarSesion() {
                 await apiCerrarSesion();
                 setUsuario(null);
@@ -163,6 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                                 desbloquearConBiometria,
                                 saltarBiometria,
                                 actualizarPerfil,
+                                actualizarTema,
                                 actualizarPreferencias,
                         }}
                 >

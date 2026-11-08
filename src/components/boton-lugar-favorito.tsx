@@ -1,3 +1,4 @@
+import { useTema } from "../context/tema.context";
 import { useRouter } from "expo-router";
 import { useAuth } from "../context/auth.context";
 import { useState } from "react";
@@ -5,9 +6,11 @@ import { Alert, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useFavoritos } from "../hooks/use-favoritos";
 import { guardarFavorito } from "../services/favoritos.service";
-import { colors } from "../styles/theme";
+import { colors as paletaColors } from "../styles/theme";
 
 export function BotonLugarFavorito({ id }: { id: string }) {
+        const { colors, styles } = useEstilos();
+
         const router = useRouter();
         const { usuario, status } = useAuth();
         const { favoritos, cargando, error, reintentar } = useFavoritos([id]);
@@ -116,15 +119,22 @@ export function BotonLugarFavorito({ id }: { id: string }) {
         );
 }
 
-const styles = StyleSheet.create({
-        boton: {
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: colors.surface,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        activo: { backgroundColor: colors.primaryLight },
-        deshabilitado: { opacity: 0.5 },
-});
+const crearEstilos = (colors: typeof paletaColors) =>
+        StyleSheet.create({
+                boton: {
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        backgroundColor: colors.surface,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                activo: { backgroundColor: colors.primaryLight },
+                deshabilitado: { opacity: 0.5 },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const colors = tema.colors;
+        return { colors, styles: crearEstilos(colors) };
+}

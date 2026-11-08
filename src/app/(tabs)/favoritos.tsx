@@ -1,3 +1,4 @@
+import { useTema } from "../../context/tema.context";
 import { useCallback, useState } from "react";
 import {
         FlatList,
@@ -26,7 +27,10 @@ import { categoriasIntereses } from "../../../constants/categorias-intereses";
 import { BotonLugarFavorito } from "../../components/boton-lugar-favorito";
 import { EstadoCatalogo } from "../../components/estado-catalogo";
 import { EstadoPantalla } from "../../components/estado-pantalla";
-import { colorsInicio as colors, fuenteTitulo } from "../../styles/inicio";
+import {
+        colorsInicio as paletaColors,
+        fuenteTitulo,
+} from "../../styles/inicio";
 import type { Lugar } from "../../types/Lugar";
 
 const normalizar = (texto: string) =>
@@ -56,6 +60,8 @@ function horarioHoy(lugar: Lugar) {
 }
 
 export default function FavoritosScreen() {
+        const { colors, styles } = useEstilos();
+
         const volver = useVolverPerfil();
         const { usuario, status } = useAuth();
         const autenticado = status === "autenticado" && usuario !== null;
@@ -84,10 +90,6 @@ export default function FavoritosScreen() {
         const ubicacion = useUbicacion();
         const [busqueda, setBusqueda] = useState("");
         const [categoria, setCategoria] = useState<string | null>(null);
-        const [cercania, setCercania] = useState(false);
-        const [filtros, setFiltros] = useState(false);
-        const [accesible, setAccesible] = useState(false);
-        const [gratis, setGratis] = useState(false);
         const favoritos = detalles.lugares.filter((lugar) => lugar.activo);
         const categoriaSinFavoritos =
                 categoria !== null &&
@@ -102,45 +104,12 @@ export default function FavoritosScreen() {
                                   lugar.coordenadas,
                           )
                         : null;
-        const visibles = favoritos
-                .filter(
-                        (lugar) =>
-                                (!categoria ||
-                                        lugar.categoriaId === categoria) &&
-                                normalizar(lugar.nombre).includes(
-                                        normalizar(busqueda.trim()),
-                                ) &&
-                                (!accesible || lugar.accesible) &&
-                                (!gratis || lugar.precioEntrada === 0),
-                )
-                .sort((a, b) => {
-                        const diferencia =
-                                cercania && ubicacion.coordenadas
-                                        ? distancia(a)! - distancia(b)!
-                                        : 0;
-                        return (
-                                diferencia ||
-                                a.nombre.localeCompare(b.nombre, "es") ||
-                                a.id.localeCompare(b.id)
-                        );
-                });
-        const chip = (titulo: string, activo: boolean, onPress: () => void) => (
-                <Pressable
-                        key={titulo}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: activo }}
-                        onPress={onPress}
-                        style={[styles.chip, activo && styles.chipActivo]}
-                >
-                        <Text
-                                style={[
-                                        styles.chipTexto,
-                                        activo && styles.chipTextoActivo,
-                                ]}
-                        >
-                                {titulo}
-                        </Text>
-                </Pressable>
+        const visibles = favoritos.filter(
+                (lugar) =>
+                        (!categoria || lugar.categoriaId === categoria) &&
+                        normalizar(lugar.nombre).includes(
+                                normalizar(busqueda.trim()),
+                        ),
         );
 
         if (!autenticado) {
@@ -394,131 +363,6 @@ export default function FavoritosScreen() {
                                                                 },
                                                         )}
                                                 </ScrollView>
-                                                <View style={styles.controles}>
-                                                        <Pressable
-                                                                accessibilityRole="button"
-                                                                style={
-                                                                        styles.orden
-                                                                }
-                                                                onPress={() => {
-                                                                        setCercania(
-                                                                                !cercania,
-                                                                        );
-                                                                        if (
-                                                                                !cercania &&
-                                                                                !ubicacion.coordenadas
-                                                                        )
-                                                                                void ubicacion.solicitar();
-                                                                }}
-                                                        >
-                                                                <Ionicons
-                                                                        name={
-                                                                                cercania
-                                                                                        ? "location-outline"
-                                                                                        : "text-outline"
-                                                                        }
-                                                                        size={
-                                                                                18
-                                                                        }
-                                                                        color={
-                                                                                colors.secondary
-                                                                        }
-                                                                />
-                                                                <Text
-                                                                        style={
-                                                                                styles.controlTexto
-                                                                        }
-                                                                >
-                                                                        Ordenar:{" "}
-                                                                        {cercania
-                                                                                ? "Más cerca"
-                                                                                : "Nombre"}
-                                                                </Text>
-                                                                <Ionicons
-                                                                        name="swap-vertical"
-                                                                        size={
-                                                                                16
-                                                                        }
-                                                                        color={
-                                                                                colors.secondary
-                                                                        }
-                                                                />
-                                                        </Pressable>
-                                                        <Pressable
-                                                                accessibilityRole="button"
-                                                                accessibilityState={{
-                                                                        expanded: filtros,
-                                                                }}
-                                                                style={[
-                                                                        styles.orden,
-                                                                        filtros &&
-                                                                                styles.chipActivo,
-                                                                ]}
-                                                                onPress={() =>
-                                                                        setFiltros(
-                                                                                !filtros,
-                                                                        )
-                                                                }
-                                                        >
-                                                                <Ionicons
-                                                                        name="options-outline"
-                                                                        size={
-                                                                                19
-                                                                        }
-                                                                        color={
-                                                                                colors.secondary
-                                                                        }
-                                                                />
-                                                                <Text
-                                                                        style={
-                                                                                styles.controlTexto
-                                                                        }
-                                                                >
-                                                                        Filtros
-                                                                        {accesible ||
-                                                                        gratis
-                                                                                ? ` (${Number(accesible) + Number(gratis)})`
-                                                                                : ""}
-                                                                </Text>
-                                                        </Pressable>
-                                                </View>
-                                                {filtros && (
-                                                        <View
-                                                                style={
-                                                                        styles.controles
-                                                                }
-                                                        >
-                                                                {chip(
-                                                                        "Accesibles",
-                                                                        accesible,
-                                                                        () =>
-                                                                                setAccesible(
-                                                                                        !accesible,
-                                                                                ),
-                                                                )}
-                                                                {chip(
-                                                                        "Entrada gratuita",
-                                                                        gratis,
-                                                                        () =>
-                                                                                setGratis(
-                                                                                        !gratis,
-                                                                                ),
-                                                                )}
-                                                        </View>
-                                                )}
-                                                {cercania &&
-                                                        !ubicacion.coordenadas && (
-                                                                <Text
-                                                                        accessibilityLiveRegion="polite"
-                                                                        style={
-                                                                                styles.aviso
-                                                                        }
-                                                                >
-                                                                        {ubicacion.cargando
-                                                                                ? "Buscando tu ubicación…"
-                                                                                : "Sin ubicación disponible: ordenamos por nombre."}
-                                                                </Text>
-                                                        )}
                                                 {(guardados.pendientes > 0 ||
                                                         guardados.errorSincronizacion) && (
                                                         <View
@@ -792,12 +636,12 @@ export default function FavoritosScreen() {
                                                                 categoriaSinFavoritos
                                                                         ? `Todavía no guardaste lugares de ${nombreCategoria ?? "esta categoría"}. Tocá el corazón de un lugar para agregarlo.`
                                                                         : favoritos.length
-                                                                          ? "Probá otra búsqueda o cambiá los filtros."
+                                                                          ? "Probá otra búsqueda o elegí otra categoría."
                                                                           : "Tocá el corazón de un lugar para guardarlo acá."
                                                         }
                                                         accion={
                                                                 favoritos.length
-                                                                        ? "Limpiar filtros"
+                                                                        ? "Ver todos los favoritos"
                                                                         : "Explorar lugares"
                                                         }
                                                         onPress={() => {
@@ -809,12 +653,6 @@ export default function FavoritosScreen() {
                                                                         );
                                                                         setCategoria(
                                                                                 null,
-                                                                        );
-                                                                        setAccesible(
-                                                                                false,
-                                                                        );
-                                                                        setGratis(
-                                                                                false,
                                                                         );
                                                                 } else
                                                                         router.push(
@@ -829,146 +667,147 @@ export default function FavoritosScreen() {
         );
 }
 
-const styles = StyleSheet.create({
-        container: { flex: 1, backgroundColor: colors.background },
-        lista: {
-                paddingHorizontal: 18,
-                paddingTop: 16,
-                paddingBottom: 32,
-                flexGrow: 1,
-        },
-        cabecera: {
-                minHeight: 64,
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 12,
-                paddingHorizontal: 52,
-        },
-        volver: {
-                position: "absolute",
-                left: 0,
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.border,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        logo: { width: 90, height: 48 },
-        titulo: {
-                fontFamily: fuenteTitulo,
-                fontSize: 24,
-                fontWeight: "700",
-                color: colors.secondary,
-        },
-        descripcion: {
-                fontSize: 14,
-                color: colors.textSecondary,
-                marginTop: 4,
-                marginBottom: 18,
-                lineHeight: 20,
-        },
-        buscador: {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 24,
-                paddingHorizontal: 14,
-                minHeight: 46,
-        },
-        input: {
-                flex: 1,
-                fontSize: 14,
-                color: colors.secondary,
-                paddingVertical: 12,
-                minWidth: 0,
-        },
-        limpiar: {
-                minWidth: 44,
-                minHeight: 44,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        categorias: { gap: 8, paddingVertical: 14 },
-        chip: {
-                minHeight: 44,
-                paddingHorizontal: 14,
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 22,
-                backgroundColor: colors.surface,
-        },
-        chipActivo: {
-                backgroundColor: colors.primaryLight,
-                borderColor: colors.primary,
-        },
-        chipTexto: { fontSize: 13, color: colors.secondary },
-        chipTextoActivo: { color: colors.secondary, fontWeight: "600" },
-        controles: {
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: 8,
-                marginBottom: 12,
-        },
-        orden: {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 6,
-                minHeight: 44,
-                borderWidth: 1,
-                borderColor: colors.border,
-                paddingHorizontal: 12,
-                borderRadius: 22,
-        },
-        controlTexto: { fontSize: 13, color: colors.secondary },
-        aviso: { fontSize: 13, color: colors.textSecondary, marginBottom: 12 },
-        contador: {
-                fontSize: 14,
-                fontWeight: "600",
-                color: colors.secondary,
-                marginBottom: 12,
-        },
-        tarjeta: {
-                position: "relative",
-                backgroundColor: colors.surface,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 16,
-                marginBottom: 10,
-                overflow: "hidden",
-        },
-        detalle: {
-                flexDirection: "row",
-                padding: 5,
-                gap: 12,
-                alignItems: "center",
-                minHeight: 106,
-        },
-        thumbnail: { width: 100, height: 96, borderRadius: 12 },
-        sinImagen: {
-                backgroundColor: colors.secondaryLight,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        contenido: { flex: 1, paddingVertical: 6, paddingRight: 32, gap: 5 },
-        nombre: {
-                fontFamily: fuenteTitulo,
-                fontWeight: "700",
-                fontSize: 16,
-                color: colors.secondary,
-        },
-        dato: { flexDirection: "row", alignItems: "center", gap: 4 },
-        datoTexto: {
-                flex: 1,
-                fontSize: 12,
-                lineHeight: 17,
-                color: colors.secondary,
-        },
-        corazon: { position: "absolute", right: 3, top: 3 },
-        flecha: { position: "absolute", bottom: 15, right: 15 },
-});
+const crearEstilos = (colors: typeof paletaColors) =>
+        StyleSheet.create({
+                container: { flex: 1, backgroundColor: colors.background },
+                lista: {
+                        paddingHorizontal: 18,
+                        paddingTop: 16,
+                        paddingBottom: 32,
+                        flexGrow: 1,
+                },
+                cabecera: {
+                        minHeight: 64,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 12,
+                        paddingHorizontal: 52,
+                },
+                volver: {
+                        position: "absolute",
+                        left: 0,
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        backgroundColor: colors.surface,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                logo: { width: 90, height: 48 },
+                titulo: {
+                        fontFamily: fuenteTitulo,
+                        fontSize: 24,
+                        fontWeight: "700",
+                        color: colors.secondary,
+                },
+                descripcion: {
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        marginTop: 4,
+                        marginBottom: 18,
+                        lineHeight: 20,
+                },
+                buscador: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 24,
+                        paddingHorizontal: 14,
+                        minHeight: 46,
+                },
+                input: {
+                        flex: 1,
+                        fontSize: 14,
+                        color: colors.secondary,
+                        paddingVertical: 12,
+                        minWidth: 0,
+                },
+                limpiar: {
+                        minWidth: 44,
+                        minHeight: 44,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                categorias: { gap: 8, paddingVertical: 14 },
+                controles: {
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        marginBottom: 12,
+                },
+                orden: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                        minHeight: 44,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        paddingHorizontal: 12,
+                        borderRadius: 22,
+                },
+                controlTexto: { fontSize: 13, color: colors.secondary },
+                aviso: {
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                        marginBottom: 12,
+                },
+                contador: {
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: colors.secondary,
+                        marginBottom: 12,
+                },
+                tarjeta: {
+                        position: "relative",
+                        backgroundColor: colors.surface,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 16,
+                        marginBottom: 10,
+                        overflow: "hidden",
+                },
+                detalle: {
+                        flexDirection: "row",
+                        padding: 5,
+                        gap: 12,
+                        alignItems: "center",
+                        minHeight: 106,
+                },
+                thumbnail: { width: 100, height: 96, borderRadius: 12 },
+                sinImagen: {
+                        backgroundColor: colors.secondaryLight,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                contenido: {
+                        flex: 1,
+                        paddingVertical: 6,
+                        paddingRight: 32,
+                        gap: 5,
+                },
+                nombre: {
+                        fontFamily: fuenteTitulo,
+                        fontWeight: "700",
+                        fontSize: 16,
+                        color: colors.secondary,
+                },
+                dato: { flexDirection: "row", alignItems: "center", gap: 4 },
+                datoTexto: {
+                        flex: 1,
+                        fontSize: 12,
+                        lineHeight: 17,
+                        color: colors.secondary,
+                },
+                corazon: { position: "absolute", right: 3, top: 3 },
+                flecha: { position: "absolute", bottom: 15, right: 15 },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const colors = tema.colorsInicio;
+        return { colors, styles: crearEstilos(colors) };
+}

@@ -166,3 +166,37 @@ export async function guardarPreferencias(
         await guardarUsuarioCache(respuesta.datos);
         return respuesta.datos;
 }
+
+export async function guardarTema(
+        usuarioId: string,
+        tema: "claro" | "oscuro",
+): Promise<Usuario> {
+        const token = await obtenerToken();
+        if (!token)
+                throw new Error("Iniciá sesión para guardar la apariencia.");
+        const sesion = z
+                .object({ datos: z.object({ id: z.string() }) })
+                .parse(await solicitarJson("/yo", { token }));
+        if (sesion.datos.id !== usuarioId || (await obtenerToken()) !== token)
+                throw new Error(
+                        "La sesión cambió. Volvé a ingresar antes de guardar.",
+                );
+        const respuesta = z
+                .object({ datos: usuarioSchema, meta: z.null() })
+                .parse(
+                        await solicitarJson("/yo", {
+                                metodo: "PATCH",
+                                token,
+                                cuerpo: { preferencias: { tema } },
+                        }),
+                );
+        if (
+                respuesta.datos.id !== usuarioId ||
+                (await obtenerToken()) !== token
+        )
+                throw new Error(
+                        "La sesión cambió mientras se guardaba la apariencia.",
+                );
+        await guardarUsuarioCache(respuesta.datos);
+        return respuesta.datos;
+}

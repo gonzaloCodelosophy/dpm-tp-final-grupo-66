@@ -11,7 +11,8 @@ import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { TemaProvider, useTema } from "../context/tema.context";
+
 import { AuthProvider } from "../context/auth.context";
 import { ModalReingresoBiometrico } from "../components/auth/modal-reingreso-biometrico";
 
@@ -30,23 +31,34 @@ export const unstable_settings = {
 };
 
 function RootNavigation() {
-        const colorScheme = useColorScheme();
+        const { colors, oscuro } = useTema();
+        const tema = oscuro ? DarkTheme : DefaultTheme;
+        const temaAplicacion = {
+                ...tema,
+                colors: {
+                        ...tema.colors,
+                        background: colors.background,
+                        card: colors.background,
+                },
+        };
 
         useEffect(() => {
                 if (Platform.OS !== "android") return;
 
-                // @chicos: cambio los colores de la barra para que los botones se vean negros sobre el fondo claro, les parece bien?
-                NavigationBar.setStyle("light");
+                // @chicos: adapto los botones de la barra al tema elegido para que se sigan viendo, les parece bien?
+                NavigationBar.setStyle(oscuro ? "dark" : "light");
                 const suscripcion = AppState.addEventListener(
                         "change",
                         (estado) => {
                                 if (estado === "active")
-                                        NavigationBar.setStyle("light");
+                                        NavigationBar.setStyle(
+                                                oscuro ? "dark" : "light",
+                                        );
                         },
                 );
 
                 return () => suscripcion.remove();
-        }, []);
+        }, [oscuro]);
 
         useEffect(() => {
                 async function solicitarPermisosNotificaciones() {
@@ -67,14 +79,18 @@ function RootNavigation() {
         }, []);
 
         return (
-                <ThemeProvider
-                        value={
-                                colorScheme === "dark"
-                                        ? DarkTheme
-                                        : DefaultTheme
-                        }
-                >
-                        <Stack screenOptions={{ statusBarStyle: "dark" }}>
+                <ThemeProvider value={temaAplicacion}>
+                        <Stack
+                                screenOptions={{
+                                        statusBarStyle: oscuro
+                                                ? "light"
+                                                : "dark",
+                                        contentStyle: {
+                                                backgroundColor:
+                                                        colors.background,
+                                        },
+                                }}
+                        >
                                 <Stack.Screen
                                         name="(tabs)"
                                         options={{ headerShown: false }}
@@ -96,7 +112,7 @@ function RootNavigation() {
                                 />
                         </Stack>
                         <ModalReingresoBiometrico />
-                        <StatusBar style="dark" />
+                        <StatusBar style={oscuro ? "light" : "dark"} />
                 </ThemeProvider>
         );
 }
@@ -104,7 +120,9 @@ function RootNavigation() {
 export default function RootLayout() {
         return (
                 <AuthProvider>
-                        <RootNavigation />
+                        <TemaProvider>
+                                <RootNavigation />
+                        </TemaProvider>
                 </AuthProvider>
         );
 }

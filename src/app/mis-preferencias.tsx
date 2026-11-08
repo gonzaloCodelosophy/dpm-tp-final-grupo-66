@@ -1,3 +1,4 @@
+import { useTema } from "../context/tema.context";
 import { useState } from "react";
 import {
         ActivityIndicator,
@@ -18,9 +19,11 @@ import { useVolverPerfil } from "../hooks/use-volver-perfil";
 import { BotonCategoria } from "../components/boton-categoria";
 import { categoriasIntereses } from "../../constants/categorias-intereses";
 import { EstadoPantalla } from "../components/estado-pantalla";
-import { colorsInicio as colors, fuenteTitulo } from "../styles/inicio";
+import { colorsInicio as paletaColors, fuenteTitulo } from "../styles/inicio";
 
 export default function MisPreferenciasScreen() {
+        const { colors, styles } = useEstilos();
+
         const { usuario, status, actualizarPreferencias } = useAuth();
         const volver = useVolverPerfil();
         const [seleccionadas, setSeleccionadas] = useState<string[]>(
@@ -304,7 +307,7 @@ export default function MisPreferenciasScreen() {
                                 >
                                         {guardando ? (
                                                 <ActivityIndicator
-                                                        color={colors.surface}
+                                                        color={colors.onPrimary}
                                                 />
                                         ) : (
                                                 <Text
@@ -321,109 +324,120 @@ export default function MisPreferenciasScreen() {
         );
 }
 
-const styles = StyleSheet.create({
-        pantalla: { flex: 1, backgroundColor: colors.background },
-        contenido: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 32 },
-        cabecera: {
-                minHeight: 64,
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 16,
-        },
-        volver: {
-                position: "absolute",
-                left: 0,
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: colors.surface,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        logo: { width: 90, height: 48 },
-        titulo: {
-                fontFamily: fuenteTitulo,
-                fontSize: 24,
-                fontWeight: "700",
-                color: colors.secondary,
-        },
-        descripcion: {
-                fontSize: 14,
-                color: colors.textSecondary,
-                lineHeight: 21,
-                marginTop: 8,
-                marginBottom: 20,
-        },
-        categorias: {
-                flexDirection: "row",
-                flexWrap: "wrap",
-                columnGap: 8,
-                rowGap: 4,
-        },
-        categoria: { width: "23%" },
-        fila: {
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 14,
-                minHeight: 64,
-                borderBottomWidth: StyleSheet.hairlineWidth,
-                borderBottomColor: colors.border,
-        },
-        nombre: { flex: 1, fontSize: 15, color: colors.secondary },
-        elegida: { fontWeight: "600" },
-        seccionTitulo: {
-                fontSize: 14,
-                fontWeight: "600",
-                color: colors.secondary,
-                marginTop: 24,
-                marginBottom: 12,
-        },
-        textoAvisos: { flex: 1, paddingVertical: 10 },
-        detalleAvisos: {
-                fontSize: 12,
-                lineHeight: 18,
-                color: colors.textSecondary,
-                marginTop: 5,
-        },
-        distancias: { flexDirection: "row", gap: 10 },
-        distancia: {
-                flex: 1,
-                minHeight: 46,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 24,
-        },
-        distanciaElegida: {
-                borderColor: colors.primary,
-                backgroundColor: colors.primaryLight,
-        },
-        distanciaTexto: { fontSize: 14, color: colors.secondary },
-        ayuda: {
-                fontSize: 12,
-                color: colors.textSecondary,
-                lineHeight: 18,
-                marginTop: 18,
-        },
-        error: {
-                fontSize: 14,
-                lineHeight: 20,
-                color: colors.error,
-                marginTop: 20,
-        },
-        guardar: {
-                minHeight: 48,
-                borderRadius: 24,
-                backgroundColor: colors.primary,
-                alignItems: "center",
-                justifyContent: "center",
-                marginTop: 28,
-        },
-        guardarTexto: {
-                fontSize: 14,
-                fontWeight: "600",
-                color: colors.surface,
-        },
-        deshabilitado: { opacity: 0.5 },
-});
+const crearEstilos = (colors: typeof paletaColors) =>
+        StyleSheet.create({
+                pantalla: { flex: 1, backgroundColor: colors.background },
+                contenido: {
+                        paddingHorizontal: 18,
+                        paddingTop: 8,
+                        paddingBottom: 32,
+                },
+                cabecera: {
+                        minHeight: 64,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 16,
+                },
+                volver: {
+                        position: "absolute",
+                        left: 0,
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        backgroundColor: colors.surface,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                logo: { width: 90, height: 48 },
+                titulo: {
+                        fontFamily: fuenteTitulo,
+                        fontSize: 24,
+                        fontWeight: "700",
+                        color: colors.secondary,
+                },
+                descripcion: {
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                        lineHeight: 21,
+                        marginTop: 8,
+                        marginBottom: 20,
+                },
+                categorias: {
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        columnGap: 8,
+                        rowGap: 4,
+                },
+                categoria: { width: "23%" },
+                fila: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 14,
+                        minHeight: 64,
+                        borderBottomWidth: StyleSheet.hairlineWidth,
+                        borderBottomColor: colors.border,
+                },
+                nombre: { flex: 1, fontSize: 15, color: colors.secondary },
+                elegida: { fontWeight: "600" },
+                seccionTitulo: {
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: colors.secondary,
+                        marginTop: 24,
+                        marginBottom: 12,
+                },
+                textoAvisos: { flex: 1, paddingVertical: 10 },
+                detalleAvisos: {
+                        fontSize: 12,
+                        lineHeight: 18,
+                        color: colors.textSecondary,
+                        marginTop: 5,
+                },
+                distancias: { flexDirection: "row", gap: 10 },
+                distancia: {
+                        flex: 1,
+                        minHeight: 46,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 24,
+                },
+                distanciaElegida: {
+                        borderColor: colors.primary,
+                        backgroundColor: colors.primaryLight,
+                },
+                distanciaTexto: { fontSize: 14, color: colors.secondary },
+                ayuda: {
+                        fontSize: 12,
+                        color: colors.textSecondary,
+                        lineHeight: 18,
+                        marginTop: 18,
+                },
+                error: {
+                        fontSize: 14,
+                        lineHeight: 20,
+                        color: colors.error,
+                        marginTop: 20,
+                },
+                guardar: {
+                        minHeight: 48,
+                        borderRadius: 24,
+                        backgroundColor: colors.primarySolid,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginTop: 28,
+                },
+                guardarTexto: {
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: colors.onPrimary,
+                },
+                deshabilitado: { opacity: 0.5 },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const colors = tema.colorsInicio;
+        return { colors, styles: crearEstilos(colors) };
+}

@@ -1,3 +1,4 @@
+import { useTema } from "../../context/tema.context";
 import { Tabs } from "expo-router";
 import React from "react";
 import { StyleSheet, View } from "react-native";
@@ -5,7 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 
 import { HapticTab } from "../../components/haptic-tab";
-import { colorsInicio as colors } from "../../styles/inicio";
+import { colors as paletaColoresBase } from "../../styles/theme";
+import { colorsInicio as paletaColors } from "../../styles/inicio";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -18,6 +20,8 @@ function IconoTab({
         icono: IconName;
         activo: IconName;
 }) {
+        const { colors, styles } = useEstilos();
+
         return (
                 <View style={[styles.icono, focused && styles.iconoActivo]}>
                         <Ionicons
@@ -34,6 +38,8 @@ function IconoTab({
 }
 
 export default function TabLayout() {
+        const { coloresBase, colors, styles } = useEstilos();
+
         const insets = useSafeAreaInsets();
         const espacioInferior = Math.max(insets.bottom, 10);
 
@@ -42,6 +48,9 @@ export default function TabLayout() {
                         backBehavior="history"
                         screenOptions={{
                                 headerShown: false,
+                                sceneStyle: {
+                                        backgroundColor: coloresBase.background,
+                                },
                                 tabBarButton: HapticTab,
                                 tabBarActiveTintColor: colors.primary,
                                 tabBarInactiveTintColor: colors.secondary,
@@ -131,30 +140,45 @@ export default function TabLayout() {
         );
 }
 
-const styles = StyleSheet.create({
-        barra: {
-                backgroundColor: colors.background,
-                borderTopWidth: 1,
-                borderTopColor: colors.border,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
-                paddingTop: 8,
-                paddingHorizontal: 8,
-                shadowColor: colors.secondary,
-                shadowOffset: { width: 0, height: -3 },
-                shadowOpacity: 0.06,
-                shadowRadius: 12,
-                elevation: 8,
-        },
-        item: { paddingHorizontal: 2 },
-        contenedorIcono: { width: 48, height: 32 },
-        icono: {
-                width: 48,
-                height: 32,
-                borderRadius: 16,
-                alignItems: "center",
-                justifyContent: "center",
-        },
-        iconoActivo: { backgroundColor: colors.primaryLight },
-        etiqueta: { fontSize: 10, fontWeight: "600", marginTop: 3 },
-});
+const crearEstilos = (
+        coloresBase: typeof paletaColoresBase,
+        colors: typeof paletaColors,
+) =>
+        StyleSheet.create({
+                barra: {
+                        backgroundColor: coloresBase.background,
+                        borderTopWidth: 1,
+                        borderTopColor: colors.border,
+                        borderTopLeftRadius: 24,
+                        borderTopRightRadius: 24,
+                        paddingTop: 8,
+                        paddingHorizontal: 8,
+                        shadowColor: colors.secondary,
+                        shadowOffset: { width: 0, height: -3 },
+                        shadowOpacity: 0.06,
+                        shadowRadius: 12,
+                        elevation: 8,
+                },
+                item: { paddingHorizontal: 2 },
+                contenedorIcono: { width: 48, height: 32 },
+                icono: {
+                        width: 48,
+                        height: 32,
+                        borderRadius: 16,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                iconoActivo: { backgroundColor: colors.primaryLight },
+                etiqueta: { fontSize: 10, fontWeight: "600", marginTop: 3 },
+        });
+
+function useEstilos() {
+        const tema = useTema();
+        const coloresBase = tema.colors;
+        const colors = tema.colorsInicio;
+        return {
+                coloresBase,
+                colors,
+                styles: crearEstilos(coloresBase, colors),
+        };
+}
