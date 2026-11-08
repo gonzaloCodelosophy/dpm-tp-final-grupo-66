@@ -1,3 +1,4 @@
+import { resolverLugarQr } from './qr.service';
 import * as Location from 'expo-location';
 import { RADIO_REGISTRO_METROS } from '../../constants/mapa';
 import { z } from 'zod';
@@ -101,6 +102,13 @@ export function registrarVisitaCercana(lugar: Lugar, usuarioId: string, recuerdo
 export function registrarVisitaManual(lugar: Lugar, usuarioId: string, recuerdo?: RecuerdoVisita): Promise<Visita> {
 
   return registrarVisita(lugar, usuarioId, 'manual', recuerdo);
+}
+
+export async function registrarVisitaQr(lugar: Lugar, usuarioId: string, codigo: string, recuerdo?: RecuerdoVisita): Promise<Visita> {
+
+  const resuelto = await resolverLugarQr(codigo);
+  if (resuelto.lugar.id !== lugar.id) throw new Error('El QR no corresponde al lugar seleccionado.');
+  return registrarVisita(lugar, usuarioId, 'qr', recuerdo);
 }
 
 export async function obtenerHistorialVisitas(usuarioId: string): Promise<Visita[]> {

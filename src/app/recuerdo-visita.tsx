@@ -15,14 +15,15 @@ import { ImagenPersistente } from '../components/imagen-persistente';
 import { useFavoritos } from '../hooks/use-favoritos';
 import { SelectorLugarVisita } from '../components/selector-lugar-visita';
 import type { Lugar } from '../types/Lugar';
-import { registrarVisitaCercana, registrarVisitaManual } from '../services/visitas.service';
+import { registrarVisitaCercana, registrarVisitaManual, registrarVisitaQr } from '../services/visitas.service';
 import { subirFotoVisita } from '../services/foto-visita.service';
 import { RADIO_REGISTRO_METROS } from '../../constants/mapa';
 import { colorsInicio, fuenteTitulo } from '../styles/inicio';
 
 export default function RecuerdoVisitaScreen() {
   const router = useRouter();
-  const { lugarId: parametroLugar } = useLocalSearchParams<{ lugarId?: string | string[] }>();
+  const { lugarId: parametroLugar, modo, codigoQr } = useLocalSearchParams<{ lugarId?: string | string[]; modo?: string; codigoQr?: string }>();
+  const [modoManual] = useState(() => modo === 'manual');
   // El lugar de entrada forma parte del borrador; no cambia al actualizar el GPS.
   const [lugarIdInicial] = useState(() => typeof parametroLugar === 'string' ? parametroLugar : null);
   const insets = useSafeAreaInsets();
@@ -37,7 +38,7 @@ export default function RecuerdoVisitaScreen() {
   const [lugarDetectado, setLugarDetectado] = useState<Lugar | null>(null);
   const [fechaFormulario] = useState(() => new Date());
   const edicionIniciada = useRef(false);
-  const [mostrarLugares, setMostrarLugares] = useState(false);
+  const [mostrarLugares, setMostrarLugares] = useState(modoManual);
   const [altoVisible, setAltoVisible] = useState(0);
   const [altoFicha, setAltoFicha] = useState(0);
   const [nota, setNota] = useState('');
@@ -54,18 +55,18 @@ export default function RecuerdoVisitaScreen() {
   const { solicitar, permiso, cargando: buscando } = ubicacion;
 
   useEffect(() => {
-    if (lugarIdInicial || solicitada.current || permiso === null || buscando) return;
+    if (modoManual || lugarIdInicial || solicitada.current || permiso === null || buscando) return;
     solicitada.current = true;
     void solicitar();
-  }, [permiso, buscando, solicitar, lugarIdInicial]);
+  }, [permiso, buscando, solicitar, lugarIdInicial, modoManual]);
 
   const cercano = useMemo(() => {
-    if (!ubicacion.coordenadas) return null;
+    if (modoManual || lugarIdInicial || !ubicacion.coordenadas) return null;
     return (datos?.lugares ?? []).filter(lugar => lugar.activo)
       .map(lugar => ({ lugar, distancia: distanciaMetros(ubicacion.coordenadas!, lugar.coordenadas) }))
       .filter(item => item.distancia <= radioMetros)
       .sort((a, b) => a.distancia - b.distancia)[0]?.lugar ?? null;
-  }, [datos, ubicacion.coordenadas, radioMetros]);
+  }, [datos, ubicacion.coordenadas, radioMetros, modoManual, lugarIdInicial]);
 
   // La primera sugerencia queda fija; el seguimiento GPS no cambia el borrador.
   // Si ya empezó a editar sin lugar, debe elegirlo explícitamente en el selector.
@@ -79,7 +80,8 @@ export default function RecuerdoVisitaScreen() {
   const idLugar = lugarBase?.id ?? lugarIdInicial;
   const detallesLugar = useDetallesLugares(idLugar ? [idLugar] : [], lugarBase ? [lugarBase] : []);
   const lugarRegistro = detallesLugar.lugares.find(lugar => lugar.id === idLugar) ?? lugarBase;
-  const registroManual = Boolean(elegido || lugarIdInicial);
+  const registroQr = !elegido && typeof codigoQr === 'string' && Boolean(lugarIdInicial);
+  const registroManual = !registroQr && (modoManual || Boolean(elegido || lugarIdInicial));
   const { favoritos } = useFavoritos(lugarRegistro ? [lugarRegistro.id] : []);
   const esFavorito = Boolean(lugarRegistro && favoritos.includes(lugarRegistro.id));
 
@@ -115,7 +117,8 @@ export default function RecuerdoVisitaScreen() {
         setFotoSubida(fotoUri);
       }
       if (cuentaActual.current !== usuarioId) throw new Error('La cuenta cambió. Volvé a ingresar.');
-      if (registroManual) await registrarVisitaManual(lugarRegistro, usuarioId, { nota, fotoUri });
+      if (registroQr) await registrarVisitaQr(lugarRegistro, usuarioId, codigoQr!, { nota, fotoUri });
+      else if (registroManual) await registrarVisitaManual(lugarRegistro, usuarioId, { nota, fotoUri });
       else await registrarVisitaCercana(lugarRegistro, usuarioId, { nota, fotoUri });
       guardada.current = true;
       Alert.alert('Visita guardada', 'Guardamos tu recuerdo. Si no hay conexión, la visita se enviará cuando vuelva.', [
@@ -175,8 +178,8 @@ export default function RecuerdoVisitaScreen() {
             </View>
             {lugarRegistro && <View style={styles.insignias}>
               <View style={styles.insignia}>
-                <Ionicons name={registroManual ? 'create-outline' : 'location-outline'} size={15} color={colors.secondary} />
-                <Text style={styles.insigniaTexto}>{registroManual ? 'Lugar seleccionado' : 'Lugar cercano'}</Text>
+                <Ionicons name={registroQr ? 'qr-code-outline' : registroManual ? 'create-outline' : 'location-outline'} size={15} color={colors.secondary} />
+                <Text style={styles.insigniaTexto}>{registroQr ? 'Lugar del QR' : registroManual ? 'Lugar seleccionado' : 'Lugar cercano'}</Text>
               </View>
               {esFavorito && <View style={[styles.insignia, { backgroundColor: '#FCE4EC' }]}>
                 <Ionicons name="heart" size={15} color="#D32F2F" />
@@ -189,8 +192,8 @@ export default function RecuerdoVisitaScreen() {
                 <Text style={styles.textoDato}>Hoy · {fechaFormulario.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} h</Text>
               </View>
               <View style={styles.dato}>
-                <Ionicons name={registroManual ? 'create-outline' : 'location-outline'} size={16} color={colors.secondary} />
-                <Text style={styles.textoDato}>{registroManual ? 'Registro manual' : 'Registro GPS'}</Text>
+                <Ionicons name={registroQr ? 'qr-code-outline' : registroManual ? 'create-outline' : 'location-outline'} size={16} color={colors.secondary} />
+                <Text style={styles.textoDato}>{registroQr ? 'Registro QR' : registroManual ? 'Registro manual' : 'Registro GPS'}</Text>
               </View>
               {lugarRegistro && <Pressable disabled={guardando} accessibilityRole="button" accessibilityLabel="Cambiar ubicación" hitSlop={8} onPress={() => { Keyboard.dismiss(); setMostrarLugares(true); }} style={styles.cambiarLugar}>
                 <Ionicons name="refresh" size={16} color={colors.primary} />

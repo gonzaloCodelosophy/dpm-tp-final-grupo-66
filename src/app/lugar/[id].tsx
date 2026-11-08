@@ -203,6 +203,7 @@ export default function DetalleLugarScreen() {
 
                                                 {lugar.audioguia ? (
                                                         <Audioguia
+                                                                titulo={lugar.nombre}
                                                                 key={
                                                                         lugar
                                                                                 .audioguia

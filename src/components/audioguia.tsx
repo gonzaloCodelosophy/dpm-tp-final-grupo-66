@@ -27,7 +27,7 @@ function tiempo(segundos: number): string {
         return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-export function Audioguia({ url }: { url: string }) {
+export function Audioguia({ url, titulo = "Audioguía de Colón" }: { url: string; titulo?: string }) {
         const { colors, styles } = useEstilos();
 
         //@todos, fijense si les da error en la audioguia al volver hacia atras.
@@ -86,7 +86,10 @@ export function Audioguia({ url }: { url: string }) {
                 // Pausar si la pantalla sigue montada pero pierde el foco.
                 // Al desmontar, useAudioPlayer libera el audio: no llamar a pause en el cleanup.
                 // @todos, puede que el sonido quede reproduciendo al volver atras, probar con la app compilada.
-                if (!enfocada) player.pause();
+                if (!enfocada) {
+                        player.pause();
+                        player.clearLockScreenControls();
+                }
                 setOcupado(false);
         }, [enfocada, player]);
 
@@ -104,6 +107,8 @@ export function Audioguia({ url }: { url: string }) {
                         } else {
                                 await setAudioModeAsync({
                                         playsInSilentMode: true,
+                                        shouldPlayInBackground: true,
+                                        interruptionMode: "doNotMix",
                                 });
                                 if (!puedeReproducir.current) return;
 
@@ -116,7 +121,13 @@ export function Audioguia({ url }: { url: string }) {
                                         await player.seekTo(0);
                                 }
 
-                                if (puedeReproducir.current) player.play();
+                                if (puedeReproducir.current) {
+                                        player.setActiveForLockScreen(true, {
+                                                title: titulo,
+                                                artist: "Colón · Audioguía",
+                                        });
+                                        player.play();
+                                }
                         }
                 } catch {
                         if (puedeReproducir.current)
