@@ -1,6 +1,8 @@
 import { useTema } from "../../context/tema.context";
 import { Tabs } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
+import { Image } from "expo-image";
+import { useAuth } from "../../context/auth.context";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
@@ -32,6 +34,40 @@ function IconoTab({
                                                 ? colors.primary
                                                 : colors.secondary
                                 }
+                        />
+                </View>
+        );
+}
+
+function IconoPerfil({ focused }: { focused: boolean }) {
+        const { usuario, status } = useAuth();
+        const { colors, styles } = useEstilos();
+        const [fallida, setFallida] = useState<string | null>(null);
+        const foto = status === "autenticado" ? usuario?.avatarUrl : null;
+        if (!foto || fallida === foto)
+                return (
+                        <IconoTab
+                                focused={focused}
+                                icono="person-outline"
+                                activo="person"
+                        />
+                );
+
+        return (
+                <View style={[styles.icono, focused && styles.iconoActivo]}>
+                        <Image
+                                source={{ uri: foto }}
+                                style={[
+                                        styles.fotoPerfil,
+                                        {
+                                                borderColor: focused
+                                                        ? colors.primary
+                                                        : colors.border,
+                                        },
+                                ]}
+                                contentFit="cover"
+                                onError={() => setFallida(foto)}
+                                accessibilityLabel="Foto de perfil"
                         />
                 </View>
         );
@@ -128,10 +164,8 @@ export default function TabLayout() {
                                 options={{
                                         title: "Perfil",
                                         tabBarIcon: ({ focused }) => (
-                                                <IconoTab
+                                                <IconoPerfil
                                                         focused={focused}
-                                                        icono="person-outline"
-                                                        activo="person"
                                                 />
                                         ),
                                 }}
@@ -167,6 +201,12 @@ const crearEstilos = (
                         borderRadius: 16,
                         alignItems: "center",
                         justifyContent: "center",
+                },
+                fotoPerfil: {
+                        width: 28,
+                        height: 28,
+                        borderRadius: 14,
+                        borderWidth: 1,
                 },
                 iconoActivo: { backgroundColor: colors.primaryLight },
                 etiqueta: { fontSize: 10, fontWeight: "600", marginTop: 3 },

@@ -1,3 +1,7 @@
+import { fuenteTitulo } from "../../styles/inicio";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Image } from "expo-image";
+import { logoPrincipal, tipografia } from "../../styles/tipografia";
 import { useTema } from "../../context/tema.context";
 import { useMemo, useState } from "react";
 import {
@@ -81,12 +85,28 @@ export default function AgendaScreen() {
         };
 
         return (
-                <View style={styles.container}>
+                <SafeAreaView
+                        style={styles.container}
+                        edges={["top", "left", "right"]}
+                >
+                        <View style={styles.header}>
+                                <Image
+                                        source={require("../../../assets/images/logo-colon.png")}
+                                        style={styles.logo}
+                                        contentFit="contain"
+                                        accessibilityLabel="Colón, Entre Ríos"
+                                />
+                                <Image
+                                        source={require("../../../assets/images/ilustracion-colon-puente.png")}
+                                        style={styles.puente}
+                                        contentFit="contain"
+                                />
+                                <Text style={styles.headerTitle}>Agenda</Text>
+                                <Text style={styles.headerSubtitle}>
+                                        Qué hacer en Colón
+                                </Text>
+                        </View>
                         <EstadoCatalogo sinConexion={sinConexion} />
-                        <Text style={styles.headerTitle}>Agenda</Text>
-                        <Text style={styles.headerSubtitle}>
-                                Qué hacer en Colón
-                        </Text>
 
                         <View style={{ paddingHorizontal: 16 }}>
                                 {cargando && (
@@ -244,7 +264,7 @@ export default function AgendaScreen() {
                                         </Text>
                                 }
                         />
-                </View>
+                </SafeAreaView>
         );
 }
 
@@ -253,19 +273,35 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 container: {
                         flex: 1,
                         backgroundColor: colors.background,
-                        paddingTop: 40,
                 },
-                headerTitle: {
-                        fontSize: 28,
-                        fontWeight: "bold",
-                        marginHorizontal: 16,
-                        color: colors.text,
+                header: {
+                        backgroundColor: colors.background,
+                        marginHorizontal: 18,
+                        marginTop: 8,
+                        flexShrink: 0,
+                        marginBottom: 24,
+                        minHeight: 130,
+                        justifyContent: "flex-end",
                 },
+                logo: {
+                        ...logoPrincipal,
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                },
+                puente: {
+                        width: 205,
+                        height: 115,
+                        position: "absolute",
+                        right: -24,
+                        top: 0,
+                        opacity: 0.85,
+                },
+                headerTitle: { ...tipografia.titulo, fontFamily: fuenteTitulo, color: colors.blueText },
                 headerSubtitle: {
-                        fontSize: 16,
-                        marginHorizontal: 16,
-                        color: colors.textSecondary,
-                        marginBottom: 16,
+                        ...tipografia.texto,
+                        color: colors.greenText,
+                        marginTop: 2,
                 },
                 filtersContainer: {
                         borderBottomWidth: 1,

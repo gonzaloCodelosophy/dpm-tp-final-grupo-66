@@ -1,3 +1,5 @@
+import { fuenteTitulo } from "../styles/inicio";
+import { tipografia } from "../styles/tipografia";
 import { useState } from "react";
 import {
         ActivityIndicator,
@@ -17,7 +19,6 @@ import { useTema } from "../context/tema.context";
 import { useVolverPerfil } from "../hooks/use-volver-perfil";
 import { EstadoPantalla } from "../components/estado-pantalla";
 import { colors as paleta } from "../styles/theme";
-import { fuenteTitulo } from "../styles/inicio";
 
 export default function AparienciaScreen() {
         const { usuario, status, actualizarTema } = useAuth();
@@ -71,7 +72,7 @@ export default function AparienciaScreen() {
                         edges={["top", "bottom", "left", "right"]}
                 >
                         <Stack.Screen options={{ headerShown: false }} />
-                        <ScrollView contentContainerStyle={styles.contenido}>
+                        <View style={styles.encabezadoFijo}>
                                 <View style={styles.cabecera}>
                                         <Pressable
                                                 accessibilityRole="button"
@@ -96,6 +97,11 @@ export default function AparienciaScreen() {
                                 <Text style={styles.descripcion}>
                                         Elegí cómo querés ver la aplicación.
                                 </Text>
+                        </View>
+                        <ScrollView
+                                style={styles.scroll}
+                                contentContainerStyle={styles.contenido}
+                        >
                                 <View
                                         accessibilityRole="radiogroup"
                                         style={styles.opciones}
@@ -286,10 +292,17 @@ export default function AparienciaScreen() {
 
 const crearEstilos = (colors: typeof paleta) =>
         StyleSheet.create({
+                scroll: { flex: 1 },
+                encabezadoFijo: {
+                        flexShrink: 0,
+                        backgroundColor: colors.background,
+                        paddingHorizontal: 18,
+                        paddingTop: 8,
+                },
                 pantalla: { flex: 1, backgroundColor: colors.background },
                 contenido: {
                         paddingHorizontal: 18,
-                        paddingTop: 8,
+                        paddingTop: 0,
                         paddingBottom: 32,
                 },
                 cabecera: {
@@ -310,15 +323,13 @@ const crearEstilos = (colors: typeof paleta) =>
                 },
                 logo: { width: 90, height: 48 },
                 titulo: {
+                        ...tipografia.titulo,
                         fontFamily: fuenteTitulo,
-                        fontSize: 24,
-                        fontWeight: "700",
-                        color: colors.secondary,
+                        color: colors.blueText,
                 },
                 descripcion: {
-                        fontSize: 14,
-                        lineHeight: 21,
-                        color: colors.textSecondary,
+                        ...tipografia.texto,
+                        color: colors.greenText,
                         marginTop: 8,
                         marginBottom: 24,
                 },

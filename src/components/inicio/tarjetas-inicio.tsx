@@ -1,3 +1,4 @@
+import { tipografia } from "../../styles/tipografia";
 import { useTema } from "../../context/tema.context";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
@@ -8,7 +9,7 @@ import { BotonLugarFavorito } from "../boton-lugar-favorito";
 import type { Lugar } from "../../types/Lugar";
 import type { Evento } from "../../types/evento";
 import { colorsInicio as paletaColors } from "../../styles/inicio";
-import { borderRadius, fontSize, spacing } from "../../styles/theme";
+import { borderRadius, spacing } from "../../styles/theme";
 
 interface LugarInicioProps {
         lugar: Lugar;
@@ -242,11 +243,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         padding: 12,
                 },
                 textos: { flex: 1, minWidth: 0 },
-                nombre: {
-                        fontSize: 14,
-                        fontWeight: "600",
-                        color: colors.secondary,
-                },
+                nombre: { ...tipografia.opcion, color: colors.blueText },
                 fila: {
                         flexDirection: "row",
                         alignItems: "flex-start",
@@ -254,8 +251,8 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         marginTop: spacing.xs,
                 },
                 secundario: {
+                        ...tipografia.detalle,
                         flexShrink: 1,
-                        fontSize: fontSize.caption,
                         color: colors.textSecondary,
                 },
                 categoria: {

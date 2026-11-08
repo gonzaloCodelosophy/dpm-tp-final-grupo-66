@@ -1,3 +1,4 @@
+import { tipografia } from "../../styles/tipografia";
 import { useTema } from "../../context/tema.context";
 import type { ComponentProps } from "react";
 import {
@@ -8,10 +9,7 @@ import {
         View,
 } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import {
-        colorsInicio as paletaColors,
-        fuenteTitulo,
-} from "../../styles/inicio";
+import { colorsInicio as paletaColors, fuenteTitulo } from "../../styles/inicio";
 import { borderRadius, fontSize, spacing } from "../../styles/theme";
 
 type Icono = ComponentProps<typeof Ionicons>["name"];
@@ -192,13 +190,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         marginBottom: 12,
                 },
                 textos: { flex: 1 },
-                titulo: {
-                        fontFamily: fuenteTitulo,
-                        fontSize: 21,
-                        fontWeight: "700",
-                        color: colors.secondary,
-                        letterSpacing: -0.8,
-                },
+                titulo: { ...tipografia.seccion, fontFamily: fuenteTitulo, color: colors.greenText },
                 subrayado: {
                         width: 23,
                         height: 3,
@@ -259,15 +251,10 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         gap: spacing.sm,
                         marginBottom: 12,
                 },
-                estadoTitulo: {
-                        fontSize: 14,
-                        fontWeight: "600",
-                        color: colors.secondary,
-                },
+                estadoTitulo: { ...tipografia.opcion, color: colors.blueText },
                 estadoTexto: {
-                        fontSize: fontSize.caption,
+                        ...tipografia.detalle,
                         color: colors.textSecondary,
-                        lineHeight: 20,
                 },
                 mapa: {
                         width: 80,
