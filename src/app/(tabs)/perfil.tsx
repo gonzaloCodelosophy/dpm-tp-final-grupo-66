@@ -82,6 +82,18 @@ export default function PerfilScreen() {
                                 ),
                 },
                 {
+                        titulo: "Mis preferencias",
+                        descripcion: "Categorías, radio de avisos y más",
+                        icono: "options-outline",
+                        fondo: colors.secondaryLight,
+                        color: colors.secondary,
+                        onPress: () =>
+                                abrirSeccion(
+                                        "Mis preferencias",
+                                        "La configuración de tus preferencias estará disponible próximamente.",
+                                ),
+                },
+                {
                         titulo: "Notificaciones",
                         descripcion: "Avisos de eventos y cercanía",
                         icono: "notifications-outline",
