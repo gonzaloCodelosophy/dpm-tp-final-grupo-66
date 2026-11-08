@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { logoPrincipal, tipografia } from "../../styles/tipografia";
 import { useTema } from "../../context/tema.context";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
         StyleSheet,
         Text,
@@ -13,19 +13,13 @@ import {
         ScrollView,
         ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useEventos } from "../../hooks/use-eventos";
 import { EstadoCatalogo } from "../../components/estado-catalogo";
 import TarjetaEvento from "../../components/tarjeta-evento";
 import { colors as paletaColors } from "../../styles/theme";
 
-const ESTADOS = [
-        "Todos",
-        "Programados",
-        "Suspendidos",
-        "Cancelados",
-        "Finalizados",
-];
+const ESTADOS = ["Todos", "Programados", "Suspendidos", "Cancelados"];
 
 export default function AgendaScreen() {
         const { colors, styles } = useEstilos();
@@ -41,19 +35,27 @@ export default function AgendaScreen() {
                 reintentar,
         } = useEventos();
         const eventos = datos ?? [];
-        const fechasUnicas = useMemo(
-                () =>
-                        [
-                                ...new Set(
-                                        (datos ?? []).map(
-                                                (e) => e.inicio.split("T")[0],
-                                        ),
-                                ),
-                        ].sort(),
-                [datos],
+        const fechasUnicas = useMemo(() => {
+                const hoy = new Date();
+                return Array.from({ length: 14 }, (_, indice) => {
+                        const fecha = new Date(
+                                hoy.getFullYear(),
+                                hoy.getMonth(),
+                                hoy.getDate() + indice,
+                        );
+                        return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
+                });
+        }, []);
+        const [filtroFecha, setFiltroFecha] = useState<string | null>(
+                fechasUnicas[0],
         );
-        const [filtroFecha, setFiltroFecha] = useState<string | null>(null);
         const [filtroEstado, setFiltroEstado] = useState("Todos");
+        useFocusEffect(
+                useCallback(() => {
+                        setFiltroFecha(null);
+                        setFiltroEstado("Todos");
+                }, []),
+        );
         const router = useRouter();
 
         const eventosFiltrados = eventos.filter((evento) => {
@@ -67,8 +69,6 @@ export default function AgendaScreen() {
                         coincideEstado = estadoEv === "programado";
                 if (filtroEstado === "Suspendidos")
                         coincideEstado = estadoEv === "suspendido";
-                if (filtroEstado === "Finalizados")
-                        coincideEstado = estadoEv === "finalizado";
                 if (filtroEstado === "Cancelados")
                         coincideEstado = estadoEv === "cancelado";
 
@@ -76,7 +76,7 @@ export default function AgendaScreen() {
         });
 
         const formatearDiaTab = (fechaStr: string) => {
-                const fecha = new Date(fechaStr + "T12:00:00"); // Forzar mediodía para evitar desfases de zona horaria
+                const fecha = new Date(fechaStr + "T12:00:00");
                 const diaSemana = fecha
                         .toLocaleDateString("es-AR", { weekday: "short" })
                         .toUpperCase();
@@ -120,14 +120,36 @@ export default function AgendaScreen() {
                                         horizontal
                                         showsHorizontalScrollIndicator={false}
                                         style={styles.dateTabs}
+                                        contentContainerStyle={
+                                                styles.fechasContenido
+                                        }
                                 >
                                         <TouchableOpacity
-                                                style={styles.dateTab}
+                                                accessibilityRole="button"
+                                                accessibilityState={{
+                                                        selected:
+                                                                filtroFecha ===
+                                                                null,
+                                                }}
+                                                style={[
+                                                        styles.dateTab,
+                                                        filtroFecha === null &&
+                                                                styles.dateTabSelected,
+                                                ]}
                                                 onPress={() =>
                                                         setFiltroFecha(null)
                                                 }
                                         >
-                                                <Text>Todos los días</Text>
+                                                <Text
+                                                        style={[
+                                                                styles.dateTabDay,
+                                                                filtroFecha ===
+                                                                        null &&
+                                                                        styles.textWhite,
+                                                        ]}
+                                                >
+                                                        Todos
+                                                </Text>
                                         </TouchableOpacity>
                                         {fechasUnicas.map((fecha) => {
                                                 const { diaSemana, numero } =
@@ -144,7 +166,9 @@ export default function AgendaScreen() {
                                                                 ]}
                                                                 onPress={() =>
                                                                         setFiltroFecha(
-                                                                                fecha,
+                                                                                isSelected
+                                                                                        ? null
+                                                                                        : fecha,
                                                                         )
                                                                 }
                                                         >
@@ -155,9 +179,13 @@ export default function AgendaScreen() {
                                                                                         styles.textWhite,
                                                                         ]}
                                                                 >
-                                                                        {
-                                                                                diaSemana
-                                                                        }
+                                                                        {fecha ===
+                                                                        fechasUnicas[0]
+                                                                                ? "HOY"
+                                                                                : diaSemana.replace(
+                                                                                          ".",
+                                                                                          "",
+                                                                                  )}
                                                                 </Text>
                                                                 <Text
                                                                         style={[
@@ -177,6 +205,9 @@ export default function AgendaScreen() {
                                         horizontal
                                         showsHorizontalScrollIndicator={false}
                                         style={styles.statusPills}
+                                        contentContainerStyle={
+                                                styles.estadosContenido
+                                        }
                                 >
                                         {ESTADOS.map((estado) => (
                                                 <TouchableOpacity
@@ -297,58 +328,75 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         top: 0,
                         opacity: 0.85,
                 },
-                headerTitle: { ...tipografia.titulo, fontFamily: fuenteTitulo, color: colors.blueText },
+                headerTitle: {
+                        ...tipografia.titulo,
+                        fontFamily: fuenteTitulo,
+                        color: colors.blueText,
+                },
                 headerSubtitle: {
                         ...tipografia.texto,
                         color: colors.greenText,
                         marginTop: 2,
                 },
                 filtersContainer: {
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.secondaryLight,
                         paddingBottom: 10,
                 },
 
-                dateTabs: { paddingHorizontal: 16, marginBottom: 12 },
+                dateTabs: { flexGrow: 0, marginBottom: 14 },
+                fechasContenido: { paddingHorizontal: 18, gap: 8 },
+                estadosContenido: { paddingHorizontal: 18, gap: 8 },
                 dateTab: {
                         backgroundColor: colors.secondaryLight,
                         borderRadius: 12,
-                        paddingVertical: 12,
-                        paddingHorizontal: 16,
-                        marginRight: 10,
+                        paddingVertical: 8,
+                        paddingHorizontal: 10,
                         alignItems: "center",
-                        minWidth: 65,
+                        minWidth: 58,
+                        flexShrink: 0,
+                        minHeight: 54,
+                        justifyContent: "center",
                 },
                 dateTabSelected: { backgroundColor: colors.primarySolid },
                 dateTabDay: {
+                        minWidth: 34,
+                        paddingHorizontal: 2,
+                        textAlign: "center",
+                        lineHeight: 18,
                         fontSize: 12,
                         color: colors.textSecondary,
                         fontWeight: "bold",
                 },
                 dateTabNumber: {
-                        fontSize: 20,
+                        alignSelf: "stretch",
+                        minWidth: 38,
+                        paddingHorizontal: 2,
+                        textAlign: "center",
+                        lineHeight: 22,
+                        fontSize: 16,
                         color: colors.text,
                         fontWeight: "bold",
                         marginTop: 2,
                 },
 
-                statusPills: { paddingHorizontal: 16 },
+                statusPills: { flexGrow: 0 },
                 statusPill: {
                         backgroundColor: colors.secondaryLight,
-                        borderRadius: 20,
+                        borderRadius: 12,
                         paddingVertical: 6,
-                        paddingHorizontal: 16,
-                        marginRight: 10,
+                        paddingHorizontal: 11,
                 },
                 statusPillSelected: { backgroundColor: colors.primarySolid },
                 statusPillText: {
-                        fontSize: 13,
-                        color: colors.textSecondary,
-                        fontWeight: "bold",
+                        fontSize: 12,
+                        color: colors.blueText,
                 },
                 textWhite: { color: colors.onPrimary },
 
-                listContainer: { padding: 16 },
+                listContainer: {
+                        paddingHorizontal: 18,
+                        paddingTop: 8,
+                        paddingBottom: 24,
+                },
                 emptyText: {
                         textAlign: "center",
                         color: colors.textSecondary,

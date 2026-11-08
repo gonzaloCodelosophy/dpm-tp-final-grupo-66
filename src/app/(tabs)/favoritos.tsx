@@ -1,3 +1,4 @@
+import { BotonVolver } from "../../components/boton-volver";
 import { useTema } from "../../context/tema.context";
 import { useCallback, useState } from "react";
 import {
@@ -122,20 +123,10 @@ export default function FavoritosScreen() {
                         >
                                 <View style={styles.lista}>
                                         <View style={styles.cabecera}>
-                                                <Pressable
-                                                        accessibilityRole="button"
-                                                        accessibilityLabel="Volver atrás"
+                                                <BotonVolver
                                                         style={styles.volver}
                                                         onPress={volver}
-                                                >
-                                                        <Ionicons
-                                                                name="chevron-back"
-                                                                size={24}
-                                                                color={
-                                                                        colors.textSecondary
-                                                                }
-                                                        />
-                                                </Pressable>
+                                                />
                                                 <Image
                                                         source={require("../../../assets/images/logo-colon.png")}
                                                         style={styles.logo}
@@ -660,14 +651,6 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 volver: {
                         position: "absolute",
                         left: 0,
-                        width: 44,
-                        height: 44,
-                        borderRadius: 22,
-                        backgroundColor: colors.surface,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                        alignItems: "center",
-                        justifyContent: "center",
                 },
                 logo: { width: 90, height: 48 },
                 titulo: {
