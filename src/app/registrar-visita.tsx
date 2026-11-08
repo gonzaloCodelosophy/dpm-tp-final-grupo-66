@@ -1,4 +1,4 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
@@ -19,12 +19,12 @@ export default function RegistrarVisitaScreen() {
     {
       titulo: 'Escanear código QR', descripcion: 'Encontrá el código en el lugar.',
       icono: 'qr-code-outline' as const, color: '#147885', fondo: colors.blueLight,
-      abrir: () => Alert.alert('Escanear código QR', 'El lector de códigos QR todavía no está disponible. Por ahora podés registrar la visita con tu ubicación o eligiendo un lugar.'),
+      abrir: () => router.push('/(tabs)/recorrido/escanear-qr'),
     },
     {
       titulo: 'Cargar manualmente', descripcion: 'Buscá y seleccioná un lugar.',
       icono: 'create-outline' as const, color: '#A74B26', fondo: colors.primaryLight,
-      abrir: () => router.push({ pathname: '/(tabs)/explore', params: { vista: 'lista' } }),
+      abrir: () => router.push({ pathname: '/(tabs)/recorrido/recuerdo-visita', params: { modo: 'manual' } }),
     },
   ];
 

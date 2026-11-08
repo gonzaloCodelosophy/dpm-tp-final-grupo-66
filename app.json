@@ -9,7 +9,12 @@
                 "userInterfaceStyle": "automatic",
                 "newArchEnabled": true,
                 "ios": {
-                        "supportsTablet": true
+                        "supportsTablet": true,
+                        "infoPlist": {
+                                "UIBackgroundModes": [
+                                        "audio"
+                                ]
+                        }
                 },
                 "android": {
                         "adaptiveIcon": {
@@ -20,7 +25,11 @@
                         },
                         "edgeToEdgeEnabled": true,
                         "predictiveBackGestureEnabled": false,
-                        "package": "com.anonymous.turismocolon"
+                        "package": "com.anonymous.turismocolon",
+                        "permissions": [
+                                "android.permission.FOREGROUND_SERVICE",
+                                "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+                        ]
                 },
                 "web": {
                         "output": "static",
@@ -71,8 +80,23 @@
                                 "expo-image-picker",
                                 {
                                         "photosPermission": "Usamos tus fotos para que puedas elegir una imagen de perfil.",
-                                        "cameraPermission": false,
+                                        "cameraPermission": "Usamos la cámara para escanear el QR de un lugar.",
                                         "microphonePermission": false
+                                }
+                        ],
+                        [
+                                "expo-camera",
+                                {
+                                        "cameraPermission": "Usamos la cámara para escanear el QR de un lugar.",
+                                        "recordAudioAndroid": false,
+                                        "microphonePermission": false
+                                }
+                        ],
+                        [
+                                "expo-audio",
+                                {
+                                        "microphonePermission": false,
+                                        "recordAudioAndroid": false
                                 }
                         ]
                 ],
