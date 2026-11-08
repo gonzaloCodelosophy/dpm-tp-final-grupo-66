@@ -45,27 +45,15 @@ export default function PerfilScreen() {
                 titulo: string;
                 descripcion: string;
                 icono: React.ComponentProps<typeof Ionicons>["name"];
-                fondo: string;
+                grupo: "Mi actividad" | "Preferencias" | "Cuenta y ayuda";
                 color: string;
                 onPress: () => void;
         }[] = [
                 {
-                        titulo: "Mi recorrido",
-                        descripcion: "Tus visitas, fotos y notas",
-                        icono: "git-network-outline",
-                        fondo: "#FDE9DC",
-                        color: colors.primary,
-                        onPress: () =>
-                                abrirSeccion(
-                                        "Mi recorrido",
-                                        "Próximamente vas a poder consultar tus visitas, fotos y notas desde acá.",
-                                ),
-                },
-                {
                         titulo: "Mis favoritos",
                         descripcion: "Lugares que guardaste",
                         icono: "heart-outline",
-                        fondo: "#FCE0DA",
+                        grupo: "Mi actividad",
                         color: colors.primary,
                         onPress: () => router.push("/(tabs)/favoritos"),
                 },
@@ -73,7 +61,7 @@ export default function PerfilScreen() {
                         titulo: "Eventos guardados",
                         descripcion: "Actividades que te interesan",
                         icono: "calendar-outline",
-                        fondo: "#EDE3F6",
+                        grupo: "Mi actividad",
                         color: "#7955A0",
                         onPress: () =>
                                 abrirSeccion(
@@ -82,14 +70,14 @@ export default function PerfilScreen() {
                                 ),
                 },
                 {
-                        titulo: "Mis preferencias",
-                        descripcion: "Categorías, radio de avisos y más",
+                        titulo: "Mis intereses",
+                        descripcion: "Las categorías que te interesan",
                         icono: "options-outline",
-                        fondo: colors.secondaryLight,
+                        grupo: "Preferencias",
                         color: colors.secondary,
                         onPress: () =>
                                 abrirSeccion(
-                                        "Mis preferencias",
+                                        "Mis intereses",
                                         "La configuración de tus preferencias estará disponible próximamente.",
                                 ),
                 },
@@ -97,7 +85,7 @@ export default function PerfilScreen() {
                         titulo: "Notificaciones",
                         descripcion: "Avisos de eventos y cercanía",
                         icono: "notifications-outline",
-                        fondo: colors.yellowLight,
+                        grupo: "Preferencias",
                         color: "#B58227",
                         onPress: () =>
                                 abrirSeccion(
@@ -109,7 +97,7 @@ export default function PerfilScreen() {
                         titulo: "Apariencia",
                         descripcion: "Tema claro, oscuro o del sistema",
                         icono: "moon-outline",
-                        fondo: "#DEF0F5",
+                        grupo: "Preferencias",
                         color: "#24657C",
                         onPress: () =>
                                 abrirSeccion(
@@ -121,13 +109,21 @@ export default function PerfilScreen() {
                         titulo: "Ayuda y soporte",
                         descripcion: "Resolvé tus dudas sobre la app",
                         icono: "help-circle-outline",
-                        fondo: colors.secondaryLight,
+                        grupo: "Cuenta y ayuda",
                         color: colors.secondary,
                         onPress: () =>
                                 abrirSeccion(
                                         "Ayuda y soporte",
                                         "Las preguntas frecuentes y los canales de soporte estarán disponibles próximamente.",
                                 ),
+                },
+                {
+                        titulo: "Cerrar sesión",
+                        descripcion: "Salir de tu cuenta",
+                        icono: "log-out-outline",
+                        grupo: "Cuenta y ayuda",
+                        color: colors.error,
+                        onPress: () => setModalVisible(true),
                 },
         ];
 
@@ -140,15 +136,7 @@ export default function PerfilScreen() {
                                 onPress={opcion.onPress}
                                 activeOpacity={0.7}
                         >
-                                <View
-                                        style={[
-                                                styles.optionIcon,
-                                                {
-                                                        backgroundColor:
-                                                                opcion.fondo,
-                                                },
-                                        ]}
-                                >
+                                <View style={styles.optionIcon}>
                                         <Ionicons
                                                 name={opcion.icono}
                                                 size={24}
@@ -156,7 +144,14 @@ export default function PerfilScreen() {
                                         />
                                 </View>
                                 <View style={styles.optionText}>
-                                        <Text style={styles.optionTitle}>
+                                        <Text
+                                                style={[
+                                                        styles.optionTitle,
+                                                        opcion.titulo ===
+                                                                "Cerrar sesión" &&
+                                                                styles.btnLogoutText,
+                                                ]}
+                                        >
                                                 {opcion.titulo}
                                         </Text>
                                         <Text style={styles.optionDescription}>
@@ -300,54 +295,39 @@ export default function PerfilScreen() {
                                                         </TouchableOpacity>
                                                 </View>
 
-                                                <View style={styles.menu}>
-                                                        {opciones
-                                                                .slice(0, 3)
-                                                                .map((opcion) =>
-                                                                        renderOpcion(
-                                                                                opcion,
-                                                                        ),
-                                                                )}
-                                                </View>
-                                                <View
-                                                        style={[
-                                                                styles.menu,
-                                                                styles.settings,
-                                                        ]}
-                                                >
-                                                        {opciones
-                                                                .slice(3)
-                                                                .map((opcion) =>
-                                                                        renderOpcion(
-                                                                                opcion,
-                                                                        ),
-                                                                )}
-                                                </View>
-
-                                                <TouchableOpacity
-                                                        style={styles.btnLogout}
-                                                        onPress={() =>
-                                                                setModalVisible(
-                                                                        true,
-                                                                )
-                                                        }
-                                                        activeOpacity={0.8}
-                                                >
-                                                        <Ionicons
-                                                                name="log-out-outline"
-                                                                size={22}
-                                                                color={
-                                                                        colors.error
-                                                                }
-                                                        />
-                                                        <Text
+                                                {(
+                                                        [
+                                                                "Mi actividad",
+                                                                "Preferencias",
+                                                                "Cuenta y ayuda",
+                                                        ] as const
+                                                ).map((grupo) => (
+                                                        <View
+                                                                key={grupo}
                                                                 style={
-                                                                        styles.btnLogoutText
+                                                                        styles.menu
                                                                 }
                                                         >
-                                                                Cerrar sesión
-                                                        </Text>
-                                                </TouchableOpacity>
+                                                                <Text
+                                                                        style={
+                                                                                styles.sectionTitle
+                                                                        }
+                                                                >
+                                                                        {grupo}
+                                                                </Text>
+                                                                {opciones
+                                                                        .filter(
+                                                                                (
+                                                                                        opcion,
+                                                                                ) =>
+                                                                                        opcion.grupo ===
+                                                                                        grupo,
+                                                                        )
+                                                                        .map(
+                                                                                renderOpcion,
+                                                                        )}
+                                                        </View>
+                                                ))}
                                         </>
                                 ) : (
                                         <View style={styles.guestCard}>
@@ -536,29 +516,26 @@ const styles = StyleSheet.create({
                 borderColor: colors.primaryLight,
         },
         editText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
-        menu: { gap: 8, marginBottom: 12 },
-        settings: {
-                gap: 0,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: 16,
-                overflow: "hidden",
+        menu: { marginBottom: spacing.lg },
+        sectionTitle: {
+                fontSize: 13,
+                fontWeight: "600",
+                color: colors.textSecondary,
+                marginBottom: spacing.sm,
+                marginTop: spacing.sm,
         },
         option: {
                 flexDirection: "row",
                 alignItems: "center",
                 gap: 12,
-                padding: 12,
+                paddingVertical: 14,
                 minHeight: 70,
-                backgroundColor: "#FFFCF7",
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: colors.border,
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderBottomColor: colors.border,
         },
         optionIcon: {
-                width: 42,
-                height: 42,
-                borderRadius: 21,
+                width: 32,
+                height: 32,
                 alignItems: "center",
                 justifyContent: "center",
         },
@@ -632,18 +609,6 @@ const styles = StyleSheet.create({
                 fontSize: 14,
                 color: colors.textSecondary,
                 marginTop: spacing.xs,
-        },
-        btnLogout: {
-                flexDirection: "row",
-                backgroundColor: "transparent",
-                minHeight: 48,
-                borderRadius: borderRadius.pill,
-                justifyContent: "flex-start",
-                alignItems: "center",
-                gap: spacing.sm,
-                borderTopWidth: 1,
-                borderTopColor: colors.border,
-                paddingHorizontal: spacing.md,
         },
         btnLogoutText: {
                 color: colors.error,
