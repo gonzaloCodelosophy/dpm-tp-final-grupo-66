@@ -2,7 +2,6 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useTema } from '../context/tema.context';
@@ -96,10 +95,8 @@ export default function VisitasScreen() {
             onPress={() => router.push('/(tabs)/recorrido/registrar-visita')}
             style={({ pressed }) => [styles.registrar, pressed && { opacity: 0.8 }]}
           >
-            <LinearGradient colors={['#FF9861', '#F65F4F']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.degradado}>
-              <Ionicons name="add-circle-outline" size={25} color="#FFFFFF" />
-              <Text style={styles.registrarTexto}>Registrar una visita</Text>
-            </LinearGradient>
+            <Ionicons name="add-circle-outline" size={20} color={colors.onPrimary} />
+            <Text style={styles.registrarTexto}>Registrar una visita</Text>
           </Pressable>
           <Text style={styles.seccion}>Lugares visitados</Text>
         </>
@@ -173,8 +170,7 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   logo: { width: 90, height: 48 },
   titulo: { fontFamily: fuenteTitulo, fontSize: 30, fontWeight: '700', color: colors.secondary, marginBottom: 6 },
   descripcion: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, marginBottom: 24 },
-  registrar: { borderRadius: 20, overflow: 'hidden', marginBottom: 28 },
-  degradado: { minHeight: 58, paddingHorizontal: 18, paddingVertical: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  registrarTexto: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', flexShrink: 1 },
+  registrar: { minHeight: 48, borderRadius: 24, backgroundColor: colors.primarySolid, paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 28 },
+  registrarTexto: { fontSize: 14, fontWeight: '600', color: colors.onPrimary, flexShrink: 1 },
   seccion: { fontSize: 20, fontWeight: '700', color: colors.secondary, marginBottom: 16 },
 });
