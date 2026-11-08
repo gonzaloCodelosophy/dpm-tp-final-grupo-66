@@ -8,7 +8,7 @@ import { useFavoritos } from "../hooks/use-favoritos";
 import { guardarFavorito } from "../services/favoritos.service";
 import { colors as paletaColors } from "../styles/theme";
 
-export function BotonLugarFavorito({ id }: { id: string }) {
+export function BotonLugarFavorito({ id, soloIcono = false }: { id: string; soloIcono?: boolean }) {
         const { colors, styles } = useEstilos();
 
         const router = useRouter();
@@ -106,7 +106,8 @@ export function BotonLugarFavorito({ id }: { id: string }) {
                         }}
                         style={[
                                 styles.boton,
-                                activo && styles.activo,
+                                activo && !soloIcono && styles.activo,
+                                soloIcono && styles.soloIcono,
                                 (cargando || guardando) && styles.deshabilitado,
                         ]}
                 >
@@ -130,6 +131,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         justifyContent: "center",
                 },
                 activo: { backgroundColor: colors.primaryLight },
+                soloIcono: { backgroundColor: "transparent", borderWidth: 0 },
                 deshabilitado: { opacity: 0.5 },
         });
 

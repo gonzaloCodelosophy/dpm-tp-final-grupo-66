@@ -1,3 +1,8 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { categoriasIntereses } from "../../constants/categorias-intereses";
+import { TarjetaLugar } from "./tarjeta-lugar";
+import { fuenteTitulo } from "../styles/inicio";
 import { useTema } from "../context/tema.context";
 import { useEffect, useMemo, useRef, useState } from "react";
 import MapView, { Marker } from "react-native-maps";
@@ -13,10 +18,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 
-import { REGION_INICIAL_COLON, DELTA_CERCANIA } from "../../constants/mapa";
+import { REGION_INICIAL_COLON, DELTA_CERCANIA, ALTURA_INICIAL_MAPA, ZOOM_INICIAL_MAPA } from "../../constants/mapa";
 import { TarjetaMapa } from "./tarjeta-mapa";
-import { BotonLugarFavorito } from "./boton-lugar-favorito";
-import { distanciaMetros, textoDistancia } from "../services/distancias";
+import { distanciaMetros } from "../services/distancias";
 import { useUbicacion } from "../hooks/use-ubicacion";
 import type { Lugar } from "../types/Lugar";
 import type { Categoria } from "../types/Categoria";
@@ -34,22 +38,22 @@ export interface MapaLugaresProps {
 
 export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
         const { colors, styles } = useEstilos();
+        const router = useRouter();
 
         const mapa = useRef<MapView>(null);
         const ubicacion = useUbicacion();
         const [seleccionId, setSeleccionId] = useState<string | null>(null);
-        const [verTodos, setVerTodos] = useState(false);
         const [altoPanel, setAltoPanel] = useState(0);
         const [mapReady, setMapReady] = useState(false);
         const [centrarPendiente, setCentrarPendiente] = useState(false);
         const [seguirSinUbicacion, setSeguirSinUbicacion] = useState(false);
 
-        // La configuración propia usa lat/lon; MapView requiere latitude/longitude.
-        const regionInicial = {
-                latitude: REGION_INICIAL_COLON.lat,
-                longitude: REGION_INICIAL_COLON.lon,
-                latitudeDelta: REGION_INICIAL_COLON.latDelta,
-                longitudeDelta: REGION_INICIAL_COLON.lonDelta,
+        const camaraInicial = {
+                center: { latitude: REGION_INICIAL_COLON.lat, longitude: REGION_INICIAL_COLON.lon },
+                altitude: ALTURA_INICIAL_MAPA,
+                zoom: ZOOM_INICIAL_MAPA,
+                heading: 0,
+                pitch: 0,
         };
 
         useEffect(() => {
@@ -159,7 +163,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
                         <MapView
                                 ref={mapa}
                                 style={styles.mapa}
-                                initialRegion={regionInicial}
+                                initialCamera={camaraInicial}
                                 onMapReady={() => setMapReady(true)}
                                 mapPadding={{
                                         top: 12,
@@ -226,11 +230,15 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
                                                                                 ? 0.55
                                                                                 : 1
                                                                 }
-                                                                pinColor={
-                                                                        categoria?.color ??
-                                                                        colors.primary
-                                                                }
-                                                        />
+                                                                anchor={{ x: 0.5, y: 1 }}
+                                                        >
+                                                                <View style={styles.marcador} collapsable={false}>
+                                                                        <View style={[styles.circuloMarcador, { backgroundColor: categoria?.color ?? colors.primary }]}>
+                                                                                <MaterialCommunityIcons name={categoriasIntereses.find(item => item.id === place.categoriaId)?.icono ?? "map-marker"} size={17} color="#FFFFFF" />
+                                                                        </View>
+                                                                        <View style={[styles.puntaMarcador, { borderTopColor: categoria?.color ?? colors.primary }]} />
+                                                                </View>
+                                                        </Marker>
                                                 );
                                         })}
                         </MapView>
@@ -356,18 +364,16 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
                                         }
                                 >
                                         <View style={styles.cabeceraCercanos}>
-                                                <Text style={styles.titulo}>
+                                                <Text style={styles.tituloCercanos}>
                                                         {ubicacion.coordenadas
-                                                                ? "Cerca tuyo"
+                                                                ? "Lo que tenés cerca"
                                                                 : "Lugares"}
                                                 </Text>
                                                 {cercanos.length > 2 && (
                                                         <Pressable
                                                                 accessibilityRole="button"
                                                                 onPress={() =>
-                                                                        setVerTodos(
-                                                                                !verTodos,
-                                                                        )
+                                                                        router.setParams({ vista: "lista" })
                                                                 }
                                                                 style={
                                                                         styles.continuar
@@ -378,9 +384,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
                                                                                 styles.enlace
                                                                         }
                                                                 >
-                                                                        {verTodos
-                                                                                ? "Ver menos"
-                                                                                : "Ver todos"}
+                                                                        Ver lista →
                                                                 </Text>
                                                         </Pressable>
                                                 )}
@@ -389,80 +393,9 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
                                                 style={styles.listaCercanos}
                                                 keyboardShouldPersistTaps="handled"
                                         >
-                                                {(verTodos
-                                                        ? cercanos
-                                                        : cercanos.slice(0, 2)
-                                                ).map(
-                                                        ({
-                                                                lugar,
-                                                                distancia,
-                                                        }) => (
-                                                                <View
-                                                                        key={
-                                                                                lugar.id
-                                                                        }
-                                                                        style={
-                                                                                styles.filaCercana
-                                                                        }
-                                                                >
-                                                                        <Pressable
-                                                                                accessibilityRole="button"
-                                                                                onPress={() =>
-                                                                                        seleccionar(
-                                                                                                lugar,
-                                                                                        )
-                                                                                }
-                                                                                style={
-                                                                                        styles.lugarCercano
-                                                                                }
-                                                                        >
-                                                                                <Ionicons
-                                                                                        name="location-outline"
-                                                                                        size={
-                                                                                                22
-                                                                                        }
-                                                                                        color={
-                                                                                                categorias.find(
-                                                                                                        (
-                                                                                                                item,
-                                                                                                        ) =>
-                                                                                                                item.id ===
-                                                                                                                lugar.categoriaId,
-                                                                                                )
-                                                                                                        ?.color ??
-                                                                                                colors.primary
-                                                                                        }
-                                                                                />
-                                                                                <Text
-                                                                                        style={
-                                                                                                styles.nombreCercano
-                                                                                        }
-                                                                                >
-                                                                                        {
-                                                                                                lugar.nombre
-                                                                                        }
-                                                                                </Text>
-                                                                                {distancia !==
-                                                                                        null && (
-                                                                                        <Text
-                                                                                                style={
-                                                                                                        styles.distancia
-                                                                                                }
-                                                                                        >
-                                                                                                {textoDistancia(
-                                                                                                        distancia,
-                                                                                                )}
-                                                                                        </Text>
-                                                                                )}
-                                                                        </Pressable>
-                                                                        <BotonLugarFavorito
-                                                                                id={
-                                                                                        lugar.id
-                                                                                }
-                                                                        />
-                                                                </View>
-                                                        ),
-                                                )}
+                                                {cercanos.slice(0, 2).map(({ lugar }) => (
+                                                        <TarjetaLugar key={lugar.id} lugar={lugar} nombreCategoria={categorias.find(item => item.id === lugar.categoriaId)?.nombre ?? ''} onPress={() => seleccionar(lugar)} />
+                                                ))}
                                                 {!cercanos.length && (
                                                         <Text
                                                                 style={
@@ -523,6 +456,9 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         borderTopLeftRadius: borderRadius.lg,
                         borderTopRightRadius: borderRadius.lg,
                 },
+                marcador: { width: 38, height: 44, alignItems: "center", paddingTop: 3 },
+                circuloMarcador: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
+                puntaMarcador: { width: 0, height: 0, borderLeftWidth: 5, borderRightWidth: 5, borderTopWidth: 7, borderLeftColor: "transparent", borderRightColor: "transparent", marginTop: -2 },
                 panelCercanos: {
                         maxHeight: "60%",
                         position: "absolute",
@@ -535,6 +471,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         borderTopRightRadius: borderRadius.lg,
                 },
                 cabeceraCercanos: {
+                        marginBottom: 8,
                         flexDirection: "row",
                         justifyContent: "space-between",
                         alignItems: "center",
@@ -564,7 +501,9 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         color: colors.textSecondary,
                         fontSize: fontSize.caption,
                 },
+                tituloCercanos: { fontFamily: fuenteTitulo, fontSize: 15, lineHeight: 20, fontWeight: "700", color: colors.secondary, flexShrink: 1 },
                 titulo: {
+                        fontFamily: fuenteTitulo,
                         fontSize: fontSize.subtitle,
                         fontWeight: "700",
                         color: colors.secondary,
