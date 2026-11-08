@@ -6,19 +6,30 @@ import { useFavoritos } from '../../hooks/use-favoritos';
 import { TarjetaLugar } from '../../components/tarjeta-lugar';
 import { EstadoCatalogo } from '../../components/estado-catalogo';
 import { EstadoPantalla } from '../../components/estado-pantalla';
+import { useAuth } from '../../context/auth.context';
 import { colors, fontSize, spacing } from '../../styles/theme';
 
 export default function FavoritosScreen() {
+  const { usuario, status } = useAuth();
   const { datos, cargando, sinConexion, error, reintentar } = useCatalogo();
   const lugares = datos?.lugares ?? [];
-  const guardados = useFavoritos(lugares.map(lugar => lugar.id));
+  const autenticado = status === 'autenticado' && usuario !== null;
+  const guardados = useFavoritos(autenticado ? lugares.map(lugar => lugar.id) : []);
   const favoritos = lugares.filter(lugar => lugar.activo && guardados.favoritos.includes(lugar.id));
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Text style={styles.titulo}>Mis favoritos</Text>
-      <Text style={styles.descripcion}>Tus lugares guardados en este dispositivo. No necesitás iniciar sesión.</Text>
-      {cargando || guardados.cargando ? <EstadoPantalla tipo="cargando" /> : datos === null ? (
+      {autenticado && <Text style={styles.descripcion}>Tus lugares guardados aparecen acá.</Text>}
+      {status === 'cargando' || cargando || (autenticado && guardados.cargando) ? <EstadoPantalla tipo="cargando" /> : !autenticado ? (
+        <EstadoPantalla
+          tipo="vacio"
+          titulo={status === 'biometria_requerida' ? 'Desbloqueá tu sesión' : 'Iniciá sesión para ver tus favoritos'}
+          mensaje={status === 'biometria_requerida' ? 'Autenticá tu sesión para consultar tus lugares guardados.' : 'Necesitás iniciar sesión para guardar y ver lugares favoritos.'}
+          accion={status === 'biometria_requerida' ? undefined : 'Iniciar sesión'}
+          onPress={status === 'biometria_requerida' ? undefined : () => router.push('/(auth)/login' as any)}
+        />
+      ) : datos === null ? (
         <EstadoPantalla tipo={sinConexion ? 'sinConexion' : 'error'} onPress={() => { void reintentar(); }} />
       ) : guardados.error ? (
         <EstadoPantalla tipo="error" titulo="No pudimos leer tus favoritos" mensaje="Intentá de nuevo en unos momentos." onPress={guardados.reintentar} />
