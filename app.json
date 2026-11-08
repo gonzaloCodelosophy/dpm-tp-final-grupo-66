@@ -1,70 +1,83 @@
 {
-  "expo": {
-    "name": "turismo-colon",
-    "slug": "turismo-colon",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "turismocolon",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.turismocolon"
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [
-      "./plugins/with-backend-http",
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+        "expo": {
+                "name": "turismo-colon",
+                "slug": "turismo-colon",
+                "version": "1.0.0",
+                "orientation": "portrait",
+                "icon": "./assets/images/icon.png",
+                "scheme": "turismocolon",
+                "userInterfaceStyle": "automatic",
+                "newArchEnabled": true,
+                "ios": {
+                        "supportsTablet": true
+                },
+                "android": {
+                        "adaptiveIcon": {
+                                "backgroundColor": "#E6F4FE",
+                                "foregroundImage": "./assets/images/android-icon-foreground.png",
+                                "backgroundImage": "./assets/images/android-icon-background.png",
+                                "monochromeImage": "./assets/images/android-icon-monochrome.png"
+                        },
+                        "edgeToEdgeEnabled": true,
+                        "predictiveBackGestureEnabled": false,
+                        "package": "com.anonymous.turismocolon"
+                },
+                "web": {
+                        "output": "static",
+                        "favicon": "./assets/images/favicon.png"
+                },
+                "plugins": [
+                        "./plugins/with-backend-http",
+                        "expo-router",
+                        [
+                                "expo-splash-screen",
+                                {
+                                        "image": "./assets/images/splash-icon.png",
+                                        "imageWidth": 200,
+                                        "resizeMode": "contain",
+                                        "backgroundColor": "#ffffff",
+                                        "dark": {
+                                                "backgroundColor": "#000000"
+                                        }
+                                }
+                        ],
+                        "expo-secure-store",
+                        [
+                                "expo-notifications",
+                                {
+                                        "icon": "./assets/images/notification-bell.png",
+                                        "color": "#ffffff",
+                                        "defaultChannel": "default",
+                                        "sounds": [],
+                                        "enableBackgroundRemoteNotifications": false
+                                }
+                        ],
+                        "expo-sqlite",
+                        [
+                                "expo-location",
+                                {
+                                        "locationWhenInUsePermission": "Usamos tu ubicación para mostrar los lugares cercanos y sus distancias.",
+                                        "locationAlwaysAndWhenInUsePermission": false,
+                                        "locationAlwaysPermission": false
+                                }
+                        ],
+                        [
+                                "expo-navigation-bar",
+                                {
+                                        "barStyle": "dark"
+                                }
+                        ]
+                ],
+                "experiments": {
+                        "typedRoutes": true,
+                        "reactCompiler": true
+                },
+                "androidStatusBar": {
+                        "barStyle": "dark-content"
+                },
+                "androidNavigationBar": {
+                        "barStyle": "dark-content",
+                        "enforceContrast": false
+                }
         }
-      ],
-      "expo-secure-store",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/notification-bell.png",
-          "color": "#ffffff",
-          "defaultChannel": "default",
-          "sounds": [],
-          "enableBackgroundRemoteNotifications": false
-        }
-      ],
-      "expo-sqlite",
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Usamos tu ubicación para mostrar los lugares cercanos y sus distancias.",
-          "locationAlwaysAndWhenInUsePermission": false,
-          "locationAlwaysPermission": false
-        }
-      ]
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    }
-  }
 }
