@@ -1,321 +1,764 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@react-native-vector-icons/ionicons';
-import { useAuth } from '../../context/auth.context';
-import { borderRadius, colors, fontSize, spacing } from '../../styles/theme';
+        Alert,
+        Modal,
+        ScrollView,
+        StyleSheet,
+        Text,
+        TouchableOpacity,
+        TouchableWithoutFeedback,
+        View,
+} from "react-native";
+import { Image } from "expo-image";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { colorsInicio, fuenteTitulo } from "../../styles/inicio";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
+import { useAuth } from "../../context/auth.context";
+import { borderRadius, colors, fontSize, spacing } from "../../styles/theme";
 
 export default function PerfilScreen() {
-  const router = useRouter();
-  const { usuario, status, cerrarSesion } = useAuth();
-  const [modalVisible, setModalVisible] = useState(false);
+        const router = useRouter();
+        const { usuario, status, cerrarSesion } = useAuth();
+        const [modalVisible, setModalVisible] = useState(false);
 
-  async function confirmarCerrarSesion() {
-    setModalVisible(false);
-    await cerrarSesion();
-    router.replace('/(auth)/login' as any);
-  }
+        async function confirmarCerrarSesion() {
+                setModalVisible(false);
+                await cerrarSesion();
+                router.replace("/(auth)/login" as any);
+        }
 
-  const iniciales = usuario?.nombre
-    ? usuario.nombre
-      .split(' ')
-      .map((n: string) => n[0])
-      .join('')
-      .substring(0, 2)
-      .toUpperCase()
-    : 'U';
+        const iniciales = usuario?.nombre
+                ? usuario.nombre
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                          .toUpperCase()
+                : "U";
 
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Mi Perfil</Text>
-        </View>
+        function abrirSeccion(titulo: string, mensaje: string) {
+                Alert.alert(titulo, mensaje);
+        }
 
-        {status === 'autenticado' && usuario ? (
-          <>
-            <View style={styles.profileCard}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>{iniciales}</Text>
-              </View>
-              <Text style={styles.userName}>{usuario.nombre}</Text>
-              <Text style={styles.userEmail}>{usuario.email}</Text>
-            </View>
+        const opciones: {
+                titulo: string;
+                descripcion: string;
+                icono: React.ComponentProps<typeof Ionicons>["name"];
+                fondo: string;
+                color: string;
+                onPress: () => void;
+        }[] = [
+                {
+                        titulo: "Mi recorrido",
+                        descripcion: "Tus visitas, fotos y notas",
+                        icono: "git-network-outline",
+                        fondo: "#FDE9DC",
+                        color: colors.primary,
+                        onPress: () =>
+                                abrirSeccion(
+                                        "Mi recorrido",
+                                        "Próximamente vas a poder consultar tus visitas, fotos y notas desde acá.",
+                                ),
+                },
+                {
+                        titulo: "Mis favoritos",
+                        descripcion: "Lugares que guardaste",
+                        icono: "heart-outline",
+                        fondo: "#FCE0DA",
+                        color: colors.primary,
+                        onPress: () => router.push("/(tabs)/favoritos"),
+                },
+                {
+                        titulo: "Eventos guardados",
+                        descripcion: "Actividades que te interesan",
+                        icono: "calendar-outline",
+                        fondo: "#EDE3F6",
+                        color: "#7955A0",
+                        onPress: () =>
+                                abrirSeccion(
+                                        "Eventos guardados",
+                                        "La lista de eventos guardados estará disponible próximamente. Podés consultar las actividades desde la agenda.",
+                                ),
+                },
+                {
+                        titulo: "Notificaciones",
+                        descripcion: "Avisos de eventos y cercanía",
+                        icono: "notifications-outline",
+                        fondo: colors.yellowLight,
+                        color: "#B58227",
+                        onPress: () =>
+                                abrirSeccion(
+                                        "Notificaciones",
+                                        "La configuración de avisos estará disponible próximamente. Los recordatorios se gestionan desde cada evento en la agenda.",
+                                ),
+                },
+                {
+                        titulo: "Apariencia",
+                        descripcion: "Tema claro, oscuro o del sistema",
+                        icono: "moon-outline",
+                        fondo: "#DEF0F5",
+                        color: "#24657C",
+                        onPress: () =>
+                                abrirSeccion(
+                                        "Apariencia",
+                                        "La selección del tema estará disponible próximamente.",
+                                ),
+                },
+                {
+                        titulo: "Ayuda y soporte",
+                        descripcion: "Resolvé tus dudas sobre la app",
+                        icono: "help-circle-outline",
+                        fondo: colors.secondaryLight,
+                        color: colors.secondary,
+                        onPress: () =>
+                                abrirSeccion(
+                                        "Ayuda y soporte",
+                                        "Las preguntas frecuentes y los canales de soporte estarán disponibles próximamente.",
+                                ),
+                },
+        ];
 
-            <TouchableOpacity
-              style={styles.btnLogout}
-              onPress={() => setModalVisible(true)}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="log-out-outline" size={22} color={colors.error} />
-              <Text style={styles.btnLogoutText}>Cerrar Sesión</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <View style={styles.guestCard}>
-            <View style={styles.guestIconCircle}>
-              <Ionicons name="person-outline" size={40} color={colors.secondary} />
-            </View>
-            <Text style={styles.guestTitle}>Modo Visitante</Text>
-            <Text style={styles.guestSubtitle}>
-              Podés explorar el mapa y lugares libremente. Iniciá sesión para guardar tus eventos favoritos y registradas.
-            </Text>
+        function renderOpcion(opcion: (typeof opciones)[number]) {
+                return (
+                        <TouchableOpacity
+                                key={opcion.titulo}
+                                accessibilityRole="button"
+                                style={styles.option}
+                                onPress={opcion.onPress}
+                                activeOpacity={0.7}
+                        >
+                                <View
+                                        style={[
+                                                styles.optionIcon,
+                                                {
+                                                        backgroundColor:
+                                                                opcion.fondo,
+                                                },
+                                        ]}
+                                >
+                                        <Ionicons
+                                                name={opcion.icono}
+                                                size={24}
+                                                color={opcion.color}
+                                        />
+                                </View>
+                                <View style={styles.optionText}>
+                                        <Text style={styles.optionTitle}>
+                                                {opcion.titulo}
+                                        </Text>
+                                        <Text style={styles.optionDescription}>
+                                                {opcion.descripcion}
+                                        </Text>
+                                </View>
+                                <Ionicons
+                                        name="chevron-forward"
+                                        size={20}
+                                        color={colorsInicio.secondary}
+                                />
+                        </TouchableOpacity>
+                );
+        }
 
-            <TouchableOpacity
-              style={styles.btnLogin}
-              onPress={() => router.push('/(auth)/login' as any)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.btnLoginText}>Iniciar sesión / Registrarse</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
+        return (
+                <SafeAreaView
+                        edges={["top", "left", "right"]}
+                        style={{ flex: 1, backgroundColor: colors.background }}
+                >
+                        <ScrollView contentContainerStyle={styles.container}>
+                                <View style={styles.header}>
+                                        <Image
+                                                source={require("../../../assets/images/logo-colon.png")}
+                                                style={styles.logo}
+                                                contentFit="contain"
+                                        />
+                                        <Image
+                                                source={require("../../../assets/images/ilustracion-colon-puente.png")}
+                                                style={styles.puente}
+                                                contentFit="contain"
+                                        />
+                                        <Text style={styles.headerTitle}>
+                                                Perfil
+                                        </Text>
+                                        <Text style={styles.headerSubtitle}>
+                                                Tu espacio personal en Colón
+                                        </Text>
+                                </View>
 
-      {/* Modal flotante personalizado de cierre de sesion */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>¿Cerrar sesión?</Text>
-                <Text style={styles.modalBody}>
-                  Vas a tener que volver a ingresar para acceder a tus favoritos y visitas guardadas.
-                </Text>
+                                {status === "autenticado" && usuario ? (
+                                        <>
+                                                <View
+                                                        style={
+                                                                styles.profileCard
+                                                        }
+                                                >
+                                                        <View
+                                                                style={
+                                                                        styles.avatarCircle
+                                                                }
+                                                        >
+                                                                <Text
+                                                                        style={
+                                                                                styles.avatarText
+                                                                        }
+                                                                >
+                                                                        {
+                                                                                iniciales
+                                                                        }
+                                                                </Text>
+                                                        </View>
+                                                        <View
+                                                                style={
+                                                                        styles.userInfo
+                                                                }
+                                                        >
+                                                                <Text
+                                                                        style={
+                                                                                styles.userName
+                                                                        }
+                                                                >
+                                                                        {
+                                                                                usuario.nombre
+                                                                        }
+                                                                </Text>
+                                                                <View
+                                                                        style={
+                                                                                styles.role
+                                                                        }
+                                                                >
+                                                                        <Ionicons
+                                                                                name="briefcase-outline"
+                                                                                size={
+                                                                                        17
+                                                                                }
+                                                                                color={
+                                                                                        colors.textSecondary
+                                                                                }
+                                                                        />
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.userEmail
+                                                                                }
+                                                                        >
+                                                                                Turista
+                                                                        </Text>
+                                                                </View>
+                                                                <Text
+                                                                        style={
+                                                                                styles.email
+                                                                        }
+                                                                        numberOfLines={
+                                                                                1
+                                                                        }
+                                                                >
+                                                                        {
+                                                                                usuario.email
+                                                                        }
+                                                                </Text>
+                                                        </View>
+                                                        <TouchableOpacity
+                                                                accessibilityRole="button"
+                                                                style={
+                                                                        styles.editButton
+                                                                }
+                                                                onPress={() =>
+                                                                        abrirSeccion(
+                                                                                "Editar perfil",
+                                                                                "La edición de tus datos estará disponible próximamente.",
+                                                                        )
+                                                                }
+                                                        >
+                                                                <Ionicons
+                                                                        name="create-outline"
+                                                                        size={
+                                                                                18
+                                                                        }
+                                                                        color={
+                                                                                colors.primary
+                                                                        }
+                                                                />
+                                                                <Text
+                                                                        style={
+                                                                                styles.editText
+                                                                        }
+                                                                >
+                                                                        Editar
+                                                                        perfil
+                                                                </Text>
+                                                        </TouchableOpacity>
+                                                </View>
 
-                <View style={styles.modalActions}>
-                  <TouchableOpacity
-                    style={styles.btnCancel}
-                    onPress={() => setModalVisible(false)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.btnCancelText}>Cancelar</Text>
-                  </TouchableOpacity>
+                                                <View style={styles.menu}>
+                                                        {opciones
+                                                                .slice(0, 3)
+                                                                .map((opcion) =>
+                                                                        renderOpcion(
+                                                                                opcion,
+                                                                        ),
+                                                                )}
+                                                </View>
+                                                <View
+                                                        style={[
+                                                                styles.menu,
+                                                                styles.settings,
+                                                        ]}
+                                                >
+                                                        {opciones
+                                                                .slice(3)
+                                                                .map((opcion) =>
+                                                                        renderOpcion(
+                                                                                opcion,
+                                                                        ),
+                                                                )}
+                                                </View>
 
-                  <TouchableOpacity
-                    style={styles.btnConfirmLogout}
-                    onPress={confirmarCerrarSesion}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.btnConfirmLogoutText}>Cerrar sesión</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    </View>
-  );
+                                                <TouchableOpacity
+                                                        style={styles.btnLogout}
+                                                        onPress={() =>
+                                                                setModalVisible(
+                                                                        true,
+                                                                )
+                                                        }
+                                                        activeOpacity={0.8}
+                                                >
+                                                        <Ionicons
+                                                                name="log-out-outline"
+                                                                size={22}
+                                                                color={
+                                                                        colors.error
+                                                                }
+                                                        />
+                                                        <Text
+                                                                style={
+                                                                        styles.btnLogoutText
+                                                                }
+                                                        >
+                                                                Cerrar sesión
+                                                        </Text>
+                                                </TouchableOpacity>
+                                        </>
+                                ) : (
+                                        <View style={styles.guestCard}>
+                                                <View
+                                                        style={
+                                                                styles.guestIconCircle
+                                                        }
+                                                >
+                                                        <Ionicons
+                                                                name="person-outline"
+                                                                size={40}
+                                                                color={
+                                                                        colors.secondary
+                                                                }
+                                                        />
+                                                </View>
+                                                <Text style={styles.guestTitle}>
+                                                        Modo Visitante
+                                                </Text>
+                                                <Text
+                                                        style={
+                                                                styles.guestSubtitle
+                                                        }
+                                                >
+                                                        Podés explorar el mapa y
+                                                        lugares libremente.
+                                                        Iniciá sesión para
+                                                        guardar tus eventos
+                                                        favoritos y registrar
+                                                        tus visitas.
+                                                </Text>
+
+                                                <TouchableOpacity
+                                                        style={styles.btnLogin}
+                                                        onPress={() =>
+                                                                router.push(
+                                                                        "/(auth)/login" as any,
+                                                                )
+                                                        }
+                                                        activeOpacity={0.85}
+                                                >
+                                                        <Text
+                                                                style={
+                                                                        styles.btnLoginText
+                                                                }
+                                                        >
+                                                                Iniciar sesión /
+                                                                Registrarse
+                                                        </Text>
+                                                </TouchableOpacity>
+                                        </View>
+                                )}
+                        </ScrollView>
+
+                        <Modal
+                                animationType="fade"
+                                transparent={true}
+                                visible={modalVisible}
+                                onRequestClose={() => setModalVisible(false)}
+                        >
+                                <TouchableWithoutFeedback
+                                        onPress={() => setModalVisible(false)}
+                                >
+                                        <View style={styles.modalOverlay}>
+                                                <TouchableWithoutFeedback>
+                                                        <View
+                                                                style={
+                                                                        styles.modalCard
+                                                                }
+                                                        >
+                                                                <Text
+                                                                        style={
+                                                                                styles.modalTitle
+                                                                        }
+                                                                >
+                                                                        ¿Cerrar
+                                                                        sesión?
+                                                                </Text>
+                                                                <Text
+                                                                        style={
+                                                                                styles.modalBody
+                                                                        }
+                                                                >
+                                                                        Vas a
+                                                                        tener
+                                                                        que
+                                                                        volver a
+                                                                        ingresar
+                                                                        para
+                                                                        acceder
+                                                                        a tus
+                                                                        favoritos
+                                                                        y
+                                                                        visitas
+                                                                        guardadas.
+                                                                </Text>
+
+                                                                <View
+                                                                        style={
+                                                                                styles.modalActions
+                                                                        }
+                                                                >
+                                                                        <TouchableOpacity
+                                                                                style={
+                                                                                        styles.btnCancel
+                                                                                }
+                                                                                onPress={() =>
+                                                                                        setModalVisible(
+                                                                                                false,
+                                                                                        )
+                                                                                }
+                                                                                activeOpacity={
+                                                                                        0.8
+                                                                                }
+                                                                        >
+                                                                                <Text
+                                                                                        style={
+                                                                                                styles.btnCancelText
+                                                                                        }
+                                                                                >
+                                                                                        Cancelar
+                                                                                </Text>
+                                                                        </TouchableOpacity>
+
+                                                                        <TouchableOpacity
+                                                                                style={
+                                                                                        styles.btnConfirmLogout
+                                                                                }
+                                                                                onPress={
+                                                                                        confirmarCerrarSesion
+                                                                                }
+                                                                                activeOpacity={
+                                                                                        0.85
+                                                                                }
+                                                                        >
+                                                                                <Text
+                                                                                        style={
+                                                                                                styles.btnConfirmLogoutText
+                                                                                        }
+                                                                                >
+                                                                                        Cerrar
+                                                                                        sesión
+                                                                                </Text>
+                                                                        </TouchableOpacity>
+                                                                </View>
+                                                        </View>
+                                                </TouchableWithoutFeedback>
+                                        </View>
+                                </TouchableWithoutFeedback>
+                        </Modal>
+                </SafeAreaView>
+        );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: colors.background,
-    padding: spacing.lg,
-    paddingTop: spacing.xl,
-  },
-  header: {
-    marginBottom: spacing.lg,
-  },
-  headerTitle: {
-    fontSize: fontSize.title,
-    fontWeight: 'bold',
-    color: colors.secondary,
-  },
+        logo: { width: 95, height: 62, position: "absolute", top: 0, left: 0 },
+        puente: {
+                width: 205,
+                height: 115,
+                position: "absolute",
+                right: -24,
+                top: 0,
+                opacity: 0.85,
+        },
+        headerSubtitle: {
+                fontSize: 14,
+                color: colorsInicio.secondary,
+                marginTop: 2,
+        },
+        userInfo: { flex: 1, minWidth: 120 },
+        role: {
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 4,
+        },
+        email: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
+        editButton: {
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                borderRadius: 24,
+                borderWidth: 1,
+                borderColor: colors.primaryLight,
+        },
+        editText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
+        menu: { gap: 8, marginBottom: 12 },
+        settings: {
+                gap: 0,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 16,
+                overflow: "hidden",
+        },
+        option: {
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                padding: 12,
+                minHeight: 70,
+                backgroundColor: "#FFFCF7",
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: colors.border,
+        },
+        optionIcon: {
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                alignItems: "center",
+                justifyContent: "center",
+        },
+        optionText: { flex: 1 },
+        optionTitle: {
+                fontSize: 16,
+                fontWeight: "600",
+                color: colorsInicio.secondary,
+        },
+        optionDescription: {
+                fontSize: fontSize.caption,
+                color: colors.textSecondary,
+                marginTop: 3,
+                lineHeight: 20,
+        },
+        container: {
+                flexGrow: 1,
+                backgroundColor: colors.background,
+                paddingHorizontal: 18,
+                paddingTop: spacing.sm,
+                paddingBottom: spacing.xl,
+        },
+        header: {
+                marginBottom: spacing.lg,
+                minHeight: 130,
+                justifyContent: "flex-end",
+        },
+        headerTitle: {
+                fontSize: 24,
+                fontFamily: fuenteTitulo,
+                fontWeight: "bold",
+                color: colors.secondary,
+        },
 
-  /* card usuario autenticado */
-  profileCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    elevation: 2,
-    shadowColor: colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  avatarCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.pill,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  avatarText: {
-    color: colors.surface,
-    fontSize: fontSize.title,
-    fontWeight: 'bold',
-  },
-  userName: {
-    fontSize: fontSize.subtitle,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  userEmail: {
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  btnLogout: {
-    flexDirection: 'row',
-    backgroundColor: colors.primaryLight,
-    height: 52,
-    borderRadius: borderRadius.pill,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  btnLogoutText: {
-    color: colors.error,
-    fontSize: fontSize.body,
-    fontWeight: 'bold',
-  },
+        profileCard: {
+                backgroundColor: colors.surface,
+                borderRadius: borderRadius.md,
+                padding: spacing.md,
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: spacing.sm,
+                alignItems: "center",
+                marginBottom: spacing.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                elevation: 2,
+                shadowColor: colors.text,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 6,
+        },
+        avatarCircle: {
+                width: 46,
+                height: 46,
+                borderRadius: borderRadius.pill,
+                backgroundColor: colors.primary,
+                justifyContent: "center",
+                alignItems: "center",
+        },
+        avatarText: {
+                color: colors.surface,
+                fontSize: 20,
+                fontWeight: "bold",
+        },
+        userName: {
+                fontSize: 17,
+                fontWeight: "bold",
+                color: colors.text,
+        },
+        userEmail: {
+                fontSize: 14,
+                color: colors.textSecondary,
+                marginTop: spacing.xs,
+        },
+        btnLogout: {
+                flexDirection: "row",
+                backgroundColor: "transparent",
+                minHeight: 48,
+                borderRadius: borderRadius.pill,
+                justifyContent: "flex-start",
+                alignItems: "center",
+                gap: spacing.sm,
+                borderTopWidth: 1,
+                borderTopColor: colors.border,
+                paddingHorizontal: spacing.md,
+        },
+        btnLogoutText: {
+                color: colors.error,
+                fontSize: 14,
+                fontWeight: "bold",
+        },
 
-  /* card visitante */
-  guestCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    marginTop: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    elevation: 2,
-    shadowColor: colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  guestIconCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: borderRadius.pill,
-    backgroundColor: colors.secondaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  guestTitle: {
-    fontSize: fontSize.subtitle,
-    fontWeight: 'bold',
-    color: colors.secondary,
-    marginBottom: spacing.xs,
-  },
-  guestSubtitle: {
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: spacing.xl,
-  },
-  btnLogin: {
-    backgroundColor: colors.primary,
-    height: 52,
-    width: '100%',
-    borderRadius: borderRadius.pill,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  btnLoginText: {
-    color: colors.surface,
-    fontSize: fontSize.body,
-    fontWeight: 'bold',
-  },
+        guestCard: {
+                backgroundColor: colors.surface,
+                borderRadius: borderRadius.lg,
+                padding: spacing.xl,
+                alignItems: "center",
+                marginTop: spacing.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                elevation: 2,
+                shadowColor: colors.text,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 6,
+        },
+        guestIconCircle: {
+                width: 76,
+                height: 76,
+                borderRadius: borderRadius.pill,
+                backgroundColor: colors.secondaryLight,
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: spacing.sm,
+        },
+        guestTitle: {
+                fontSize: fontSize.subtitle,
+                fontWeight: "bold",
+                color: colors.secondary,
+                marginBottom: spacing.xs,
+        },
+        guestSubtitle: {
+                fontSize: fontSize.body,
+                color: colors.textSecondary,
+                textAlign: "center",
+                lineHeight: 22,
+                marginBottom: spacing.xl,
+        },
+        btnLogin: {
+                backgroundColor: colors.primary,
+                height: 52,
+                width: "100%",
+                borderRadius: borderRadius.pill,
+                justifyContent: "center",
+                alignItems: "center",
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 2,
+        },
+        btnLoginText: {
+                color: colors.surface,
+                fontSize: fontSize.body,
+                fontWeight: "bold",
+        },
 
-  /* modal de confirmacion */
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  modalCard: {
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-  },
-  modalTitle: {
-    fontSize: fontSize.subtitle,
-    fontWeight: 'bold',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  modalBody: {
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: spacing.lg,
-    paddingHorizontal: spacing.xs,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    width: '100%',
-    gap: spacing.sm,
-  },
-  btnCancel: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.pill,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnCancelText: {
-    color: colors.primary,
-    fontSize: fontSize.body,
-    fontWeight: 'bold',
-  },
-  btnConfirmLogout: {
-    flex: 1,
-    height: 48,
-    borderRadius: borderRadius.pill,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnConfirmLogoutText: {
-    color: colors.surface,
-    fontSize: fontSize.body,
-    fontWeight: 'bold',
-  },
+        modalOverlay: {
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.4)",
+                justifyContent: "center",
+                alignItems: "center",
+                paddingHorizontal: spacing.lg,
+        },
+        modalCard: {
+                width: "100%",
+                backgroundColor: colors.surface,
+                borderRadius: borderRadius.lg,
+                padding: spacing.xl,
+                alignItems: "center",
+                elevation: 4,
+                shadowColor: colors.text,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+        },
+        modalTitle: {
+                fontSize: fontSize.subtitle,
+                fontWeight: "bold",
+                color: colors.text,
+                textAlign: "center",
+                marginBottom: spacing.sm,
+        },
+        modalBody: {
+                fontSize: fontSize.body,
+                color: colors.textSecondary,
+                textAlign: "center",
+                lineHeight: 22,
+                marginBottom: spacing.lg,
+                paddingHorizontal: spacing.xs,
+        },
+        modalActions: {
+                flexDirection: "row",
+                width: "100%",
+                gap: spacing.sm,
+        },
+        btnCancel: {
+                flex: 1,
+                height: 48,
+                borderRadius: borderRadius.pill,
+                borderWidth: 1,
+                borderColor: colors.primary,
+                backgroundColor: colors.surface,
+                justifyContent: "center",
+                alignItems: "center",
+        },
+        btnCancelText: {
+                color: colors.primary,
+                fontSize: fontSize.body,
+                fontWeight: "bold",
+        },
+        btnConfirmLogout: {
+                flex: 1,
+                height: 48,
+                borderRadius: borderRadius.pill,
+                backgroundColor: colors.primary,
+                justifyContent: "center",
+                alignItems: "center",
+        },
+        btnConfirmLogoutText: {
+                color: colors.surface,
+                fontSize: fontSize.body,
+                fontWeight: "bold",
+        },
 });
