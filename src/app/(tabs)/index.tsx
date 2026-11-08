@@ -1,3 +1,4 @@
+import { tipografia, logoPrincipal } from "../../styles/tipografia";
 import { BotonCategoria } from "../../components/boton-categoria";
 import { useTema } from "../../context/tema.context";
 import { useCallback, useMemo, useState } from "react";
@@ -19,7 +20,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { router, useFocusEffect } from "expo-router";
 
@@ -29,7 +29,6 @@ import { useEventos } from "../../hooks/use-eventos";
 import { useUbicacion } from "../../hooks/use-ubicacion";
 import { distanciaMetros, textoDistancia } from "../../services/distancias";
 import { actualizarEventos } from "../../services/eventos.service";
-import { ImagenPersistente } from "../../components/imagen-persistente";
 import {
         TarjetaEventoInicio,
         TarjetaLugarInicio,
@@ -39,10 +38,7 @@ import {
         EstadoInicio,
         TituloInicio,
 } from "../../components/inicio/elementos-inicio";
-import {
-        colorsInicio as paletaColors,
-        fuenteTitulo,
-} from "../../styles/inicio";
+import { colorsInicio as paletaColors, fuenteTitulo } from "../../styles/inicio";
 import { borderRadius, fontSize, spacing } from "../../styles/theme";
 
 const entradaCercanos = FadeInDown.duration(240)
@@ -84,7 +80,6 @@ export default function HomeScreen() {
         const ubicacion = useUbicacion();
         const [busqueda, setBusqueda] = useState("");
         const [panel, setPanel] = useState<PanelInicio | null>(null);
-        const [avatarFallido, setAvatarFallido] = useState<string | null>(null);
         const [ahora, setAhora] = useState(() => Date.now());
         useFocusEffect(
                 useCallback(() => {
@@ -103,7 +98,6 @@ export default function HomeScreen() {
                 status === "autenticado"
                         ? usuario?.nombre.trim().split(/\s+/)[0]
                         : null;
-        const avatar = status === "autenticado" ? usuario?.avatarUrl : null;
         const texto = normalizar(busqueda);
         const resultadosLugares = texto
                 ? lugares.filter((lugar) =>
@@ -156,14 +150,6 @@ export default function HomeScreen() {
                 [agenda.datos, ahora],
         );
 
-        const imagenPortada =
-                lugares.find(
-                        (lugar) =>
-                                /puerto|costanera/i.test(lugar.nombre) &&
-                                lugar.imagenes.length > 0,
-                )?.imagenes[0] ??
-                lugares.find((lugar) => lugar.imagenes.length > 0)?.imagenes[0];
-
         const abrirMapa = async () => {
                 try {
                         await Linking.openURL(
@@ -187,96 +173,148 @@ export default function HomeScreen() {
                                 contentContainerStyle={styles.content}
                                 keyboardShouldPersistTaps="handled"
                                 showsVerticalScrollIndicator={false}
+                                stickyHeaderIndices={[0]}
                         >
-                                <View style={styles.header}>
-                                        <Image
-                                                source={require("../../../assets/images/logo-colon.png")}
-                                                style={styles.logo}
-                                                contentFit="contain"
-                                                accessibilityLabel="Colón, Entre Ríos"
-                                        />
-                                        <Pressable
-                                                accessibilityRole="button"
-                                                accessibilityLabel="Ver mi perfil"
-                                                onPress={() =>
-                                                        router.push(
-                                                                "/(tabs)/perfil",
-                                                        )
-                                                }
-                                                style={styles.avatar}
-                                        >
-                                                {avatar &&
-                                                avatarFallido !== avatar ? (
-                                                        <Image
-                                                                source={{
-                                                                        uri: avatar,
-                                                                }}
-                                                                style={
-                                                                        styles.avatarImagen
-                                                                }
-                                                                onError={() =>
-                                                                        setAvatarFallido(
-                                                                                avatar,
+                                <View style={styles.encabezadoFijo}>
+                                        <View style={styles.header}>
+                                                <Image
+                                                        source={require("../../../assets/images/logo-colon.png")}
+                                                        style={styles.logo}
+                                                        contentFit="contain"
+                                                        accessibilityLabel="Colón, Entre Ríos"
+                                                />
+                                                <Image
+                                                        source={require("../../../assets/images/ilustracion-colon-puente.png")}
+                                                        style={styles.puente}
+                                                        contentFit="contain"
+                                                />
+
+                                                <Text style={styles.saludo}>
+                                                        {nombre
+                                                                ? `Hola, ${nombre} 👋`
+                                                                : "¡Hola! 👋"}
+                                                </Text>
+                                                <Text style={styles.subtitulo}>
+                                                        Descubrí todo lo que
+                                                        Colón tiene para vos
+                                                </Text>
+                                        </View>
+
+                                        <View style={styles.buscador}>
+                                                <Ionicons
+                                                        name="search-outline"
+                                                        size={23}
+                                                        color={colors.primary}
+                                                />
+                                                <TextInput
+                                                        accessibilityLabel="Buscar lugares y eventos"
+                                                        placeholder="¿Qué querés descubrir?"
+                                                        placeholderTextColor={
+                                                                colors.textSecondary
+                                                        }
+                                                        value={busqueda}
+                                                        onChangeText={
+                                                                setBusqueda
+                                                        }
+                                                        style={styles.input}
+                                                        returnKeyType="search"
+                                                />
+                                                {busqueda.length > 0 && (
+                                                        <Pressable
+                                                                accessibilityRole="button"
+                                                                accessibilityLabel="Borrar búsqueda"
+                                                                onPress={() =>
+                                                                        setBusqueda(
+                                                                                "",
                                                                         )
                                                                 }
-                                                        />
-                                                ) : (
-                                                        <Ionicons
-                                                                name="person-outline"
-                                                                size={24}
-                                                                color={
-                                                                        colors.secondary
-                                                                }
-                                                        />
+                                                                hitSlop={8}
+                                                        >
+                                                                <Ionicons
+                                                                        name="close-circle-outline"
+                                                                        size={
+                                                                                22
+                                                                        }
+                                                                        color={
+                                                                                colors.textSecondary
+                                                                        }
+                                                                />
+                                                        </Pressable>
                                                 )}
-                                        </Pressable>
-                                </View>
+                                        </View>
 
-                                <Text style={styles.saludo}>
-                                        {nombre
-                                                ? `Hola, ${nombre} 👋`
-                                                : "¡Hola! 👋"}
-                                </Text>
-                                <Text style={styles.subtitulo}>
-                                        Descubrí todo lo que Colón tiene para
-                                        vos
-                                </Text>
-
-                                <View style={styles.buscador}>
-                                        <Ionicons
-                                                name="search-outline"
-                                                size={23}
-                                                color={colors.primary}
-                                        />
-                                        <TextInput
-                                                accessibilityLabel="Buscar lugares y eventos"
-                                                placeholder="¿Qué querés descubrir?"
-                                                placeholderTextColor={
-                                                        colors.textSecondary
-                                                }
-                                                value={busqueda}
-                                                onChangeText={setBusqueda}
-                                                style={styles.input}
-                                                returnKeyType="search"
-                                        />
-                                        {busqueda.length > 0 && (
-                                                <Pressable
-                                                        accessibilityRole="button"
-                                                        accessibilityLabel="Borrar búsqueda"
-                                                        onPress={() =>
-                                                                setBusqueda("")
+                                        <View style={styles.accesos}>
+                                                <BotonCategoria
+                                                        nombre="Lugares"
+                                                        style={
+                                                                styles.accesoCategoria
                                                         }
-                                                        hitSlop={8}
-                                                >
-                                                        <Ionicons
-                                                                name="close-circle-outline"
-                                                                size={22}
-                                                                color={
-                                                                        colors.textSecondary
-                                                                }
-                                                        />
-                                                </Pressable>
-                                        )}
+                                                        icono="map-marker-outline"
+                                                        color={colors.primary}
+                                                        fondo={
+                                                                colors.primaryLight
+                                                        }
+                                                        onPress={() =>
+                                                                router.push(
+                                                                        "/(tabs)/explore",
+                                                                )
+                                                        }
+                                                />
+                                                <BotonCategoria
+                                                        nombre="Eventos"
+                                                        style={
+                                                                styles.accesoCategoria
+                                                        }
+                                                        icono="calendar-outline"
+                                                        color={colors.green}
+                                                        fondo={
+                                                                colors.greenLight
+                                                        }
+                                                        onPress={() =>
+                                                                router.push(
+                                                                        "/(tabs)/agenda",
+                                                                )
+                                                        }
+                                                />
+                                                <BotonCategoria
+                                                        nombre="Mapa"
+                                                        style={
+                                                                styles.accesoCategoria
+                                                        }
+                                                        icono="map-outline"
+                                                        color={colors.secondary}
+                                                        fondo={colors.blueLight}
+                                                        onPress={() => {
+                                                                const destino =
+                                                                        {
+                                                                                pathname: "/(tabs)/explore" as const,
+                                                                                params: {
+                                                                                        vista: "mapa",
+                                                                                },
+                                                                        };
+
+                                                                router.push(
+                                                                        destino,
+                                                                );
+                                                        }}
+                                                />
+                                                <BotonCategoria
+                                                        nombre="Visitas"
+                                                        style={
+                                                                styles.accesoCategoria
+                                                        }
+                                                        icono="map-marker-path"
+                                                        color="#A87721"
+                                                        fondo={
+                                                                colors.yellowLight
+                                                        }
+                                                        onPress={() =>
+                                                                setPanel(
+                                                                        "visitas",
+                                                                )
+                                                        }
+                                                />
+                                        </View>
                                 </View>
 
                                 {texto.length > 0 && (
@@ -447,118 +485,6 @@ export default function HomeScreen() {
                                                         )}
                                         </View>
                                 )}
-
-                                <View style={styles.accesos}>
-                                        <BotonCategoria
-                                                nombre="Lugares"
-                                                style={styles.accesoCategoria}
-                                                icono="map-marker-outline"
-                                                color={colors.primary}
-                                                fondo={colors.primaryLight}
-                                                onPress={() =>
-                                                        router.push(
-                                                                "/(tabs)/explore",
-                                                        )
-                                                }
-                                        />
-                                        <BotonCategoria
-                                                nombre="Eventos"
-                                                style={styles.accesoCategoria}
-                                                icono="calendar-outline"
-                                                color={colors.green}
-                                                fondo={colors.greenLight}
-                                                onPress={() =>
-                                                        router.push(
-                                                                "/(tabs)/agenda",
-                                                        )
-                                                }
-                                        />
-                                        <BotonCategoria
-                                                nombre="Mapa"
-                                                style={styles.accesoCategoria}
-                                                icono="map-outline"
-                                                color={colors.secondary}
-                                                fondo={colors.blueLight}
-                                                onPress={() => {
-                                                        const destino = {
-                                                                pathname: "/(tabs)/explore" as const,
-                                                                params: {
-                                                                        vista: "mapa",
-                                                                },
-                                                        };
-
-                                                        router.push(destino);
-                                                }}
-                                        />
-                                        <BotonCategoria
-                                                nombre="Visitas"
-                                                style={styles.accesoCategoria}
-                                                icono="map-marker-path"
-                                                color="#A87721"
-                                                fondo={colors.yellowLight}
-                                                onPress={() =>
-                                                        setPanel("visitas")
-                                                }
-                                        />
-                                </View>
-
-                                <View style={styles.portada}>
-                                        {imagenPortada ? (
-                                                <ImagenPersistente
-                                                        url={imagenPortada}
-                                                        style={
-                                                                styles.imagenPortada
-                                                        }
-                                                />
-                                        ) : (
-                                                <View
-                                                        style={[
-                                                                styles.imagenPortada,
-                                                                styles.portadaVacia,
-                                                        ]}
-                                                >
-                                                        <Ionicons
-                                                                name="image-outline"
-                                                                size={48}
-                                                                color={
-                                                                        colors.secondary
-                                                                }
-                                                        />
-                                                </View>
-                                        )}
-                                        <LinearGradient
-                                                colors={[
-                                                        "transparent",
-                                                        "rgba(0, 0, 0, 0.65)",
-                                                ]}
-                                                style={styles.degradado}
-                                                pointerEvents="none"
-                                        />
-                                        <View style={styles.portadaContenido}>
-                                                <Text
-                                                        style={
-                                                                styles.portadaTitulo
-                                                        }
-                                                >
-                                                        Explorá Colón
-                                                </Text>
-                                                <Text
-                                                        style={
-                                                                styles.portadaSubtitulo
-                                                        }
-                                                >
-                                                        Lugares cerca tuyo
-                                                </Text>
-                                                <BotonInicio
-                                                        texto="Ver lugares"
-                                                        onPress={() =>
-                                                                router.push(
-                                                                        "/(tabs)/explore",
-                                                                )
-                                                        }
-                                                />
-                                        </View>
-                                </View>
 
                                 <View style={styles.seccion}>
                                         <TituloInicio
@@ -1104,10 +1030,17 @@ export default function HomeScreen() {
 
 const crearEstilos = (colors: typeof paletaColors) =>
         StyleSheet.create({
-                screen: { flex: 1, backgroundColor: colors.background },
-                scroll: { flex: 1 },
-                content: {
+                screen: {
+                        flex: 1,
+                        backgroundColor: colors.background,
                         paddingTop: spacing.sm,
+                },
+                scroll: { flex: 1 },
+                encabezadoFijo: {
+                        backgroundColor: colors.background,
+                        zIndex: 1,
+                },
+                content: {
                         paddingHorizontal: 18,
                         paddingBottom: spacing.xl,
                         maxWidth: 600,
@@ -1115,41 +1048,30 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         alignSelf: "center",
                 },
                 header: {
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: spacing.md,
+                        flexShrink: 0,
+                        minHeight: 130,
+                        justifyContent: "flex-end",
+                        marginBottom: spacing.lg,
                 },
-                logo: { width: 108, height: 58 },
-                avatar: {
-                        width: 46,
-                        height: 46,
-                        borderRadius: 23,
-                        padding: 3,
-                        borderWidth: 1,
-                        borderColor: colors.primary,
-                        backgroundColor: colors.surface,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        overflow: "hidden",
+                logo: {
+                        ...logoPrincipal,
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
                 },
-                avatarImagen: {
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 20,
+                puente: {
+                        position: "absolute",
+                        right: -24,
+                        top: 0,
+                        width: 205,
+                        height: 115,
+                        opacity: 0.85,
                 },
-                saludo: {
-                        fontSize: 24,
-                        fontWeight: "600",
-                        color: colors.secondary,
-                        letterSpacing: -0.7,
-                },
+                saludo: { ...tipografia.titulo, fontFamily: fuenteTitulo, color: colors.blueText },
                 subtitulo: {
-                        fontSize: 14,
-                        color: colors.textSecondary,
-                        marginTop: spacing.xs,
-                        marginBottom: spacing.md,
-                        lineHeight: 20,
+                        ...tipografia.texto,
+                        color: colors.greenText,
+                        marginTop: 2,
                 },
                 buscador: {
                         minHeight: 48,
@@ -1170,10 +1092,10 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         marginBottom: spacing.md,
                 },
                 input: {
+                        ...tipografia.texto,
                         flex: 1,
                         minWidth: 0,
-                        color: colors.secondary,
-                        fontSize: 14,
+                        color: colors.text,
                         paddingVertical: spacing.xs,
                 },
                 accesoCategoria: { flex: 1, minWidth: 0 },
@@ -1181,37 +1103,6 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         flexDirection: "row",
                         gap: spacing.sm,
                         marginBottom: spacing.md,
-                },
-                portada: {
-                        borderRadius: 18,
-                        overflow: "hidden",
-                        height: 225,
-                        backgroundColor: colors.blueLight,
-                },
-                imagenPortada: { width: "100%", height: "100%" },
-                portadaVacia: {
-                        alignItems: "center",
-                        justifyContent: "center",
-                },
-                degradado: { ...StyleSheet.absoluteFillObject },
-                portadaContenido: {
-                        position: "absolute",
-                        bottom: spacing.md,
-                        left: 16,
-                        right: 16,
-                        gap: spacing.sm,
-                },
-                portadaTitulo: {
-                        fontFamily: fuenteTitulo,
-                        fontSize: 26,
-                        fontWeight: "700",
-                        letterSpacing: -0.8,
-                        color: colors.onPrimary,
-                },
-                portadaSubtitulo: {
-                        fontSize: 14,
-                        color: colors.onPrimary,
-                        marginBottom: 6,
                 },
                 seccion: { marginTop: 20 },
                 flex: { flex: 1, minWidth: 0 },
@@ -1224,10 +1115,8 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         gap: spacing.md,
                 },
                 ubicacionTexto: {
-                        fontSize: 14,
-                        lineHeight: 21,
-                        fontWeight: "500",
-                        color: colors.secondary,
+                        ...tipografia.texto,
+                        color: colors.textSecondary,
                         marginBottom: spacing.sm,
                 },
                 eventos: {
@@ -1281,13 +1170,11 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         borderRadius: borderRadius.md,
                 },
                 recorridoTitulo: {
-                        fontSize: 17,
-                        fontWeight: "600",
-                        color: colors.secondary,
+                        ...tipografia.seccion,
+                        color: colors.blueText,
                 },
                 recorridoDescripcion: {
-                        fontSize: 14,
-                        lineHeight: 20,
+                        ...tipografia.texto,
                         color: colors.textSecondary,
                         marginVertical: spacing.sm,
                 },
@@ -1313,9 +1200,8 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         marginBottom: spacing.md,
                 },
                 resultadosTitulo: {
-                        fontSize: fontSize.body,
-                        fontWeight: "600",
-                        color: colors.secondary,
+                        ...tipografia.opcion,
+                        color: colors.blueText,
                 },
                 resultado: {
                         flexDirection: "row",
@@ -1327,11 +1213,11 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         minHeight: 48,
                 },
                 resultadoTitulo: {
-                        fontSize: fontSize.body,
-                        color: colors.secondary,
+                        ...tipografia.opcion,
+                        color: colors.blueText,
                 },
                 textoSecundario: {
-                        fontSize: fontSize.caption,
+                        ...tipografia.detalle,
                         color: colors.textSecondary,
                         marginTop: spacing.xs,
                 },
@@ -1360,11 +1246,9 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         marginBottom: spacing.sm,
                 },
                 modalTitulo: {
+                        ...tipografia.titulo,
                         flex: 1,
-                        fontFamily: fuenteTitulo,
-                        fontSize: 25,
-                        color: colors.secondary,
-                        fontWeight: "700",
+                        color: colors.blueText,
                 },
                 cerrar: {
                         minWidth: 44,
@@ -1375,9 +1259,8 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 modalContenido: { gap: spacing.md },
                 medicionRio: { fontWeight: "700", color: colors.secondary },
                 modalTexto: {
+                        ...tipografia.texto,
                         color: colors.textSecondary,
-                        fontSize: fontSize.body,
-                        lineHeight: 24,
                 },
         });
 

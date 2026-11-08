@@ -1,3 +1,4 @@
+import { tipografia } from "../styles/tipografia";
 import { useTema } from "../context/tema.context";
 import { useState } from "react";
 import {
@@ -142,10 +143,7 @@ export default function EditarPerfilScreen() {
                                                 : undefined
                                 }
                         >
-                                <ScrollView
-                                        contentContainerStyle={styles.contenido}
-                                        keyboardShouldPersistTaps="handled"
-                                >
+                                <View style={styles.encabezadoFijo}>
                                         <View style={styles.cabecera}>
                                                 <Pressable
                                                         accessibilityRole="button"
@@ -174,6 +172,12 @@ export default function EditarPerfilScreen() {
                                         <Text style={styles.subtitulo}>
                                                 Actualizá tu información
                                         </Text>
+                                </View>
+                                <ScrollView
+                                        style={styles.scroll}
+                                        contentContainerStyle={styles.contenido}
+                                        keyboardShouldPersistTaps="handled"
+                                >
                                         <Text style={styles.etiqueta}>
                                                 Foto de perfil
                                         </Text>
@@ -379,10 +383,17 @@ export default function EditarPerfilScreen() {
 
 const crearEstilos = (colors: typeof paletaColors) =>
         StyleSheet.create({
+                scroll: { flex: 1 },
+                encabezadoFijo: {
+                        flexShrink: 0,
+                        backgroundColor: colors.background,
+                        paddingHorizontal: 18,
+                        paddingTop: 8,
+                },
                 pantalla: { flex: 1, backgroundColor: colors.background },
                 contenido: {
                         paddingHorizontal: 18,
-                        paddingTop: 8,
+                        paddingTop: 0,
                         paddingBottom: 32,
                 },
                 cabecera: {
@@ -403,13 +414,12 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
                 logo: { width: 90, height: 48 },
                 titulo: {
+                        ...tipografia.titulo,
                         fontFamily: fuenteTitulo,
-                        fontSize: 24,
-                        fontWeight: "700",
                         color: colors.secondary,
                 },
                 subtitulo: {
-                        fontSize: 14,
+                        ...tipografia.texto,
                         color: colors.textSecondary,
                         marginTop: 4,
                         marginBottom: 8,

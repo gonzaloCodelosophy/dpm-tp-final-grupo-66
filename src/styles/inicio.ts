@@ -11,7 +11,6 @@ export const colorsInicio = {
         blueLight: "#E5F3F5",
         yellowLight: "#F5EBDD",
         background: "#FFFCF8",
-        textSecondary: "#737781",
         border: "#F0EBE5",
 };
 

@@ -1,4 +1,6 @@
 export const colors = {
+        blueText: "#073B53",
+        greenText: "#114E4A",
         primarySolid: "#F4604D",
         secondarySolid: "#114E4A",
         onPrimary: "#FFFFFF",
@@ -46,6 +48,8 @@ export const fontSize = {
         title: 28,
 };
 export const darkColors: typeof colors = {
+        blueText: "#A9D7ED",
+        greenText: "#A5DCD3",
         primarySolid: "#BB493B",
         secondarySolid: "#27615A",
         primary: "#FF8573",

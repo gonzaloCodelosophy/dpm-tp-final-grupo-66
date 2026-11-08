@@ -1,3 +1,4 @@
+import { tipografia, logoPrincipal } from "../../styles/tipografia";
 import { useTema } from "../../context/tema.context";
 import React, { useState } from "react";
 import {
@@ -12,10 +13,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-        colorsInicio as paletaColorsInicio,
-        fuenteTitulo,
-} from "../../styles/inicio";
+import { colorsInicio as paletaColorsInicio, fuenteTitulo } from "../../styles/inicio";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useAuth } from "../../context/auth.context";
@@ -32,21 +30,13 @@ export default function PerfilScreen() {
         const router = useRouter();
         const { usuario, status, cerrarSesion } = useAuth();
         const [modalVisible, setModalVisible] = useState(false);
+        const [fotoFallida, setFotoFallida] = useState<string | null>(null);
 
         async function confirmarCerrarSesion() {
                 setModalVisible(false);
                 await cerrarSesion();
                 router.replace("/(auth)/login" as any);
         }
-
-        const iniciales = usuario?.nombre
-                ? usuario.nombre
-                          .split(" ")
-                          .map((n: string) => n[0])
-                          .join("")
-                          .substring(0, 2)
-                          .toUpperCase()
-                : "U";
 
         function abrirSeccion(titulo: string, mensaje: string) {
                 Alert.alert(titulo, mensaje);
@@ -175,26 +165,27 @@ export default function PerfilScreen() {
                         edges={["top", "left", "right"]}
                         style={{ flex: 1, backgroundColor: colors.background }}
                 >
-                        <ScrollView contentContainerStyle={styles.container}>
-                                <View style={styles.header}>
-                                        <Image
-                                                source={require("../../../assets/images/logo-colon.png")}
-                                                style={styles.logo}
-                                                contentFit="contain"
-                                        />
-                                        <Image
-                                                source={require("../../../assets/images/ilustracion-colon-puente.png")}
-                                                style={styles.puente}
-                                                contentFit="contain"
-                                        />
-                                        <Text style={styles.headerTitle}>
-                                                Perfil
-                                        </Text>
-                                        <Text style={styles.headerSubtitle}>
-                                                Tu espacio personal en Colón
-                                        </Text>
-                                </View>
+                        <View style={styles.header}>
+                                <Image
+                                        source={require("../../../assets/images/logo-colon.png")}
+                                        style={styles.logo}
+                                        contentFit="contain"
+                                />
+                                <Image
+                                        source={require("../../../assets/images/ilustracion-colon-puente.png")}
+                                        style={styles.puente}
+                                        contentFit="contain"
+                                />
+                                <Text style={styles.headerTitle}>Perfil</Text>
+                                <Text style={styles.headerSubtitle}>
+                                        Tu espacio personal en Colón
+                                </Text>
+                        </View>
 
+                        <ScrollView
+                                style={styles.scroll}
+                                contentContainerStyle={styles.container}
+                        >
                                 {status === "autenticado" && usuario ? (
                                         <>
                                                 <View
@@ -204,40 +195,47 @@ export default function PerfilScreen() {
                                                 >
                                                         <View
                                                                 style={
-                                                                        styles.avatarCircle
-                                                                }
-                                                        >
-                                                                {usuario.avatarUrl ? (
-                                                                        <Image
-                                                                                source={{
-                                                                                        uri: usuario.avatarUrl,
-                                                                                }}
-                                                                                style={
-                                                                                        styles.avatarImage
-                                                                                }
-                                                                                contentFit="cover"
-                                                                                accessibilityLabel="Foto de perfil"
-                                                                        />
-                                                                ) : (
-                                                                        <Text
-                                                                                style={
-                                                                                        styles.avatarText
-                                                                                }
-                                                                        >
-                                                                                {
-                                                                                        iniciales
-                                                                                }
-                                                                        </Text>
-                                                                )}
-                                                        </View>
-                                                        <View
-                                                                style={
-                                                                        styles.userInfo
+                                                                        styles.profileDetails
                                                                 }
                                                         >
                                                                 <View
                                                                         style={
-                                                                                styles.nombreFila
+                                                                                styles.profilePhoto
+                                                                        }
+                                                                >
+                                                                        {usuario.avatarUrl &&
+                                                                        fotoFallida !==
+                                                                                usuario.avatarUrl ? (
+                                                                                <Image
+                                                                                        source={{
+                                                                                                uri: usuario.avatarUrl,
+                                                                                        }}
+                                                                                        style={
+                                                                                                styles.profilePhotoImage
+                                                                                        }
+                                                                                        contentFit="cover"
+                                                                                        accessibilityLabel="Foto de perfil"
+                                                                                        onError={() =>
+                                                                                                setFotoFallida(
+                                                                                                        usuario.avatarUrl,
+                                                                                                )
+                                                                                        }
+                                                                                />
+                                                                        ) : (
+                                                                                <Ionicons
+                                                                                        name="person"
+                                                                                        size={
+                                                                                                40
+                                                                                        }
+                                                                                        color={
+                                                                                                colors.secondary
+                                                                                        }
+                                                                                />
+                                                                        )}
+                                                                </View>
+                                                                <View
+                                                                        style={
+                                                                                styles.userInfo
                                                                         }
                                                                 >
                                                                         <Text
@@ -247,6 +245,37 @@ export default function PerfilScreen() {
                                                                         >
                                                                                 {
                                                                                         usuario.nombre
+                                                                                }
+                                                                        </Text>
+                                                                        <View
+                                                                                style={
+                                                                                        styles.role
+                                                                                }
+                                                                        >
+                                                                                <Ionicons
+                                                                                        name="briefcase-outline"
+                                                                                        size={
+                                                                                                16
+                                                                                        }
+                                                                                        color={
+                                                                                                colors.textSecondary
+                                                                                        }
+                                                                                />
+                                                                                <Text
+                                                                                        style={
+                                                                                                styles.userEmail
+                                                                                        }
+                                                                                >
+                                                                                        Turista
+                                                                                </Text>
+                                                                        </View>
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.email
+                                                                                }
+                                                                        >
+                                                                                {
+                                                                                        usuario.email
                                                                                 }
                                                                         </Text>
                                                                         <TouchableOpacity
@@ -264,48 +293,22 @@ export default function PerfilScreen() {
                                                                                 <Ionicons
                                                                                         name="create-outline"
                                                                                         size={
-                                                                                                18
+                                                                                                16
                                                                                         }
                                                                                         color={
                                                                                                 colors.primary
                                                                                         }
                                                                                 />
+                                                                                <Text
+                                                                                        style={
+                                                                                                styles.editText
+                                                                                        }
+                                                                                >
+                                                                                        Editar
+                                                                                        perfil
+                                                                                </Text>
                                                                         </TouchableOpacity>
                                                                 </View>
-                                                                <View
-                                                                        style={
-                                                                                styles.role
-                                                                        }
-                                                                >
-                                                                        <Ionicons
-                                                                                name="briefcase-outline"
-                                                                                size={
-                                                                                        17
-                                                                                }
-                                                                                color={
-                                                                                        colors.textSecondary
-                                                                                }
-                                                                        />
-                                                                        <Text
-                                                                                style={
-                                                                                        styles.userEmail
-                                                                                }
-                                                                        >
-                                                                                Turista
-                                                                        </Text>
-                                                                </View>
-                                                                <Text
-                                                                        style={
-                                                                                styles.email
-                                                                        }
-                                                                        numberOfLines={
-                                                                                1
-                                                                        }
-                                                                >
-                                                                        {
-                                                                                usuario.email
-                                                                        }
-                                                                </Text>
                                                         </View>
                                                 </View>
 
@@ -502,8 +505,7 @@ const crearEstilos = (
 ) =>
         StyleSheet.create({
                 logo: {
-                        width: 95,
-                        height: 62,
+                        ...logoPrincipal,
                         position: "absolute",
                         top: 0,
                         left: 0,
@@ -517,11 +519,11 @@ const crearEstilos = (
                         opacity: 0.85,
                 },
                 headerSubtitle: {
-                        fontSize: 14,
-                        color: colorsInicio.secondary,
+                        ...tipografia.texto,
+                        color: colors.greenText,
                         marginTop: 2,
                 },
-                userInfo: { flex: 1, minWidth: 120 },
+                userInfo: { flex: 1, minWidth: 0 },
                 role: {
                         flexDirection: "row",
                         alignItems: "center",
@@ -533,22 +535,39 @@ const crearEstilos = (
                         color: colors.textSecondary,
                         marginTop: 4,
                 },
-                nombreFila: {
+                editButton: {
+                        alignSelf: "flex-start",
+                        marginTop: 4,
+                        minHeight: 36,
                         flexDirection: "row",
                         alignItems: "center",
                         gap: 4,
                 },
-                editButton: {
-                        width: 44,
-                        height: 44,
+                editText: {
+                        fontSize: 12,
+                        fontWeight: "600",
+                        color: colors.primary,
+                },
+                profileDetails: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 14,
+                },
+                profilePhoto: {
+                        width: 80,
+                        height: 80,
+                        borderRadius: 40,
+                        backgroundColor: colors.secondaryLight,
                         alignItems: "center",
                         justifyContent: "center",
+                        overflow: "hidden",
                 },
+                profilePhotoImage: { width: "100%", height: "100%" },
                 menu: { marginBottom: spacing.lg },
                 sectionTitle: {
-                        fontSize: 13,
-                        fontWeight: "600",
-                        color: colors.textSecondary,
+                        ...tipografia.grupo,
+                        fontFamily: fuenteTitulo,
+                        color: colors.greenText,
                         marginBottom: spacing.sm,
                         marginTop: spacing.sm,
                 },
@@ -568,17 +587,13 @@ const crearEstilos = (
                         justifyContent: "center",
                 },
                 optionText: { flex: 1 },
-                optionTitle: {
-                        fontSize: 16,
-                        fontWeight: "600",
-                        color: colorsInicio.secondary,
-                },
+                optionTitle: { ...tipografia.opcion, color: colors.blueText },
                 optionDescription: {
-                        fontSize: fontSize.caption,
+                        ...tipografia.detalle,
                         color: colors.textSecondary,
                         marginTop: 3,
-                        lineHeight: 20,
                 },
+                scroll: { flex: 1 },
                 container: {
                         flexGrow: 1,
                         backgroundColor: colors.background,
@@ -587,25 +602,20 @@ const crearEstilos = (
                         paddingBottom: spacing.xl,
                 },
                 header: {
+                        backgroundColor: colors.background,
+                        marginHorizontal: 18,
+                        marginTop: spacing.sm,
+                        flexShrink: 0,
                         marginBottom: spacing.lg,
                         minHeight: 130,
                         justifyContent: "flex-end",
                 },
-                headerTitle: {
-                        fontSize: 24,
-                        fontFamily: fuenteTitulo,
-                        fontWeight: "bold",
-                        color: colors.secondary,
-                },
+                headerTitle: { ...tipografia.titulo, fontFamily: fuenteTitulo, color: colors.blueText },
 
                 profileCard: {
                         backgroundColor: colors.surface,
                         borderRadius: borderRadius.md,
                         padding: spacing.md,
-                        flexDirection: "row",
-                        flexWrap: "wrap",
-                        gap: spacing.sm,
-                        alignItems: "center",
                         marginBottom: spacing.md,
                         borderWidth: 1,
                         borderColor: colors.border,
@@ -615,32 +625,13 @@ const crearEstilos = (
                         shadowOpacity: 0.08,
                         shadowRadius: 6,
                 },
-                avatarCircle: {
-                        width: 46,
-                        height: 46,
-                        borderRadius: borderRadius.pill,
-                        backgroundColor: colors.primarySolid,
-                        justifyContent: "center",
-                        alignItems: "center",
-                },
-                avatarImage: {
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: borderRadius.pill,
-                },
-                avatarText: {
-                        color: colors.onPrimary,
-                        fontSize: 20,
-                        fontWeight: "bold",
-                },
                 userName: {
+                        ...tipografia.seccion,
                         flexShrink: 1,
-                        fontSize: 17,
-                        fontWeight: "bold",
-                        color: colors.text,
+                        color: colors.blueText,
                 },
                 userEmail: {
-                        fontSize: 14,
+                        ...tipografia.texto,
                         color: colors.textSecondary,
                         marginTop: spacing.xs,
                 },
