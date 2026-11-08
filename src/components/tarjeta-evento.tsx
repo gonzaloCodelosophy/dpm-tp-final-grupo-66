@@ -28,7 +28,7 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
                           .replace(",", " ·");
 
         // Asumimos 'Programado' por defecto si el backend no lo envía
-        const estado = evento.estado || "Programado";
+        const estado = evento.estado || "programado";
 
         const getBadgeStyle = () => {
                 if (estado === "cancelado")
@@ -76,8 +76,8 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
                                 <View style={styles.detailRow}>
                                         <Ionicons
                                                 name="calendar-outline"
-                                                size={14}
-                                                color={colors.textSecondary}
+                                                size={15}
+                                                color={colors.blueText}
                                         />
                                         <Text style={styles.detailText}>
                                                 {textoFecha}
@@ -87,8 +87,8 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
                                 <View style={styles.detailRow}>
                                         <Ionicons
                                                 name="location-outline"
-                                                size={14}
-                                                color={colors.textSecondary}
+                                                size={15}
+                                                color={colors.blueText}
                                         />
                                         <Text
                                                 style={styles.detailText}
@@ -100,7 +100,14 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
                                 </View>
 
                                 <View style={getBadgeStyle()}>
-                                        <Text style={styles.badgeText}>
+                                        <Text
+                                                style={[
+                                                        styles.badgeText,
+                                                        estado ===
+                                                                "suspendido" &&
+                                                                styles.badgeTextoOscuro,
+                                                ]}
+                                        >
                                                 {estado.toUpperCase()}
                                         </Text>
                                 </View>
@@ -110,7 +117,7 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
                                 <Ionicons
                                         name="chevron-forward"
                                         size={20}
-                                        color={colors.textSecondary}
+                                        color={colors.blueText}
                                 />
                         </View>
                 </TouchableOpacity>
@@ -122,19 +129,20 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 tarjeta: {
                         flexDirection: "row",
                         backgroundColor: colors.surface,
-                        borderRadius: 16,
-                        marginBottom: 16,
+                        borderRadius: 14,
+                        marginBottom: 10,
                         overflow: "hidden",
-                        elevation: 2,
-                        shadowColor: "#000",
+                        elevation: 1,
+                        shadowColor: colors.blueText,
                         shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.1,
+                        shadowOpacity: 0.04,
                         shadowRadius: 4,
                         width: "100%",
                 },
                 imageContainer: {
-                        width: 100,
-                        minHeight: 120,
+                        width: 106,
+                        minHeight: 112,
+                        borderRadius: 12,
                         alignSelf: "stretch",
                         overflow: "hidden",
                 },
@@ -148,14 +156,16 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
                 infoContainer: {
                         flex: 1,
-                        padding: 12,
+                        paddingVertical: 10,
+                        paddingLeft: 14,
+                        paddingRight: 4,
                         justifyContent: "center",
                 },
                 title: {
                         fontSize: 16,
                         fontWeight: "bold",
-                        color: colors.text,
-                        marginBottom: 8,
+                        color: colors.blueText,
+                        marginBottom: 7,
                 },
                 detailRow: {
                         flexDirection: "row",
@@ -165,20 +175,28 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 detailText: {
                         flex: 1,
                         fontSize: 13,
-                        color: colors.textSecondary,
+                        color: colors.blueText,
                         marginLeft: 6,
                 },
                 badge: {
                         alignSelf: "flex-start",
+                        minWidth: 104,
+                        flexShrink: 0,
+                        alignItems: "center",
                         paddingHorizontal: 8,
-                        paddingVertical: 4,
+                        paddingVertical: 3,
                         borderRadius: 12,
-                        marginTop: 6,
+                        marginTop: 4,
                 },
-                badgeProgramado: { backgroundColor: "#17A2B8" },
-                badgeSuspendido: { backgroundColor: "#FFC107" },
-                badgeCancelado: { backgroundColor: "#DC3545" },
+                badgeProgramado: { backgroundColor: "#17B3A7" },
+                badgeSuspendido: { backgroundColor: "#FFC137" },
+                badgeCancelado: { backgroundColor: "#F34D4D" },
+                badgeTextoOscuro: { color: "#473400" },
                 badgeText: {
+                        paddingHorizontal: 3,
+                        lineHeight: 16,
+                        textAlign: "center",
+                        flexShrink: 0,
                         color: colors.onPrimary,
                         fontSize: 10,
                         fontWeight: "bold",
