@@ -12,6 +12,11 @@ import {
         TextInput,
         View,
 } from "react-native";
+import Animated, {
+        FadeInDown,
+        FadeOut,
+        ReduceMotion,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,6 +44,11 @@ import {
         fuenteTitulo,
 } from "../../styles/inicio";
 import { borderRadius, fontSize, spacing } from "../../styles/theme";
+
+const entradaCercanos = FadeInDown.duration(240)
+        .delay(160)
+        .reduceMotion(ReduceMotion.System);
+const salidaCercanos = FadeOut.duration(140).reduceMotion(ReduceMotion.System);
 
 type PanelInicio = "visitas" | "accesibilidad" | "rio";
 
@@ -591,40 +601,58 @@ export default function HomeScreen() {
                                         ) : cercanos.length === 0 ? (
                                                 <EstadoInicio titulo="Todavía no hay lugares disponibles" />
                                         ) : (
-                                                cercanos.map(
-                                                        ({
-                                                                lugar,
-                                                                distancia,
-                                                        }) => (
-                                                                <TarjetaLugarInicio
-                                                                        key={
-                                                                                lugar.id
-                                                                        }
-                                                                        lugar={
-                                                                                lugar
-                                                                        }
-                                                                        categoria={
-                                                                                catalogo.datos?.categorias.find(
-                                                                                        (
-                                                                                                categoria,
-                                                                                        ) =>
-                                                                                                categoria.id ===
-                                                                                                lugar.categoriaId,
-                                                                                )
-                                                                                        ?.nombre ??
-                                                                                "Sin categoría"
-                                                                        }
-                                                                        distancia={
-                                                                                distancia ===
-                                                                                null
-                                                                                        ? null
-                                                                                        : textoDistancia(
-                                                                                                  distancia,
-                                                                                          )
-                                                                        }
-                                                                />
-                                                        ),
-                                                )
+                                                <Animated.View
+                                                        key={cercanos
+                                                                .map(
+                                                                        (
+                                                                                item,
+                                                                        ) =>
+                                                                                item
+                                                                                        .lugar
+                                                                                        .id,
+                                                                )
+                                                                .join("|")}
+                                                        entering={
+                                                                entradaCercanos
+                                                        }
+                                                        exiting={salidaCercanos}
+                                                        collapsable={false}
+                                                >
+                                                        {cercanos.map(
+                                                                ({
+                                                                        lugar,
+                                                                        distancia,
+                                                                }) => (
+                                                                        <TarjetaLugarInicio
+                                                                                key={
+                                                                                        lugar.id
+                                                                                }
+                                                                                lugar={
+                                                                                        lugar
+                                                                                }
+                                                                                categoria={
+                                                                                        catalogo.datos?.categorias.find(
+                                                                                                (
+                                                                                                        categoria,
+                                                                                                ) =>
+                                                                                                        categoria.id ===
+                                                                                                        lugar.categoriaId,
+                                                                                        )
+                                                                                                ?.nombre ??
+                                                                                        "Sin categoría"
+                                                                                }
+                                                                                distancia={
+                                                                                        distancia ===
+                                                                                        null
+                                                                                                ? null
+                                                                                                : textoDistancia(
+                                                                                                          distancia,
+                                                                                                  )
+                                                                                }
+                                                                        />
+                                                                ),
+                                                        )}
+                                                </Animated.View>
                                         )}
                                         {ubicacion.permiso !== null &&
                                                 ubicacion.permiso !==
