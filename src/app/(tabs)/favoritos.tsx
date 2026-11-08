@@ -54,6 +54,7 @@ function horarioHoy(lugar: Lugar) {
 
 export default function FavoritosScreen() {
         const { usuario, status } = useAuth();
+        const autenticado = status === "autenticado" && usuario !== null;
         const usuarioId =
                 status === "autenticado" ? (usuario?.id ?? null) : null;
         useFocusEffect(
@@ -69,8 +70,13 @@ export default function FavoritosScreen() {
         const { datos, cargando, sinConexion, error, reintentar } =
                 useCatalogo();
         const lugares = datos?.lugares ?? [];
-        const guardados = useFavoritos(lugares.map((lugar) => lugar.id));
-        const detalles = useDetallesLugares(guardados.todosFavoritos, lugares);
+        const guardados = useFavoritos(
+                autenticado ? lugares.map((lugar) => lugar.id) : [],
+        );
+        const detalles = useDetallesLugares(
+                autenticado ? guardados.todosFavoritos : [],
+                lugares,
+        );
         const ubicacion = useUbicacion();
         const [busqueda, setBusqueda] = useState("");
         const [categoria, setCategoria] = useState<string | null>(null);
@@ -126,6 +132,83 @@ export default function FavoritosScreen() {
                         </Text>
                 </Pressable>
         );
+
+        if (!autenticado) {
+                return (
+                        <SafeAreaView
+                                style={styles.container}
+                                edges={["top", "left", "right"]}
+                        >
+                                <View style={styles.lista}>
+                                        <View style={styles.cabecera}>
+                                                <Pressable
+                                                        accessibilityRole="button"
+                                                        accessibilityLabel="Volver atrás"
+                                                        style={styles.volver}
+                                                        onPress={() =>
+                                                                router.canGoBack()
+                                                                        ? router.back()
+                                                                        : router.replace(
+                                                                                  "/(tabs)/perfil",
+                                                                          )
+                                                        }
+                                                >
+                                                        <Ionicons
+                                                                name="chevron-back"
+                                                                size={24}
+                                                                color={
+                                                                        colors.secondary
+                                                                }
+                                                        />
+                                                </Pressable>
+                                                <Image
+                                                        source={require("../../../assets/images/logo-colon.png")}
+                                                        style={styles.logo}
+                                                        contentFit="contain"
+                                                        accessibilityLabel="Colón, Entre Ríos"
+                                                />
+                                        </View>
+                                        <Text style={styles.titulo}>
+                                                Mis favoritos
+                                        </Text>
+                                </View>
+                                {status === "cargando" ? (
+                                        <EstadoPantalla tipo="cargando" />
+                                ) : (
+                                        <EstadoPantalla
+                                                tipo="vacio"
+                                                titulo={
+                                                        status ===
+                                                        "biometria_requerida"
+                                                                ? "Desbloqueá tu sesión"
+                                                                : "Iniciá sesión para ver tus favoritos"
+                                                }
+                                                mensaje={
+                                                        status ===
+                                                        "biometria_requerida"
+                                                                ? "Autenticá tu sesión para consultar tus lugares guardados."
+                                                                : "Necesitás iniciar sesión para guardar y ver lugares favoritos."
+                                                }
+                                                accion={
+                                                        status ===
+                                                        "biometria_requerida"
+                                                                ? undefined
+                                                                : "Iniciar sesión"
+                                                }
+                                                onPress={
+                                                        status ===
+                                                        "biometria_requerida"
+                                                                ? undefined
+                                                                : () =>
+                                                                          router.push(
+                                                                                  "/(auth)/login",
+                                                                          )
+                                                }
+                                        />
+                                )}
+                        </SafeAreaView>
+                );
+        }
 
         return (
                 <SafeAreaView

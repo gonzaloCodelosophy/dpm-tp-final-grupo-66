@@ -5,11 +5,13 @@ import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '../context/auth.context';
 import { ultimaVisitaLocal, type VisitaGuardada } from '../data/repositories/visitas.repository';
-import { observarVisitas, registrarVisitaCercana, reintentarVisita } from '../services/visitas.service';
+import { observarVisitas, registrarVisitaCercana, registrarVisitaManual, reintentarVisita } from '../services/visitas.service';
 import type { Lugar } from '../types/Lugar';
 import { borderRadius, colors, spacing } from '../styles/theme';
 
-export function BotonVisitaCercana({ lugar }: { lugar: Lugar }) {
+type ModoRegistro = 'cercania' | 'manual';
+
+export function BotonRegistrarVisita({ lugar, modo }: { lugar: Lugar; modo: ModoRegistro }) {
 
   const { usuario, status } = useAuth();
   const usuarioId = status === 'autenticado' ? usuario?.id : undefined;
@@ -38,7 +40,8 @@ export function BotonVisitaCercana({ lugar }: { lugar: Lugar }) {
     setOcupado(true);
 
     try {
-      await registrarVisitaCercana(lugar, usuarioId);
+      if (modo === 'manual') await registrarVisitaManual(lugar, usuarioId);
+      else await registrarVisitaCercana(lugar, usuarioId);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     } catch (error) {
       Alert.alert('Registrar visita', error instanceof Error ? error.message : 'No pudimos guardar la visita. Intentá de nuevo.');
@@ -74,10 +77,10 @@ export function BotonVisitaCercana({ lugar }: { lugar: Lugar }) {
 
   return (
     <View style={styles.contenedor}>
-      <Pressable accessibilityRole="button" accessibilityState={{ busy: ocupado, disabled: ocupado }} disabled={ocupado} onPress={pulsar} style={styles.boton}>
-        <Text style={styles.texto}>{ocupado ? 'Comprobando visita…' : !usuarioId ? 'Ingresá para registrar una visita' : actual ? 'Registrar otra visita' : 'Registrar visita por cercanía'}</Text>
+      <Pressable accessibilityRole="button" accessibilityState={{ busy: ocupado, disabled: ocupado }} disabled={ocupado} onPress={pulsar} style={[styles.boton, modo === 'manual' && styles.botonManual]}>
+        <Text style={styles.texto}>{ocupado ? (modo === 'manual' ? 'Guardando visita…' : 'Comprobando visita…') : !usuarioId ? 'Ingresá para registrar una visita' : actual ? 'Registrar otra visita' : modo === 'manual' ? 'Registrar visita' : 'Registrar visita por cercanía'}</Text>
       </Pressable>
-      {actual && <Text style={styles.estado} accessibilityLiveRegion="polite">{actual.visita.sincronizada ? 'Visita registrada.' : actual.error ? actual.error.mensaje : 'Visita guardada. Se enviará cuando haya conexión.'}</Text>}
+      {actual && <Text style={styles.estado} accessibilityLiveRegion="polite">{actual.visita.sincronizada ? (modo === 'manual' ? 'Ya visitaste este lugar.' : 'Visita registrada.') : actual.error ? actual.error.mensaje : 'Visita guardada. Se enviará cuando haya conexión.'}</Text>}
       {actual && !actual.visita.sincronizada && (
         <Pressable accessibilityRole="button" disabled={ocupado} onPress={() => { void reintentar(); }} style={styles.reintentar}>
           <Text style={styles.estado}>Reintentar envío</Text>
@@ -87,9 +90,15 @@ export function BotonVisitaCercana({ lugar }: { lugar: Lugar }) {
   );
 }
 
+export function BotonVisitaCercana({ lugar }: { lugar: Lugar }) {
+
+  return <BotonRegistrarVisita lugar={lugar} modo="cercania" />;
+}
+
 const styles = StyleSheet.create({
   contenedor: { gap: spacing.xs, marginTop: spacing.sm },
   boton: { minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: borderRadius.pill, backgroundColor: colors.secondary, paddingHorizontal: spacing.sm },
+  botonManual: { backgroundColor: colors.primary },
   texto: { color: colors.surface, fontWeight: '600', textAlign: 'center' },
   estado: { color: colors.textSecondary, textAlign: 'center', fontSize: 13 },
   reintentar: { minHeight: 44, justifyContent: 'center' },

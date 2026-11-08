@@ -77,13 +77,6 @@ export default function ExploreScreen() {
         >
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
-
-        <Text style={styles.headerLogo}>Colón</Text>
-
-        {/*Usuario Provicional*/}
-        <View style={styles.headerAvatar}>
-          <Ionicons name="person" size={20} color={colors.textSecondary} />
-        </View>
       </View>
         <EstadoCatalogo sinConexion={sinConexion} error={error !== null} />
 
@@ -337,7 +330,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
     backgroundColor: colors.background,
@@ -352,21 +345,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.border,
-  },
-
-  headerLogo: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: colors.secondary,
-  },
-
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primaryLight,
-    alignItems: "center",
-    justifyContent: "center",
   },
 
   lista: {

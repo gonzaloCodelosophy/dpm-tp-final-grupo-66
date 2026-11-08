@@ -1,3 +1,4 @@
+import { BotonRegistrarVisita } from "../../components/boton-visita-cercana";
 import { BotonLugarFavorito } from "../../components/boton-lugar-favorito";
 import { EstadoPantalla } from "../../components/estado-pantalla";
 import { Audioguia } from "../../components/audioguia";
@@ -399,6 +400,52 @@ export default function DetalleLugarScreen() {
                                                                 </View>
                                                         }
 
+                                                        <View
+                                                                style={
+                                                                        styles.infoItem
+                                                                }
+                                                        >
+                                                                <View
+                                                                        style={
+                                                                                styles.infoIcono
+                                                                        }
+                                                                >
+                                                                        <Ionicons
+                                                                                name="globe-outline"
+                                                                                size={
+                                                                                        21
+                                                                                }
+                                                                                color={
+                                                                                        colors.secondary
+                                                                                }
+                                                                        />
+                                                                </View>
+
+                                                                <View
+                                                                        style={
+                                                                                styles.infoTextoContainer
+                                                                        }
+                                                                >
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.infoTitulo
+                                                                                }
+                                                                        >
+                                                                                Sitio
+                                                                                web
+                                                                        </Text>
+
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.infoTexto
+                                                                                }
+                                                                        >
+                                                                                {lugar.sitioWeb ||
+                                                                                        "Sitio web no disponible"}
+                                                                        </Text>
+                                                                </View>
+                                                        </View>
+
                                                         {lugar.precioEntrada !==
                                                                 null && (
                                                                 <View
@@ -448,6 +495,66 @@ export default function DetalleLugarScreen() {
                                                                         </View>
                                                                 </View>
                                                         )}
+                                                </View>
+
+                                                <View style={styles.visitaCard}>
+                                                        <View
+                                                                style={
+                                                                        styles.visitaEncabezado
+                                                                }
+                                                        >
+                                                                <View
+                                                                        style={
+                                                                                styles.visitaIcono
+                                                                        }
+                                                                >
+                                                                        <Ionicons
+                                                                                name="location-outline"
+                                                                                size={
+                                                                                        24
+                                                                                }
+                                                                                color={
+                                                                                        colors.surface
+                                                                                }
+                                                                        />
+                                                                </View>
+
+                                                                <View
+                                                                        style={
+                                                                                styles.visitaTextoContainer
+                                                                        }
+                                                                >
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.visitaTitulo
+                                                                                }
+                                                                        >
+                                                                                ¿Ya
+                                                                                visitaste
+                                                                                este
+                                                                                lugar?
+                                                                        </Text>
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.visitaDescripcion
+                                                                                }
+                                                                        >
+                                                                                Registrá
+                                                                                tu
+                                                                                visita
+                                                                                y
+                                                                                sumala
+                                                                                a
+                                                                                tu
+                                                                                recorrido.
+                                                                        </Text>
+                                                                </View>
+                                                        </View>
+
+                                                        <BotonRegistrarVisita
+                                                                lugar={lugar}
+                                                                modo="manual"
+                                                        />
                                                 </View>
                                         </View>
                                 </ScrollView>
@@ -614,6 +721,43 @@ const styles = StyleSheet.create({
         },
 
         infoTexto: {
+                marginTop: 2,
+                fontSize: fontSize.caption,
+                color: colors.textSecondary,
+        },
+
+        visitaCard: {
+                marginTop: spacing.lg,
+                gap: spacing.sm,
+                padding: spacing.md,
+                borderRadius: borderRadius.md,
+                backgroundColor: colors.primaryLight,
+        },
+
+        visitaEncabezado: {
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing.sm,
+        },
+
+        visitaIcono: {
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: colors.primary,
+        },
+
+        visitaTextoContainer: { flex: 1 },
+
+        visitaTitulo: {
+                fontSize: fontSize.body,
+                fontWeight: "700",
+                color: colors.primary,
+        },
+
+        visitaDescripcion: {
                 marginTop: 2,
                 fontSize: fontSize.caption,
                 color: colors.textSecondary,
