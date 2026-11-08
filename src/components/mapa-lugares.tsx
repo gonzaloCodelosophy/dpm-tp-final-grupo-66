@@ -80,14 +80,10 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
 
                 setSeleccionId(null);
                 setSeguirSinUbicacion(false);
-                setCentrarPendiente(true);
+                setCentrarPendiente(false);
 
-                if (!ubicacion.coordenadas) {
-                        const coordenadas = await ubicacion.solicitar();
-
-                        if (!coordenadas && mapa.current)
-                                setCentrarPendiente(false);
-                }
+                const coordenadas = await ubicacion.solicitar();
+                if (mapa.current) setCentrarPendiente(coordenadas !== null);
         };
 
         const cercanos = useMemo(

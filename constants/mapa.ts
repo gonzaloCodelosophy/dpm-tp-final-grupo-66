@@ -1,3 +1,4 @@
+import type { Usuario } from '../src/types/auth';
 import type { Coordenadas } from '../src/types/Coordenadas';
 
 
@@ -18,5 +19,12 @@ export const REGION_INICIAL_COLON = {
 // Encuadre cercano para centrar la posición o seleccionar un lugar.
 export const DELTA_CERCANIA = 0.015;
 
-// Radio de registro GPS acordado con Gonzalo.
+// Radio fijo para comprobar el registro por GPS.
 export const RADIO_REGISTRO_METROS = 50;
+
+// Los avisos conservan el radio elegido en la cuenta.
+export function radioProximidad(usuario?: Usuario | null): number {
+  const radio = usuario?.preferencias?.radioAvisoMetros;
+
+  return typeof radio === 'number' && Number.isFinite(radio) && radio > 0 ? radio : 250;
+}

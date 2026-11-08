@@ -1,15 +1,19 @@
 import * as Location from 'expo-location';
-import { z } from 'zod';
 import { RADIO_REGISTRO_METROS } from '../../constants/mapa';
+import { z } from 'zod';
 import { distanciaMetros } from './distancias';
 import { obtenerToken } from './storage.service';
 import { solicitarJson } from './api/http';
 import { descargarVisitas, enviarVisita } from './api/visitas.api';
 import { POR_PAGINA } from './api/paginacion';
-import { confirmarVisita, guardarErrorVisita, guardarVisitaLocal, visitasPendientes } from '../data/repositories/visitas.repository';
+import { leerVisitaLocal, confirmarVisita, guardarErrorVisita, guardarVisitaLocal, visitasPendientes } from '../data/repositories/visitas.repository';
 import { errorDatos } from './errores';
 import type { Lugar } from '../types/Lugar';
 import type { Visita } from '../types/Visita';
+
+export interface RecuerdoVisita { nota?: string; fotoUri?: string }
+
+const visitasConsultadas = new Map<string, Visita>();
 
 const registros = new Map<string, Promise<Visita>>();
 const envios = new Map<string, Promise<void>>();
@@ -28,8 +32,9 @@ function publicar(usuarioId: string) {
   }
 }
 
-async function crearVisita(lugar: Lugar, usuarioId: string, origen: Visita['origen']): Promise<Visita> {
+async function crearVisita(lugar: Lugar, usuarioId: string, origen: Visita['origen'], recuerdo?: RecuerdoVisita): Promise<Visita> {
 
+  if ((recuerdo?.nota?.trim().length ?? 0) > 280) throw new Error('La nota puede tener hasta 280 caracteres.');
   const token = await obtenerToken();
   if (!token) throw new Error('Ingresá con tu cuenta para registrar una visita.');
   if (!lugar.activo) throw new Error('Este lugar ya no está disponible para registrar una visita.');
@@ -66,35 +71,36 @@ async function crearVisita(lugar: Lugar, usuarioId: string, origen: Visita['orig
   const visita: Visita = {
     id: `vis-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`,
     usuarioId, lugarId: lugar.id, fechaHora: new Date().toISOString(), origen,
-    fotoUri: null, nota: null, sincronizada: false,
+    fotoUri: recuerdo?.fotoUri ?? null, nota: recuerdo?.nota?.trim() || null, sincronizada: false,
   };
 
   await guardarVisitaLocal(visita);
+  visitasConsultadas.set(`${usuarioId}:${visita.id}`, visita);
   publicar(usuarioId);
   void sincronizarVisitas(usuarioId).catch(error => console.error('No se pudieron enviar las visitas', error));
 
   return visita;
 }
 
-function registrarVisita(lugar: Lugar, usuarioId: string, origen: Visita['origen']): Promise<Visita> {
+function registrarVisita(lugar: Lugar, usuarioId: string, origen: Visita['origen'], recuerdo?: RecuerdoVisita): Promise<Visita> {
 
   const clave = `${usuarioId}:${lugar.id}`;
   const previa = registros.get(clave);
   if (previa) return previa;
 
-  const tarea = crearVisita(lugar, usuarioId, origen).finally(() => { registros.delete(clave); });
+  const tarea = crearVisita(lugar, usuarioId, origen, recuerdo).finally(() => { registros.delete(clave); });
   registros.set(clave, tarea);
   return tarea;
 }
 
-export function registrarVisitaCercana(lugar: Lugar, usuarioId: string): Promise<Visita> {
+export function registrarVisitaCercana(lugar: Lugar, usuarioId: string, recuerdo?: RecuerdoVisita): Promise<Visita> {
 
-  return registrarVisita(lugar, usuarioId, 'gps');
+  return registrarVisita(lugar, usuarioId, 'gps', recuerdo);
 }
 
-export function registrarVisitaManual(lugar: Lugar, usuarioId: string): Promise<Visita> {
+export function registrarVisitaManual(lugar: Lugar, usuarioId: string, recuerdo?: RecuerdoVisita): Promise<Visita> {
 
-  return registrarVisita(lugar, usuarioId, 'manual');
+  return registrarVisita(lugar, usuarioId, 'manual', recuerdo);
 }
 
 export async function obtenerHistorialVisitas(usuarioId: string): Promise<Visita[]> {
@@ -113,9 +119,26 @@ export async function obtenerHistorialVisitas(usuarioId: string): Promise<Visita
 
   if (await obtenerToken() !== token) throw new Error('La sesión cambió. Iniciá sesión de nuevo.');
 
+  for (const visita of historial) {
+    if (visita.usuarioId === usuarioId) visitasConsultadas.set(`${usuarioId}:${visita.id}`, visita);
+  }
+
   return historial
     .filter(visita => visita.usuarioId === usuarioId)
     .sort((a, b) => Date.parse(b.fechaHora) - Date.parse(a.fechaHora));
+}
+
+export async function obtenerVisitaRegistrada(id: string, usuarioId: string): Promise<Visita | null> {
+
+  const consultada = visitasConsultadas.get(`${usuarioId}:${id}`);
+  if (consultada) return consultada;
+  try {
+    const local = await leerVisitaLocal(id, usuarioId);
+    if (local) return local;
+  } catch {
+    // La copia local puede no estar disponible en web.
+  }
+  return (await obtenerHistorialVisitas(usuarioId)).find(visita => visita.id === id) ?? null;
 }
 
 export function sincronizarVisitas(usuarioId: string): Promise<void> {
@@ -142,6 +165,7 @@ export function sincronizarVisitas(usuarioId: string): Promise<void> {
         try {
           const confirmada = await enviarVisita(visita, token);
           await confirmarVisita(confirmada);
+          visitasConsultadas.set(`${usuarioId}:${confirmada.id}`, confirmada);
           publicar(usuarioId);
         } catch (error) {
           const detalle = errorDatos(error);

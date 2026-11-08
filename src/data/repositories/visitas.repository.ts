@@ -51,3 +51,12 @@ export function guardarErrorVisita(id: string, usuarioId: string, error: ErrorDa
     await db.runAsync('UPDATE visitas_gps SET errorJson = ? WHERE id = ? AND usuarioId = ? AND sincronizada = 0', error ? JSON.stringify(error) : null, id, usuarioId);
   });
 }
+
+export function leerVisitaLocal(id: string, usuarioId: string) {
+
+  return conBase(async db => {
+    const fila = await db.getFirstAsync<FilaVisita>('SELECT datosJson, errorJson FROM visitas_gps WHERE id = ? AND usuarioId = ?', id, usuarioId);
+
+    return fila ? leerFila(fila).visita : null;
+  });
+}

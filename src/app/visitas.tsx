@@ -1,300 +1,180 @@
-import { useTema } from "../context/tema.context";
-import { useCallback, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { Ionicons } from "@react-native-vector-icons/ionicons";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useAuth } from "../context/auth.context";
-import { EstadoPantalla } from "../components/estado-pantalla";
-import { obtenerLugares } from "../services/lugares.service";
-import { obtenerHistorialVisitas } from "../services/visitas.service";
-import {
-        colors as paletaColors,
-        spacing,
-        fontSize,
-        borderRadius,
-} from "../styles/theme";
-import type { Visita } from "../types/Visita";
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import { useTema } from '../context/tema.context';
+import { useAuth } from '../context/auth.context';
+import { useVolverPerfil } from '../hooks/use-volver-perfil';
+import { useCatalogo } from '../hooks/use-catalogo';
+import { useDetallesLugares } from '../hooks/use-detalles-lugares';
+import { EstadoPantalla } from '../components/estado-pantalla';
+import { TarjetaVisita } from '../components/tarjeta-visita';
+import { obtenerHistorialVisitas, observarVisitas } from '../services/visitas.service';
+import { colorsInicio, fuenteTitulo } from '../styles/inicio';
+import type { Visita } from '../types/Visita';
 
-interface VisitaConNombre extends Visita {
-        nombreLugar: string;
+const zonaRecorrido = 'America/Argentina/Buenos_Aires';
+const formatoDia = new Intl.DateTimeFormat('es-AR', {
+  timeZone: zonaRecorrido, year: 'numeric', month: '2-digit', day: '2-digit',
+});
+const formatoFecha = new Intl.DateTimeFormat('es-AR', {
+  timeZone: zonaRecorrido, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+});
+
+function fechaLineaTiempo(fecha: string) {
+  const texto = formatoFecha.format(new Date(fecha)).replace(',', '').replace(/ de (\d{4})$/, ' $1');
+
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
-
-function fechaLegible(fecha: string) {
-        const valor = new Date(fecha);
-        return `${valor.toLocaleDateString("es-AR")} · ${valor.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}`;
-}
-
-const origenLegible: Record<Visita["origen"], string> = {
-        qr: "Código QR",
-        gps: "Cercanía",
-        manual: "Registro manual",
-};
 
 export default function VisitasScreen() {
-        const { colors, styles } = useEstilos();
+  const { colorsInicio: colors } = useTema();
+  const styles = crearEstilos(colors);
+  const router = useRouter();
+  const volver = useVolverPerfil();
+  const { usuario, status } = useAuth();
+  const usuarioId = status === 'autenticado' ? usuario?.id : undefined;
+  const [historial, setHistorial] = useState<{ usuarioId: string; visitas: Visita[] } | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(false);
+  const turno = useRef(0);
+  const visitas = historial && historial.usuarioId === usuarioId ? historial.visitas : [];
+  const catalogo = useCatalogo();
+  const detalles = useDetallesLugares(visitas.map(visita => visita.lugarId), catalogo.datos?.lugares ?? []);
+  const lugares = new Map(detalles.lugares.map(lugar => [lugar.id, lugar]));
+  const lineaTiempo = useMemo(() => {
+    const ordenadas = [...(historial && historial.usuarioId === usuarioId ? historial.visitas : [])]
+      .sort((a, b) => Date.parse(b.fechaHora) - Date.parse(a.fechaHora));
 
-        const router = useRouter();
-        const { usuario, status } = useAuth();
-        const [visitas, setVisitas] = useState<VisitaConNombre[]>([]);
-        const [cargando, setCargando] = useState(true);
-        const [error, setError] = useState(false);
+    return ordenadas.map((visita, indice) => ({
+      visita,
+      empiezaDia: indice === 0 || formatoDia.format(new Date(visita.fechaHora)) !== formatoDia.format(new Date(ordenadas[indice - 1].fechaHora)),
+    }));
+  }, [historial, usuarioId]);
 
-        const cargarHistorial = useCallback(async () => {
-                if (status !== "autenticado" || !usuario) {
-                        setCargando(false);
-                        return;
-                }
 
-                setCargando(true);
-                setError(false);
-                try {
-                        const historial = await obtenerHistorialVisitas(
-                                usuario.id,
-                        );
-                        let nombres = new Map<string, string>();
-                        try {
-                                const lugares = await obtenerLugares();
-                                nombres = new Map(
-                                        lugares.map((lugar) => [
-                                                lugar.id,
-                                                lugar.nombre,
-                                        ]),
-                                );
-                        } catch {
-                                // @gonzalo: muestro las visitas aunque no pueda cargar los nombres del catálogo, te parece bien?
-                        }
+  const cargar = useCallback(async () => {
+    const solicitud = ++turno.current;
+    if (!usuarioId) return;
+    setCargando(true);
+    setError(false);
+    try {
+      const nuevas = await obtenerHistorialVisitas(usuarioId);
+      if (solicitud === turno.current) setHistorial({ usuarioId, visitas: nuevas });
+    } catch {
+      if (solicitud === turno.current) setError(true);
+    } finally {
+      if (solicitud === turno.current) setCargando(false);
+    }
+  }, [usuarioId]);
 
-                        setVisitas(
-                                historial.map((visita) => ({
-                                        ...visita,
-                                        nombreLugar:
-                                                nombres.get(visita.lugarId) ??
-                                                "Lugar visitado",
-                                })),
-                        );
-                } catch {
-                        setError(true);
-                } finally {
-                        setCargando(false);
-                }
-        }, [status, usuario]);
+  useFocusEffect(useCallback(() => {
+    void cargar();
+    const quitar = observarVisitas(id => { if (id === usuarioId) void cargar(); });
 
-        useFocusEffect(
-                useCallback(() => {
-                        void cargarHistorial();
-                }, [cargarHistorial]),
-        );
+    return () => { turno.current++; quitar(); };
+  }, [cargar, usuarioId]));
 
-        if (status !== "autenticado" || !usuario) {
-                return (
-                        <View style={styles.container}>
-                                <Pressable
-                                        style={styles.volver}
-                                        onPress={() => router.back()}
-                                        accessibilityRole="button"
-                                        accessibilityLabel="Volver"
-                                >
-                                        <Ionicons
-                                                name="arrow-back"
-                                                size={22}
-                                                color={colors.secondary}
-                                        />
-                                </Pressable>
-                                <EstadoPantalla
-                                        tipo="error"
-                                        titulo="Iniciá sesión"
-                                        mensaje="Necesitás una cuenta para consultar tu historial de visitas."
-                                        accion="Iniciar sesión"
-                                        onPress={() =>
-                                                router.push(
-                                                        "/(auth)/login" as any,
-                                                )
-                                        }
-                                />
-                        </View>
-                );
-        }
+  const cabecera = (
+    <View style={styles.encabezadoFijo}>
+      <View style={styles.cabecera}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Volver al perfil" onPress={volver} style={styles.volver}>
+          <Ionicons name="chevron-back" size={24} color={colors.secondary} />
+        </Pressable>
+        <Image source={require('../../assets/images/logo-colon.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Colón, Entre Ríos" />
+      </View>
+      <Text style={styles.titulo}>Mi recorrido</Text>
+      <Text style={styles.descripcion}>Tus lugares y experiencias en Colón</Text>
+      {usuarioId && (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Registrar una visita. Elegir cómo registrarla"
+            onPress={() => router.push('/(tabs)/recorrido/registrar-visita')}
+            style={({ pressed }) => [styles.registrar, pressed && { opacity: 0.8 }]}
+          >
+            <LinearGradient colors={['#FF9861', '#F65F4F']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.degradado}>
+              <Ionicons name="add-circle-outline" size={25} color="#FFFFFF" />
+              <Text style={styles.registrarTexto}>Registrar una visita</Text>
+            </LinearGradient>
+          </Pressable>
+          <Text style={styles.seccion}>Lugares visitados</Text>
+        </>
+      )}
+    </View>
+  );
 
-        return (
-                <View style={styles.container}>
-                        <View style={styles.header}>
-                                <Pressable
-                                        style={styles.volver}
-                                        onPress={() => router.back()}
-                                        accessibilityRole="button"
-                                        accessibilityLabel="Volver"
-                                >
-                                        <Ionicons
-                                                name="arrow-back"
-                                                size={22}
-                                                color={colors.secondary}
-                                        />
-                                </Pressable>
-                                <Text style={styles.titulo}>Mi recorrido</Text>
-                                <Pressable
-                                        style={styles.recargar}
-                                        onPress={() => void cargarHistorial()}
-                                        accessibilityRole="button"
-                                        accessibilityLabel="Actualizar historial"
-                                >
-                                        <Ionicons
-                                                name="refresh"
-                                                size={21}
-                                                color={colors.secondary}
-                                        />
-                                </Pressable>
-                        </View>
+  const estadoVacio = !usuarioId ? (
+    <EstadoPantalla
+      tipo={status === 'cargando' ? 'cargando' : 'vacio'}
+      titulo={status === 'biometria_requerida' ? 'Desbloqueá tu cuenta' : 'Tu recorrido empieza acá'}
+      mensaje="Ingresá con tu cuenta para ver tus visitas y guardar nuevos recuerdos."
+      accion={status === 'biometria_requerida' ? 'Ir al perfil' : 'Iniciar sesión'}
+      onPress={() => status === 'biometria_requerida' ? volver() : router.push('/(auth)/login')}
+    />
+  ) : cargando ? <EstadoPantalla tipo="cargando" /> : error ? (
+    <EstadoPantalla tipo="error" mensaje="No pudimos cargar tus visitas. Intentá de nuevo." onPress={() => void cargar()} />
+  ) : (
+    <EstadoPantalla tipo="vacio" titulo="Empezá tu recorrido" mensaje="Todavía no registraste visitas. Elegí un lugar y guardá tu primera experiencia." />
+  );
 
-                        {cargando ? (
-                                <EstadoPantalla tipo="cargando" />
-                        ) : error ? (
-                                <EstadoPantalla
-                                        tipo="error"
-                                        mensaje="No pudimos cargar tu historial. Revisá la conexión e intentá de nuevo."
-                                        onPress={() => void cargarHistorial()}
-                                />
-                        ) : visitas.length === 0 ? (
-                                <EstadoPantalla
-                                        tipo="vacio"
-                                        titulo="Todavía no registraste visitas"
-                                        mensaje="Cuando registres una visita, va a aparecer acá."
-                                />
-                        ) : (
-                                <FlatList
-                                        data={visitas}
-                                        keyExtractor={(visita) => visita.id}
-                                        contentContainerStyle={styles.lista}
-                                        renderItem={({ item }) => (
-                                                <View style={styles.tarjeta}>
-                                                        <View
-                                                                style={
-                                                                        styles.icono
-                                                                }
-                                                        >
-                                                                <Ionicons
-                                                                        name="location-outline"
-                                                                        size={
-                                                                                22
-                                                                        }
-                                                                        color={
-                                                                                colors.secondary
-                                                                        }
-                                                                />
-                                                        </View>
-                                                        <View
-                                                                style={
-                                                                        styles.detalle
-                                                                }
-                                                        >
-                                                                <Text
-                                                                        style={
-                                                                                styles.nombre
-                                                                        }
-                                                                >
-                                                                        {
-                                                                                item.nombreLugar
-                                                                        }
-                                                                </Text>
-                                                                <Text
-                                                                        style={
-                                                                                styles.fecha
-                                                                        }
-                                                                >
-                                                                        {fechaLegible(
-                                                                                item.fechaHora,
-                                                                        )}
-                                                                </Text>
-                                                                <Text
-                                                                        style={
-                                                                                styles.origen
-                                                                        }
-                                                                >
-                                                                        {
-                                                                                origenLegible[
-                                                                                        item
-                                                                                                .origen
-                                                                                ]
-                                                                        }
-                                                                </Text>
-                                                        </View>
-                                                </View>
-                                        )}
-                                />
-                        )}
-                </View>
-        );
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <Stack.Screen options={{ headerShown: false }} />
+      {cabecera}
+      <FlatList
+        style={styles.contenedorLista}
+        data={lineaTiempo}
+        keyExtractor={item => item.visita.id}
+        contentContainerStyle={styles.lista}
+        ListEmptyComponent={estadoVacio}
+        ListFooterComponent={error && visitas.length > 0 ? (
+          <EstadoPantalla tipo="error" mensaje="No pudimos actualizar las visitas." onPress={() => void cargar()} />
+        ) : null}
+        refreshing={Boolean(usuarioId) && cargando && visitas.length > 0}
+        onRefresh={usuarioId ? () => void cargar() : undefined}
+        renderItem={({ item: { visita, empiezaDia } }) => (
+          <View style={styles.filaTiempo}>
+            <View style={styles.ejeTiempo} pointerEvents="none" accessible={false}>
+              <View style={styles.lineaVertical} />
+              {empiezaDia && <View style={styles.puntoTiempo} />}
+            </View>
+            <View style={styles.contenidoTiempo}>
+              {empiezaDia && (
+                <Text accessibilityRole="header" style={styles.fechaTiempo}>
+                  {fechaLineaTiempo(visita.fechaHora)}
+                </Text>
+              )}
+              <TarjetaVisita visita={visita} lugar={lugares.get(visita.lugarId)} onPress={() => router.push({ pathname: '/(tabs)/recorrido/visita/[id]', params: { id: visita.id } })} />
+            </View>
+          </View>
+        )}
+      />
+    </SafeAreaView>
+  );
 }
 
-const crearEstilos = (colors: typeof paletaColors) =>
-        StyleSheet.create({
-                container: {
-                        flex: 1,
-                        backgroundColor: colors.background,
-                        paddingTop: spacing.xl,
-                },
-                header: {
-                        flexDirection: "row",
-                        alignItems: "center",
-                        paddingHorizontal: spacing.md,
-                        paddingBottom: spacing.md,
-                        gap: spacing.sm,
-                },
-                volver: {
-                        width: 42,
-                        height: 42,
-                        borderRadius: borderRadius.pill,
-                        backgroundColor: colors.surface,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                        alignItems: "center",
-                        justifyContent: "center",
-                },
-                titulo: {
-                        flex: 1,
-                        color: colors.secondary,
-                        fontSize: fontSize.title,
-                        fontWeight: "700",
-                },
-                recargar: {
-                        width: 42,
-                        height: 42,
-                        alignItems: "center",
-                        justifyContent: "center",
-                },
-                lista: { padding: spacing.md, gap: spacing.sm },
-                tarjeta: {
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: spacing.md,
-                        padding: spacing.md,
-                        borderRadius: borderRadius.md,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                        backgroundColor: colors.surface,
-                },
-                icono: {
-                        width: 44,
-                        height: 44,
-                        borderRadius: borderRadius.pill,
-                        backgroundColor: colors.secondaryLight,
-                        alignItems: "center",
-                        justifyContent: "center",
-                },
-                detalle: { flex: 1, gap: spacing.xs },
-                nombre: {
-                        color: colors.text,
-                        fontSize: fontSize.body,
-                        fontWeight: "700",
-                },
-                fecha: {
-                        color: colors.textSecondary,
-                        fontSize: fontSize.caption,
-                },
-                origen: { color: colors.secondary, fontSize: fontSize.caption },
-        });
-
-function useEstilos() {
-        const tema = useTema();
-        const colors = tema.colors;
-        return { colors, styles: crearEstilos(colors) };
-}
+const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  encabezadoFijo: { paddingHorizontal: 18, paddingTop: 16 },
+  contenedorLista: { flex: 1 },
+  lista: { paddingHorizontal: 18, paddingBottom: 32, flexGrow: 1 },
+  filaTiempo: { flexDirection: 'row' },
+  ejeTiempo: { width: 22, marginRight: 8, alignSelf: 'stretch' },
+  lineaVertical: { position: 'absolute', left: 7, top: 0, bottom: 0, width: 2, backgroundColor: colors.border },
+  puntoTiempo: { position: 'absolute', left: 2, top: 6, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.background },
+  contenidoTiempo: { flex: 1, minWidth: 0 },
+  fechaTiempo: { fontSize: 15, fontWeight: '700', lineHeight: 23, color: colors.secondary, marginBottom: 14 },
+  cabecera: { minHeight: 64, alignItems: 'center', justifyContent: 'center', marginBottom: 12, paddingHorizontal: 52 },
+  volver: { position: 'absolute', left: 0, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  logo: { width: 90, height: 48 },
+  titulo: { fontFamily: fuenteTitulo, fontSize: 30, fontWeight: '700', color: colors.secondary, marginBottom: 6 },
+  descripcion: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, marginBottom: 24 },
+  registrar: { borderRadius: 20, overflow: 'hidden', marginBottom: 28 },
+  degradado: { minHeight: 58, paddingHorizontal: 18, paddingVertical: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  registrarTexto: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', flexShrink: 1 },
+  seccion: { fontSize: 20, fontWeight: '700', color: colors.secondary, marginBottom: 16 },
+});

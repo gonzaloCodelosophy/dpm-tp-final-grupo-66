@@ -6,6 +6,7 @@
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
+    "android-fresh": "cd android && ./gradlew clean && cd .. && expo run:android",
     "apk:android": "node scripts/build-apk.cjs",
     "ios": "expo run:ios",
     "web": "expo start --web",

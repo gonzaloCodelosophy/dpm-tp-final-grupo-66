@@ -11,6 +11,9 @@ import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import "react-native-reanimated";
 
+import { UbicacionProvider } from "../context/ubicacion.context";
+import { useAvisosProximidad } from "../hooks/use-avisos-proximidad";
+
 import { TemaProvider, useTema } from "../context/tema.context";
 
 import { AuthProvider } from "../context/auth.context";
@@ -31,6 +34,7 @@ export const unstable_settings = {
 };
 
 function RootNavigation() {
+        useAvisosProximidad();
         const { colors, oscuro } = useTema();
         const tema = oscuro ? DarkTheme : DefaultTheme;
         const temaAplicacion = {
@@ -121,7 +125,9 @@ export default function RootLayout() {
         return (
                 <AuthProvider>
                         <TemaProvider>
-                                <RootNavigation />
+                                <UbicacionProvider>
+                                        <RootNavigation />
+                                </UbicacionProvider>
                         </TemaProvider>
                 </AuthProvider>
         );
