@@ -4,7 +4,8 @@ import { RADIO_REGISTRO_METROS } from '../../constants/mapa';
 import { distanciaMetros } from './distancias';
 import { obtenerToken } from './storage.service';
 import { solicitarJson } from './api/http';
-import { enviarVisita } from './api/visitas.api';
+import { descargarVisitas, enviarVisita } from './api/visitas.api';
+import { POR_PAGINA } from './api/paginacion';
 import { confirmarVisita, guardarErrorVisita, guardarVisitaLocal, visitasPendientes } from '../data/repositories/visitas.repository';
 import { errorDatos } from './errores';
 import type { Lugar } from '../types/Lugar';
@@ -27,17 +28,13 @@ function publicar(usuarioId: string) {
   }
 }
 
-export function registrarVisitaCercana(lugar: Lugar, usuarioId: string): Promise<Visita> {
+async function crearVisita(lugar: Lugar, usuarioId: string, origen: Visita['origen']): Promise<Visita> {
 
-  const clave = `${usuarioId}:${lugar.id}`;
-  const previa = registros.get(clave);
-  if (previa) return previa;
+  const token = await obtenerToken();
+  if (!token) throw new Error('Ingresá con tu cuenta para registrar una visita.');
+  if (!lugar.activo) throw new Error('Este lugar ya no está disponible para registrar una visita.');
 
-  const tarea = (async () => {
-    const token = await obtenerToken();
-    if (!token) throw new Error('Ingresá con tu cuenta para registrar una visita.');
-    if (!lugar.activo) throw new Error('Este lugar ya no está disponible para registrar una visita.');
-
+  if (origen === 'gps') {
     const permiso = await Location.getForegroundPermissionsAsync();
     if (!permiso.granted) throw new Error('Permití tu ubicación desde el mapa para comprobar que estás cerca.');
     if (!await Location.hasServicesEnabledAsync()) throw new Error('Activá la ubicación del teléfono e intentá de nuevo.');
@@ -62,23 +59,63 @@ export function registrarVisitaCercana(lugar: Lugar, usuarioId: string): Promise
 
     const distancia = distanciaMetros({ latitud: posicion.coords.latitude, longitud: posicion.coords.longitude }, lugar.coordenadas);
     if (distancia > RADIO_REGISTRO_METROS) throw new Error(`Acercate a ${RADIO_REGISTRO_METROS} metros del lugar para registrar la visita.`);
-    if (await obtenerToken() !== token) throw new Error('La cuenta cambió. Ingresá de nuevo antes de registrar la visita.');
+  }
 
-    const visita: Visita = {
-      id: `vis-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`,
-      usuarioId, lugarId: lugar.id, fechaHora: new Date().toISOString(), origen: 'gps',
-      fotoUri: null, nota: null, sincronizada: false,
-    };
+  if (await obtenerToken() !== token) throw new Error('La cuenta cambió. Ingresá de nuevo antes de registrar la visita.');
 
-    await guardarVisitaLocal(visita);
-    publicar(usuarioId);
-    void sincronizarVisitas(usuarioId).catch(error => console.error('No se pudieron enviar las visitas', error));
+  const visita: Visita = {
+    id: `vis-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`,
+    usuarioId, lugarId: lugar.id, fechaHora: new Date().toISOString(), origen,
+    fotoUri: null, nota: null, sincronizada: false,
+  };
 
-    return visita;
-  })().finally(() => { registros.delete(clave); });
+  await guardarVisitaLocal(visita);
+  publicar(usuarioId);
+  void sincronizarVisitas(usuarioId).catch(error => console.error('No se pudieron enviar las visitas', error));
 
+  return visita;
+}
+
+function registrarVisita(lugar: Lugar, usuarioId: string, origen: Visita['origen']): Promise<Visita> {
+
+  const clave = `${usuarioId}:${lugar.id}`;
+  const previa = registros.get(clave);
+  if (previa) return previa;
+
+  const tarea = crearVisita(lugar, usuarioId, origen).finally(() => { registros.delete(clave); });
   registros.set(clave, tarea);
   return tarea;
+}
+
+export function registrarVisitaCercana(lugar: Lugar, usuarioId: string): Promise<Visita> {
+
+  return registrarVisita(lugar, usuarioId, 'gps');
+}
+
+export function registrarVisitaManual(lugar: Lugar, usuarioId: string): Promise<Visita> {
+
+  return registrarVisita(lugar, usuarioId, 'manual');
+}
+
+export async function obtenerHistorialVisitas(usuarioId: string): Promise<Visita[]> {
+
+  const token = await obtenerToken();
+  if (!token) throw new Error('Iniciá sesión para consultar tus visitas.');
+
+  const primera = await descargarVisitas(1, token);
+  const historial = [...primera.datos];
+  const paginas = Math.ceil(primera.meta.total / POR_PAGINA);
+
+  for (let pagina = 2; pagina <= paginas; pagina++) {
+    if (await obtenerToken() !== token) throw new Error('La sesión cambió. Iniciá sesión de nuevo.');
+    historial.push(...(await descargarVisitas(pagina, token)).datos);
+  }
+
+  if (await obtenerToken() !== token) throw new Error('La sesión cambió. Iniciá sesión de nuevo.');
+
+  return historial
+    .filter(visita => visita.usuarioId === usuarioId)
+    .sort((a, b) => Date.parse(b.fechaHora) - Date.parse(a.fechaHora));
 }
 
 export function sincronizarVisitas(usuarioId: string): Promise<void> {

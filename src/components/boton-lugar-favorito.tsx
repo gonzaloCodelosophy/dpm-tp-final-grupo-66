@@ -1,17 +1,42 @@
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../context/auth.context';
 import { useFavoritos } from '../hooks/use-favoritos';
 import { guardarFavorito } from '../services/favoritos.service';
 import { colors } from '../styles/theme';
 
 export function BotonLugarFavorito({ id }: { id: string }) {
+  const router = useRouter();
+  const { status } = useAuth();
   const { favoritos, cargando, error, reintentar } = useFavoritos([id]);
   const [guardando, setGuardando] = useState(false);
-  const activo = favoritos.includes(id);
+  const activo = status === 'autenticado' && favoritos.includes(id);
 
   const cambiar = async () => {
     if (guardando || cargando) return;
+    if (status !== 'autenticado') {
+      if (status === 'no_autenticado') {
+        Alert.alert(
+          'Iniciá sesión para guardar favoritos',
+          'Iniciá sesión para agregar o quitar lugares de tus favoritos.',
+          [
+            { text: 'Ahora no', style: 'cancel' },
+            { text: 'Iniciar sesión', onPress: () => router.push('/(auth)/login' as any) },
+          ],
+        );
+      } else {
+        Alert.alert(
+          status === 'biometria_requerida' ? 'Desbloqueá tu sesión' : 'Cargando tu sesión',
+          status === 'biometria_requerida'
+            ? 'Autenticá tu sesión para guardar o quitar favoritos.'
+            : 'Esperá un momento y volvé a intentarlo.',
+          [{ text: 'Entendido', style: 'cancel' }],
+        );
+      }
+      return;
+    }
     if (error) {
       reintentar();
       Alert.alert('Mis favoritos', 'No pudimos leer tus favoritos. Intentá de nuevo en unos momentos.');
