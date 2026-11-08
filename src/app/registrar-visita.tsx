@@ -75,7 +75,7 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   volver: { position: 'absolute', left: 0, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   logo: { width: 90, height: 48 },
   contenido: { paddingHorizontal: 18, paddingBottom: 32 },
-  titulo: { fontFamily: fuenteTitulo, fontSize: 30, fontWeight: '700', color: colors.secondary, marginBottom: 6 },
+  titulo: { fontFamily: fuenteTitulo, fontSize: 28, fontWeight: '700', color: colors.secondary, marginBottom: 6 },
   descripcion: { fontSize: 15, lineHeight: 22, color: colors.textSecondary, marginBottom: 28 },
   opciones: { gap: 16 },
   opcion: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12, minHeight: 100, borderRadius: 22, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },

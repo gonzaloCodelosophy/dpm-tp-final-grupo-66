@@ -6,7 +6,6 @@ import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { useTema } from '../context/tema.context';
 import { useAuth } from '../context/auth.context';
-import { useVolverPerfil } from '../hooks/use-volver-perfil';
 import { useCatalogo } from '../hooks/use-catalogo';
 import { useDetallesLugares } from '../hooks/use-detalles-lugares';
 import { EstadoPantalla } from '../components/estado-pantalla';
@@ -33,7 +32,6 @@ export default function VisitasScreen() {
   const { colorsInicio: colors } = useTema();
   const styles = crearEstilos(colors);
   const router = useRouter();
-  const volver = useVolverPerfil();
   const { usuario, status } = useAuth();
   const usuarioId = status === 'autenticado' ? usuario?.id : undefined;
   const [historial, setHistorial] = useState<{ usuarioId: string; visitas: Visita[] } | null>(null);
@@ -80,13 +78,11 @@ export default function VisitasScreen() {
   const cabecera = (
     <View style={styles.encabezadoFijo}>
       <View style={styles.cabecera}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Volver al perfil" onPress={volver} style={styles.volver}>
-          <Ionicons name="chevron-back" size={24} color={colors.secondary} />
-        </Pressable>
         <Image source={require('../../assets/images/logo-colon.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Colón, Entre Ríos" />
+        <Image source={require('../../assets/images/ilustracion-colon-puente.png')} style={styles.puente} contentFit="contain" />
+        <Text style={styles.titulo}>Mi recorrido</Text>
+        <Text style={styles.descripcion}>Tus lugares y experiencias en Colón</Text>
       </View>
-      <Text style={styles.titulo}>Mi recorrido</Text>
-      <Text style={styles.descripcion}>Tus lugares y experiencias en Colón</Text>
       {usuarioId && (
         <>
           <Pressable
@@ -110,7 +106,7 @@ export default function VisitasScreen() {
       titulo={status === 'biometria_requerida' ? 'Desbloqueá tu cuenta' : 'Tu recorrido empieza acá'}
       mensaje="Ingresá con tu cuenta para ver tus visitas y guardar nuevos recuerdos."
       accion={status === 'biometria_requerida' ? 'Ir al perfil' : 'Iniciar sesión'}
-      onPress={() => status === 'biometria_requerida' ? volver() : router.push('/(auth)/login')}
+      onPress={() => status === 'biometria_requerida' ? router.navigate('/(tabs)/perfil') : router.push('/(auth)/login')}
     />
   ) : cargando ? <EstadoPantalla tipo="cargando" /> : error ? (
     <EstadoPantalla tipo="error" mensaje="No pudimos cargar tus visitas. Intentá de nuevo." onPress={() => void cargar()} />
@@ -156,7 +152,7 @@ export default function VisitasScreen() {
 
 const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  encabezadoFijo: { paddingHorizontal: 18, paddingTop: 16 },
+  encabezadoFijo: { paddingHorizontal: 18, paddingTop: 8 },
   contenedorLista: { flex: 1 },
   lista: { paddingHorizontal: 18, paddingBottom: 32, flexGrow: 1 },
   filaTiempo: { flexDirection: 'row' },
@@ -165,12 +161,12 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   puntoTiempo: { position: 'absolute', left: 2, top: 6, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.background },
   contenidoTiempo: { flex: 1, minWidth: 0 },
   fechaTiempo: { fontSize: 15, fontWeight: '700', lineHeight: 23, color: colors.secondary, marginBottom: 14 },
-  cabecera: { minHeight: 64, alignItems: 'center', justifyContent: 'center', marginBottom: 12, paddingHorizontal: 52 },
-  volver: { position: 'absolute', left: 0, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 90, height: 48 },
-  titulo: { fontFamily: fuenteTitulo, fontSize: 30, fontWeight: '700', color: colors.secondary, marginBottom: 6 },
-  descripcion: { fontSize: 15, color: colors.textSecondary, lineHeight: 22, marginBottom: 24 },
+  cabecera: { minHeight: 130, justifyContent: 'flex-end', marginBottom: 24, paddingTop: 72 },
+  logo: { width: 95, height: 62, position: 'absolute', top: 0, left: 0 },
+  puente: { width: 205, height: 115, position: 'absolute', right: -24, top: 0, opacity: 0.85 },
+  titulo: { fontFamily: fuenteTitulo, fontSize: 24, lineHeight: 30, fontWeight: '700', color: colors.blueText },
+  descripcion: { fontSize: 14, color: colors.greenText, lineHeight: 20, marginTop: 2 },
   registrar: { minHeight: 48, borderRadius: 24, backgroundColor: colors.primarySolid, paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 28 },
   registrarTexto: { fontSize: 14, fontWeight: '600', color: colors.onPrimary, flexShrink: 1 },
-  seccion: { fontSize: 20, fontWeight: '700', color: colors.secondary, marginBottom: 16 },
+  seccion: { fontSize: 19, fontWeight: '700', color: colors.secondary, marginBottom: 16 },
 });

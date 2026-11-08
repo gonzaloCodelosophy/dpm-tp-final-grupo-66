@@ -145,7 +145,7 @@ export default function TabLayout() {
                         <Tabs.Screen
                                 name="recorrido"
                                 options={{
-                                        title: "Mi recorrido",
+                                        title: "Recorrido",
                                         tabBarIcon: ({ focused }) => (
                                                 <IconoTab
                                                         focused={focused}

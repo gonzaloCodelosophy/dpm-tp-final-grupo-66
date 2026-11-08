@@ -88,7 +88,7 @@ export function TarjetaMapa({
                                         accessibilityRole="button"
                                         onPress={() =>
                                                 router.push({
-                                                        pathname: "/lugar/[id]",
+                                                        pathname: "/(tabs)/explore/lugar/[id]",
                                                         params: {
                                                                 id: lugar.id,
                                                         },

@@ -349,7 +349,7 @@ export default function HomeScreen() {
                                                                         onPress={() =>
                                                                                 router.push(
                                                                                         {
-                                                                                                pathname: "/lugar/[id]",
+                                                                                                pathname: "/(tabs)/explore/lugar/[id]",
                                                                                                 params: {
                                                                                                         id: lugar.id,
                                                                                                 },
@@ -413,7 +413,7 @@ export default function HomeScreen() {
                                                                         onPress={() =>
                                                                                 router.push(
                                                                                         {
-                                                                                                pathname: "/evento/[id]",
+                                                                                                pathname: "/(tabs)/agenda/evento/[id]",
                                                                                                 params: {
                                                                                                         id: evento.id,
                                                                                                 },
@@ -973,7 +973,7 @@ export default function HomeScreen() {
                                                                                                                         );
                                                                                                                         router.push(
                                                                                                                                 {
-                                                                                                                                        pathname: "/lugar/[id]",
+                                                                                                                                        pathname: "/(tabs)/explore/lugar/[id]",
                                                                                                                                         params: {
                                                                                                                                                 id: lugar.id,
                                                                                                                                         },

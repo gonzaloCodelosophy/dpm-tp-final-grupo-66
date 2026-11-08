@@ -36,7 +36,7 @@ export function TarjetaLugarInicio({
                                 accessibilityLabel={`Ver ${lugar.nombre}`}
                                 onPress={() =>
                                         router.push({
-                                                pathname: "/lugar/[id]",
+                                                pathname: "/(tabs)/explore/lugar/[id]",
                                                 params: { id: lugar.id },
                                         })
                                 }
@@ -141,7 +141,7 @@ export function TarjetaEventoInicio({
                         style={[styles.tarjeta, styles.evento]}
                         onPress={() =>
                                 router.push({
-                                        pathname: "/evento/[id]",
+                                        pathname: "/(tabs)/agenda/evento/[id]",
                                         params: { id: evento.id },
                                 })
                         }

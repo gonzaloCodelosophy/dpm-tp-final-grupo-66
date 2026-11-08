@@ -14,6 +14,7 @@ import {
         Linking,
         Platform,
         TouchableOpacity,
+        useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -33,6 +34,8 @@ import BotonEventoFavorito from "../../components/boton-evento-favorito";
 export default function PantallaDetalleEvento() {
         const { colorsInicio: colors } = useTema();
         const styles = crearEstilos(colors);
+        const { width } = useWindowDimensions();
+        const altoImagen = Math.min(width * 0.72, 320);
         const { id, origen } = useLocalSearchParams<{
                 id: string;
                 origen?: string;
@@ -150,13 +153,15 @@ export default function PantallaDetalleEvento() {
                                                                         evento.imagenUrl
                                                                 }
                                                                 style={
-                                                                        styles.imagen
+                                                                        [styles.imagen, { height: altoImagen }]
                                                                 }
+                                                                contentFit="cover"
                                                         />
                                                 ) : (
                                                         <View
                                                                 style={[
                                                                         styles.imagen,
+                                                                        { height: altoImagen },
                                                                         styles.placeholder,
                                                                 ]}
                                                         >
@@ -196,7 +201,7 @@ export default function PantallaDetalleEvento() {
                                                                                         styles.textoSuspendido,
                                                                         ]}
                                                                 >
-                                                                        {estado.toUpperCase()}
+                                                                        {estado.charAt(0).toUpperCase() + estado.slice(1)}
                                                                 </Text>
                                                         </View>
                                                         {(suspendido ||
@@ -454,7 +459,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 header: {
                         minHeight: 64,
                         marginHorizontal: 18,
-                        marginTop: 8,
+                        marginTop: 0,
                         alignItems: "center",
                         justifyContent: "center",
                 },
@@ -467,19 +472,13 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         padding: 18,
                 },
                 scroll: {
-                        paddingHorizontal: 18,
-                        paddingTop: 8,
                         paddingBottom: 28,
-                        maxWidth: 600,
+                        maxWidth: 900,
                         width: "100%",
                         alignSelf: "center",
                 },
                 tarjeta: {
-                        backgroundColor: colors.surface,
-                        borderRadius: 16,
-                        overflow: "hidden",
-                        borderWidth: 1,
-                        borderColor: colors.border,
+                        backgroundColor: colors.background,
                 },
                 imagen: { width: "100%", height: 180 },
                 placeholder: {
@@ -487,37 +486,42 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         alignItems: "center",
                         justifyContent: "center",
                 },
-                content: { padding: 14 },
+                content: {
+                        marginTop: -24,
+                        borderTopLeftRadius: 28,
+                        borderTopRightRadius: 28,
+                        padding: 20,
+                        backgroundColor: colors.background,
+                },
                 title: {
                         fontFamily: fuenteTitulo,
-                        fontSize: 22,
+                        fontSize: 28,
                         fontWeight: "700",
-                        color: colors.blueText,
-                        marginBottom: 8,
+                        color: colors.secondary,
+                        marginBottom: 12,
                 },
                 badge: {
                         alignSelf: "flex-start",
-                        minWidth: 104,
                         flexShrink: 0,
                         alignItems: "center",
-                        borderRadius: 12,
+                        borderRadius: 16,
                         paddingHorizontal: 10,
                         paddingVertical: 4,
                         marginBottom: 12,
                 },
-                badgeProgramado: { backgroundColor: "#17B3A7" },
-                badgeSuspendido: { backgroundColor: "#FFC137" },
-                badgeCancelado: { backgroundColor: "#F34D4D" },
+                badgeProgramado: { backgroundColor: colors.greenLight },
+                badgeSuspendido: { backgroundColor: colors.yellowLight },
+                badgeCancelado: { backgroundColor: colors.primaryLight },
                 badgeText: {
                         paddingHorizontal: 3,
                         lineHeight: 16,
                         textAlign: "center",
                         flexShrink: 0,
-                        fontSize: 11,
-                        fontWeight: "700",
-                        color: colors.onPrimary,
+                        fontSize: 12,
+                        fontWeight: "600",
+                        color: colors.secondary,
                 },
-                textoSuspendido: { color: "#473400" },
+                textoSuspendido: { color: colors.secondary },
                 aviso: {
                         flexDirection: "row",
                         gap: 10,
@@ -550,17 +554,16 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
                 fechaSuspendida: { textDecorationLine: "line-through" },
                 subtitle: {
-                        fontFamily: fuenteTitulo,
-                        fontSize: 16,
+                        fontSize: 19,
                         fontWeight: "700",
-                        color: colors.greenText,
-                        marginTop: 8,
-                        marginBottom: 6,
+                        color: colors.secondary,
+                        marginTop: 24,
+                        marginBottom: 12,
                 },
                 description: {
-                        fontSize: 14,
-                        lineHeight: 20,
-                        color: colors.blueText,
+                        fontSize: 15,
+                        lineHeight: 24,
+                        color: colors.textSecondary,
                 },
                 precio: {
                         flexDirection: "row",
@@ -575,9 +578,9 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 precioTexto: { fontSize: 12, color: colors.blueText },
                 acciones: { gap: 10, marginTop: 18 },
                 boton: {
-                        minHeight: 44,
-                        paddingVertical: 10,
-                        borderRadius: 12,
+                        minHeight: 48,
+                        paddingVertical: 12,
+                        borderRadius: 24,
                         backgroundColor: colors.primarySolid,
                         flexDirection: "row",
                         gap: 6,

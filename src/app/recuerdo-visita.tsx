@@ -4,10 +4,11 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTema } from '../context/tema.context';
 import { useAuth } from '../context/auth.context';
 import { useCatalogo } from '../hooks/use-catalogo';
+import { useDetallesLugares } from '../hooks/use-detalles-lugares';
 import { useUbicacion } from '../hooks/use-ubicacion';
 import { distanciaMetros } from '../services/distancias';
 import { ImagenPersistente } from '../components/imagen-persistente';
@@ -21,6 +22,9 @@ import { colorsInicio, fuenteTitulo } from '../styles/inicio';
 
 export default function RecuerdoVisitaScreen() {
   const router = useRouter();
+  const { lugarId: parametroLugar } = useLocalSearchParams<{ lugarId?: string | string[] }>();
+  // El lugar de entrada forma parte del borrador; no cambia al actualizar el GPS.
+  const [lugarIdInicial] = useState(() => typeof parametroLugar === 'string' ? parametroLugar : null);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { colorsInicio: colors } = useTema();
@@ -30,6 +34,9 @@ export default function RecuerdoVisitaScreen() {
   const ubicacion = useUbicacion();
   const { datos, cargando, hayMasLugares, cargarMasLugares, actualizando } = useCatalogo();
   const [elegido, setElegido] = useState<Lugar | null>(null);
+  const [lugarDetectado, setLugarDetectado] = useState<Lugar | null>(null);
+  const [fechaFormulario] = useState(() => new Date());
+  const edicionIniciada = useRef(false);
   const [mostrarLugares, setMostrarLugares] = useState(false);
   const [altoVisible, setAltoVisible] = useState(0);
   const [altoFicha, setAltoFicha] = useState(0);
@@ -47,10 +54,10 @@ export default function RecuerdoVisitaScreen() {
   const { solicitar, permiso, cargando: buscando } = ubicacion;
 
   useEffect(() => {
-    if (solicitada.current || permiso === null || buscando) return;
+    if (lugarIdInicial || solicitada.current || permiso === null || buscando) return;
     solicitada.current = true;
     void solicitar();
-  }, [permiso, buscando, solicitar]);
+  }, [permiso, buscando, solicitar, lugarIdInicial]);
 
   const cercano = useMemo(() => {
     if (!ubicacion.coordenadas) return null;
@@ -60,11 +67,24 @@ export default function RecuerdoVisitaScreen() {
       .sort((a, b) => a.distancia - b.distancia)[0]?.lugar ?? null;
   }, [datos, ubicacion.coordenadas, radioMetros]);
 
-  const lugarRegistro = elegido ?? cercano;
+  // La primera sugerencia queda fija; el seguimiento GPS no cambia el borrador.
+  // Si ya empezó a editar sin lugar, debe elegirlo explícitamente en el selector.
+  useEffect(() => {
+    if (!lugarIdInicial && cercano && !edicionIniciada.current) {
+      setLugarDetectado(anterior => anterior ?? cercano);
+    }
+  }, [cercano, lugarIdInicial]);
+
+  const lugarBase = elegido ?? (lugarIdInicial ? datos?.lugares.find(lugar => lugar.id === lugarIdInicial) ?? null : lugarDetectado);
+  const idLugar = lugarBase?.id ?? lugarIdInicial;
+  const detallesLugar = useDetallesLugares(idLugar ? [idLugar] : [], lugarBase ? [lugarBase] : []);
+  const lugarRegistro = detallesLugar.lugares.find(lugar => lugar.id === idLugar) ?? lugarBase;
+  const registroManual = Boolean(elegido || lugarIdInicial);
   const { favoritos } = useFavoritos(lugarRegistro ? [lugarRegistro.id] : []);
   const esFavorito = Boolean(lugarRegistro && favoritos.includes(lugarRegistro.id));
 
   async function elegirFoto() {
+    edicionIniciada.current = true;
     setEligiendo(true);
     setError(null);
     try {
@@ -84,6 +104,7 @@ export default function RecuerdoVisitaScreen() {
     if (enCurso.current || guardada.current || !lugarRegistro) return;
     const usuarioId = cuentaActual.current;
     if (!usuarioId) { router.push('/(auth)/login'); return; }
+    edicionIniciada.current = true;
     enCurso.current = true;
     setGuardando(true);
     setError(null);
@@ -94,7 +115,7 @@ export default function RecuerdoVisitaScreen() {
         setFotoSubida(fotoUri);
       }
       if (cuentaActual.current !== usuarioId) throw new Error('La cuenta cambió. Volvé a ingresar.');
-      if (elegido) await registrarVisitaManual(lugarRegistro, usuarioId, { nota, fotoUri });
+      if (registroManual) await registrarVisitaManual(lugarRegistro, usuarioId, { nota, fotoUri });
       else await registrarVisitaCercana(lugarRegistro, usuarioId, { nota, fotoUri });
       guardada.current = true;
       Alert.alert('Visita guardada', 'Guardamos tu recuerdo. Si no hay conexión, la visita se enviará cuando vuelva.', [
@@ -107,8 +128,8 @@ export default function RecuerdoVisitaScreen() {
   const selectorLugares = (
     <SelectorLugarVisita
                 lugares={datos?.lugares ?? []} categorias={datos?.categorias ?? []} posicion={ubicacion.coordenadas}
-                hayMas={hayMasLugares} cargando={actualizando}
-                onSeleccionar={lugar => { setElegido(lugar); setMostrarLugares(false); setError(null); }}
+                hayMas={hayMasLugares} cargando={cargando || actualizando}
+                onSeleccionar={lugar => { edicionIniciada.current = true; setElegido(lugar); setMostrarLugares(false); setError(null); }}
                 onCargarMas={() => { void cargarMasLugares().catch(() => setError('No pudimos cargar más lugares. Intentá de nuevo.')); }}
               />
   );
@@ -133,10 +154,18 @@ export default function RecuerdoVisitaScreen() {
           <View style={[styles.portada, { height: Math.max(160, Math.min(width * 0.72, 320) - 64) }]}>
             {lugarRegistro?.imagenes[0] ? (
               <ImagenPersistente url={lugarRegistro.imagenes[0]} style={styles.imagenPortada} contentFit="cover" />
+            ) : lugarRegistro ? (
+              <View style={styles.portadaVacia}>
+                <Ionicons name="image-outline" size={46} color={colors.secondary} />
+              </View>
             ) : (
               <View style={styles.portadaVacia}>
                 <Ionicons name="location-outline" size={46} color={colors.secondary} />
                 <Text style={styles.textoPortada}>Un nuevo recuerdo en Colón</Text>
+                <Pressable disabled={guardando} accessibilityRole="button" accessibilityLabel="Elegir ubicación" hitSlop={8} onPress={() => { Keyboard.dismiss(); setMostrarLugares(true); }} style={({ pressed }) => [styles.elegirPortada, (pressed || guardando) && { opacity: 0.7 }]}>
+                  <Ionicons name="refresh" size={16} color={colors.onPrimary} />
+                  <Text style={styles.elegirPortadaTexto}>Elegir ubicación</Text>
+                </Pressable>
               </View>
             )}
           </View>
@@ -146,8 +175,8 @@ export default function RecuerdoVisitaScreen() {
             </View>
             {lugarRegistro && <View style={styles.insignias}>
               <View style={styles.insignia}>
-                <Ionicons name={elegido ? 'create-outline' : 'location-outline'} size={15} color={colors.secondary} />
-                <Text style={styles.insigniaTexto}>{elegido ? 'Lugar seleccionado' : 'Lugar cercano'}</Text>
+                <Ionicons name={registroManual ? 'create-outline' : 'location-outline'} size={15} color={colors.secondary} />
+                <Text style={styles.insigniaTexto}>{registroManual ? 'Lugar seleccionado' : 'Lugar cercano'}</Text>
               </View>
               {esFavorito && <View style={[styles.insignia, { backgroundColor: '#FCE4EC' }]}>
                 <Ionicons name="heart" size={15} color="#D32F2F" />
@@ -157,28 +186,23 @@ export default function RecuerdoVisitaScreen() {
             <View style={styles.metadatos}>
               <View style={styles.dato}>
                 <Ionicons name="calendar-outline" size={16} color={colors.secondary} />
-                <Text style={styles.textoDato}>Hoy · {new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} h</Text>
+                <Text style={styles.textoDato}>Hoy · {fechaFormulario.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} h</Text>
               </View>
               <View style={styles.dato}>
-                <Ionicons name={elegido ? 'create-outline' : 'location-outline'} size={16} color={colors.secondary} />
-                <Text style={styles.textoDato}>{elegido ? 'Registro manual' : 'Registro con GPS'}</Text>
+                <Ionicons name={registroManual ? 'create-outline' : 'location-outline'} size={16} color={colors.secondary} />
+                <Text style={styles.textoDato}>{registroManual ? 'Registro manual' : 'Registro GPS'}</Text>
               </View>
+              {lugarRegistro && <Pressable disabled={guardando} accessibilityRole="button" accessibilityLabel="Cambiar ubicación" hitSlop={8} onPress={() => { Keyboard.dismiss(); setMostrarLugares(true); }} style={styles.cambiarLugar}>
+                <Ionicons name="refresh" size={16} color={colors.primary} />
+                <Text style={styles.textoElegir}>Cambiar ubicación</Text>
+              </Pressable>}
             </View>
             <Text style={styles.seccionTitulo}>Mi recuerdo</Text>
           </View>
           <View style={[styles.cuerpoRecuerdo, { minHeight: Math.max(0, altoVisible - altoFicha) }]}>
-            {!lugarRegistro && <View style={styles.busquedaLugar}>
-              {(buscando || cargando) ? <ActivityIndicator color={colors.primary} /> : <Text style={styles.ayuda}>No encontramos lugares a menos de {radioMetros} metros. Elegí uno del listado para registrar tu visita.</Text>}
-              <Pressable disabled={buscando || guardando} onPress={() => void solicitar()} accessibilityRole="button"><Text style={styles.enlace}>Actualizar ubicación</Text></Pressable>
-            </View>}
-            {ubicacion.error && <Text style={styles.error}>{ubicacion.error}</Text>}
-            {lugarRegistro && <Pressable disabled={guardando} accessibilityRole="button" onPress={() => { Keyboard.dismiss(); setMostrarLugares(true); }} style={styles.cambiarLugar}>
-              <Text style={styles.enlace}>Cambiar lugar</Text>
-            </Pressable>}
-            {!lugarRegistro && !buscando && !cargando && !mostrarLugares && selectorLugares}
             <TextInput
               accessibilityLabel="Mi recuerdo de la visita" placeholder="Un momento para recordar…" placeholderTextColor={colors.textSecondary}
-              value={nota} onChangeText={setNota} editable={!guardando} multiline maxLength={280} textAlignVertical="top" style={styles.nota}
+              value={nota} onFocus={() => { edicionIniciada.current = true; }} onChangeText={texto => { edicionIniciada.current = true; setNota(texto); }} editable={!guardando} multiline maxLength={280} textAlignVertical="top" style={styles.nota}
             />
             <Text style={styles.contador}>{nota.length}/280</Text>
             <View style={styles.fotos}>
@@ -196,7 +220,7 @@ export default function RecuerdoVisitaScreen() {
               </Pressable>
             </View>
             {foto && <Text style={styles.ayuda}>La foto necesita conexión para guardarse. Podés adjuntar una imagen.</Text>}
-            {lugarRegistro && <Pressable disabled={guardando} accessibilityRole="button" onPress={() => router.push({ pathname: '/lugar/[id]', params: { id: lugarRegistro.id } })} style={styles.verLugar}>
+            {lugarRegistro && <Pressable disabled={guardando} accessibilityRole="button" onPress={() => router.push({ pathname: '/(tabs)/explore/lugar/[id]', params: { id: lugarRegistro.id } })} style={styles.verLugar}>
               <Ionicons name="map-outline" size={23} color={colors.primary} /><Text style={styles.enlace}>Ver lugar</Text>
             </Pressable>}
             {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
@@ -211,7 +235,7 @@ export default function RecuerdoVisitaScreen() {
           <Pressable style={StyleSheet.absoluteFillObject} accessibilityRole="button" accessibilityLabel="Cerrar selector de lugares" onPress={() => setMostrarLugares(false)} />
           <View style={styles.popup} accessibilityViewIsModal>
             <View style={styles.cabeceraPopup}>
-              <Text accessibilityRole="header" style={styles.tituloPopup}>Cambiar lugar</Text>
+              <Text accessibilityRole="header" style={styles.tituloPopup}>{lugarRegistro ? 'Cambiar ubicación' : 'Elegir ubicación'}</Text>
               <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" hitSlop={8} onPress={() => setMostrarLugares(false)} style={styles.cerrarPopup}>
                 <Ionicons name="close" size={23} color={colors.secondary} />
               </Pressable>
@@ -238,6 +262,8 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   portada: { backgroundColor: colors.blueLight, marginBottom: -26 },
   imagenPortada: { width: '100%', height: '100%' },
   portadaVacia: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  elegirPortada: { minHeight: 44, borderRadius: 22, backgroundColor: colors.primarySolid, paddingHorizontal: 18, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  elegirPortadaTexto: { color: colors.onPrimary, fontSize: 14, fontWeight: '600' },
   textoPortada: { color: colors.secondary, fontSize: 14 },
   ficha: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12, backgroundColor: colors.background },
   cuerpoRecuerdo: { paddingHorizontal: 20, paddingBottom: 12, backgroundColor: colors.background },
@@ -247,12 +273,12 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   metadatos: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, rowGap: 10, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   dato: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   textoDato: { color: colors.textSecondary, fontSize: 12 },
-  cambiarLugar: { alignSelf: 'flex-start', marginTop: 14 },
-  busquedaLugar: { gap: 12, marginTop: 12 },
+  cambiarLugar: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  textoElegir: { color: colors.primary, fontSize: 12, fontWeight: '600' },
   seccionTitulo: { fontSize: 19, fontWeight: '700', color: colors.secondary, marginTop: 22, marginBottom: 12 },
   filaTitulo: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
   titulo: { flex: 1, fontFamily: fuenteTitulo, fontSize: 28, fontWeight: '700', color: colors.secondary },
-  nota: { minHeight: 72, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 16, backgroundColor: colors.surface, fontSize: 16, lineHeight: 23, color: colors.text, fontStyle: 'italic' },
+  nota: { minHeight: 72, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 16, backgroundColor: colors.surface, fontSize: 15, lineHeight: 24, color: colors.textSecondary },
   contador: { textAlign: 'right', color: colors.textSecondary, fontSize: 12, marginTop: 6, marginBottom: 20 },
   fotos: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, foto: { width: 120, height: 100, borderRadius: 16 },
   quitar: { position: 'absolute', right: 4, top: 4, padding: 4, borderRadius: 16, backgroundColor: colors.surface },

@@ -78,7 +78,7 @@ export default function EventosGuardadosScreen() {
                                                         evento={item}
                                                         onPress={() =>
                                                                 router.push({
-                                                                        pathname: "/evento/[id]",
+                                                                        pathname: "/(tabs)/agenda/evento/[id]",
                                                                         params: {
                                                                                 id: item.id,
                                                                                 origen: "eventos-guardados",

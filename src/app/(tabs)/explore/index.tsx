@@ -1,5 +1,7 @@
-import { useTema } from "../../context/tema.context";
-import { EstadoPantalla } from "../../components/estado-pantalla";
+import { fuenteTitulo } from "../../../styles/inicio";
+import { Image } from "expo-image";
+import { useTema } from "../../../context/tema.context";
+import { EstadoPantalla } from "../../../components/estado-pantalla";
 import { useMemo, useState } from "react";
 import {
         FlatList,
@@ -15,17 +17,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { router, useLocalSearchParams } from "expo-router";
 
-import { MapaLugares } from "../../components/mapa-lugares";
-import { TarjetaLugar } from "../../components/tarjeta-lugar";
-import { useCatalogo } from "../../hooks/use-catalogo";
-import { EstadoCatalogo } from "../../components/estado-catalogo";
-import type { Categoria } from "../../types/Categoria";
+import { MapaLugares } from "../../../components/mapa-lugares";
+import { TarjetaLugar } from "../../../components/tarjeta-lugar";
+import { useCatalogo } from "../../../hooks/use-catalogo";
+import { EstadoCatalogo } from "../../../components/estado-catalogo";
+import type { Categoria } from "../../../types/Categoria";
 import {
         borderRadius,
         colors as paletaColors,
         fontSize,
         spacing,
-} from "../../styles/theme";
+} from "../../../styles/theme";
 
 export default function ExploreScreen() {
         const { colors, styles } = useEstilos();
@@ -103,26 +105,13 @@ export default function ExploreScreen() {
 
         return (
                 <View style={styles.container}>
-                        <View
-                                style={[
-                                        styles.header,
-                                        {
-                                                paddingTop:
-                                                        insets.top + spacing.sm,
-                                        },
-                                ]}
-                        >
-                                <Pressable
-                                        style={styles.headerBoton}
-                                        onPress={() => router.back()}
-                                        hitSlop={8}
-                                >
-                                        <Ionicons
-                                                name="chevron-back"
-                                                size={24}
-                                                color={colors.text}
-                                        />
-                                </Pressable>
+                        <View style={{ paddingTop: insets.top }}>
+                                <View style={styles.header}>
+                                        <Image source={require("../../../../assets/images/logo-colon.png")} style={styles.logo} contentFit="contain" accessibilityLabel="Colón, Entre Ríos" />
+                                        <Image source={require("../../../../assets/images/ilustracion-colon-puente.png")} style={styles.puente} contentFit="contain" />
+                                        <Text style={styles.tituloCabecera}>Explorar</Text>
+                                        <Text style={styles.descripcionCabecera}>Descubrí todo lo que Colón tiene para vos</Text>
+                                </View>
                         </View>
                         <EstadoCatalogo
                                 sinConexion={sinConexion}
@@ -391,7 +380,7 @@ export default function ExploreScreen() {
                                                         )}
                                                         onPress={() =>
                                                                 router.push({
-                                                                        pathname: "/lugar/[id]" as any,
+                                                                        pathname: "/(tabs)/explore/lugar/[id]" as any,
                                                                         params: {
                                                                                 id: item.id,
                                                                         },
@@ -431,24 +420,6 @@ export default function ExploreScreen() {
                                         }
                                         ListHeaderComponent={
                                                 <View>
-                                                        <Text
-                                                                style={
-                                                                        styles.titulo
-                                                                }
-                                                        >
-                                                                Lugares
-                                                        </Text>
-
-                                                        <Text
-                                                                style={
-                                                                        styles.subtitulo
-                                                                }
-                                                        >
-                                                                Descubrí todo lo
-                                                                que Colón tiene
-                                                                para vos
-                                                        </Text>
-
                                                         <View
                                                                 style={
                                                                         styles.buscador
@@ -716,25 +687,11 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         backgroundColor: colors.background,
                 },
 
-                header: {
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "flex-start",
-                        paddingHorizontal: spacing.md,
-                        paddingBottom: spacing.sm,
-                        backgroundColor: colors.background,
-                },
-
-                headerBoton: {
-                        width: 40,
-                        height: 40,
-                        borderRadius: 20,
-                        backgroundColor: colors.surface,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                },
+                header: { minHeight: 130, justifyContent: "flex-end", paddingTop: 72, marginHorizontal: 18, marginTop: 8, marginBottom: 24, backgroundColor: colors.background },
+                logo: { width: 95, height: 62, position: "absolute", left: 0, top: 0 },
+                puente: { width: 205, height: 115, position: "absolute", right: -24, top: 0, opacity: 0.85 },
+                tituloCabecera: { fontFamily: fuenteTitulo, fontSize: 24, lineHeight: 30, fontWeight: "700", color: colors.blueText },
+                descripcionCabecera: { fontSize: 14, lineHeight: 20, color: colors.greenText, marginTop: 2 },
 
                 lista: {
                         paddingHorizontal: spacing.md,

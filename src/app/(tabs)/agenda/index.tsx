@@ -1,8 +1,8 @@
-import { fuenteTitulo } from "../../styles/inicio";
+import { fuenteTitulo } from "../../../styles/inicio";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { logoPrincipal, tipografia } from "../../styles/tipografia";
-import { useTema } from "../../context/tema.context";
+import { logoPrincipal, tipografia } from "../../../styles/tipografia";
+import { useTema } from "../../../context/tema.context";
 import { useCallback, useMemo, useState } from "react";
 import {
         StyleSheet,
@@ -14,10 +14,10 @@ import {
         ActivityIndicator,
 } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useEventos } from "../../hooks/use-eventos";
-import { EstadoCatalogo } from "../../components/estado-catalogo";
-import TarjetaEvento from "../../components/tarjeta-evento";
-import { colors as paletaColors } from "../../styles/theme";
+import { useEventos } from "../../../hooks/use-eventos";
+import { EstadoCatalogo } from "../../../components/estado-catalogo";
+import TarjetaEvento from "../../../components/tarjeta-evento";
+import { colors as paletaColors } from "../../../styles/theme";
 
 const ESTADOS = ["Todos", "Programados", "Suspendidos", "Cancelados"];
 
@@ -91,13 +91,13 @@ export default function AgendaScreen() {
                 >
                         <View style={styles.header}>
                                 <Image
-                                        source={require("../../../assets/images/logo-colon.png")}
+                                        source={require("../../../../assets/images/logo-colon.png")}
                                         style={styles.logo}
                                         contentFit="contain"
                                         accessibilityLabel="Colón, Entre Ríos"
                                 />
                                 <Image
-                                        source={require("../../../assets/images/ilustracion-colon-puente.png")}
+                                        source={require("../../../../assets/images/ilustracion-colon-puente.png")}
                                         style={styles.puente}
                                         contentFit="contain"
                                 />
@@ -247,7 +247,7 @@ export default function AgendaScreen() {
                                                 evento={item}
                                                 onPress={() =>
                                                         router.push(
-                                                                `/evento/${item.id}`,
+                                                                `/(tabs)/agenda/evento/${item.id}`,
                                                         )
                                                 }
                                         />

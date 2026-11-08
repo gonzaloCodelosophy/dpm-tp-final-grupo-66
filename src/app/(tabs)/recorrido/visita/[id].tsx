@@ -101,7 +101,7 @@ export default function DetalleVisitaScreen() {
               <Text style={styles.dato}>{lugar.descripcionCorta}</Text>
               <View style={styles.fila}><Ionicons name="location-outline" size={19} color={colors.secondary} /><Text style={styles.dato}>{lugar.direccion}</Text></View>
               <Pressable accessibilityRole="button" onPress={() => void abrirIndicaciones(lugar.coordenadas).catch(() => Alert.alert('No pudimos abrir el mapa', 'Intentá de nuevo.'))} style={styles.boton}><Ionicons name="navigate-outline" size={20} color={colors.primary} /><Text style={styles.botonTexto}>Cómo llegar</Text></Pressable>
-              <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/lugar/[id]', params: { id: lugar.id } })} style={styles.boton}><Ionicons name="map-outline" size={20} color={colors.primary} /><Text style={styles.botonTexto}>Ver lugar</Text></Pressable>
+              <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/(tabs)/explore/lugar/[id]', params: { id: lugar.id } })} style={styles.boton}><Ionicons name="map-outline" size={20} color={colors.primary} /><Text style={styles.botonTexto}>Ver lugar</Text></Pressable>
             </> : <Text style={styles.dato}>{detalles.cargando ? 'Cargando información del lugar…' : 'La información del lugar no está disponible en este momento.'}</Text>}
           </View>
         </ScrollView>
@@ -121,7 +121,7 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   insignias: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   insignia: { flexDirection: 'row', gap: 5, alignItems: 'center', alignSelf: 'flex-start', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: colors.greenLight }, insigniaTexto: { fontSize: 12, fontWeight: '600', color: colors.secondary },
   seccion: { fontSize: 19, fontWeight: '700', color: colors.secondary, marginTop: 24, marginBottom: 12 },
-  recuerdo: { padding: 16, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }, nota: { fontSize: 16, lineHeight: 24, color: colors.text, fontStyle: 'italic' },
+  recuerdo: { padding: 16, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }, nota: { fontSize: 15, lineHeight: 24, color: colors.textSecondary },
   fila: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, marginVertical: 7 }, dato: { flexShrink: 1, fontSize: 14, lineHeight: 22, color: colors.textSecondary },
-  boton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderWidth: 1, borderColor: colors.primary, padding: 14, borderRadius: 16, marginTop: 16 }, botonTexto: { fontSize: 15, fontWeight: '600', color: colors.primary },
+  boton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderWidth: 1, borderColor: colors.primary, padding: 14, borderRadius: 16, marginTop: 16 }, botonTexto: { fontSize: 14, fontWeight: '600', color: colors.primary },
 });

@@ -1,12 +1,14 @@
+import { useState } from "react";
+import { colorsInicio as paletaColors, fuenteTitulo } from "../../styles/inicio";
+import { Image } from "expo-image";
 import { BotonVolver } from "../../components/boton-volver";
 import { useTema } from "../../context/tema.context";
-import { BotonRegistrarVisita } from "../../components/boton-visita-cercana";
 import { BotonLugarFavorito } from "../../components/boton-lugar-favorito";
 import { EstadoPantalla } from "../../components/estado-pantalla";
 import { Audioguia } from "../../components/audioguia";
 import { ImagenPersistente } from "../../components/imagen-persistente";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 
@@ -15,15 +17,18 @@ import { useCatalogo } from "../../hooks/use-catalogo";
 import { EstadoCatalogo } from "../../components/estado-catalogo";
 import {
         borderRadius,
-        colors as paletaColors,
         fontSize,
         spacing,
 } from "../../styles/theme";
 
 export default function DetalleLugarScreen() {
-        const { colors, styles } = useEstilos();
+        const { colors, styles, coloresBoton } = useEstilos();
 
         const insets = useSafeAreaInsets();
+        const { width } = useWindowDimensions();
+        const altoImagen = Math.min(width * 0.72, 320);
+        const [altoVisible, setAltoVisible] = useState(0);
+        const [altoTitulo, setAltoTitulo] = useState(0);
         const { id } = useLocalSearchParams<{ id: string }>();
 
         const { datos, sinConexion, cargando, error, reintentar } =
@@ -86,28 +91,9 @@ export default function DetalleLugarScreen() {
                         />
 
                         <View style={styles.container}>
-                                <View
-                                        style={[
-                                                styles.header,
-                                                {
-                                                        paddingTop:
-                                                                insets.top +
-                                                                spacing.sm,
-                                                },
-                                        ]}
-                                >
-                                        <BotonVolver
-                                                onPress={() => router.back()}
-                                        />
-
-                                        <Text
-                                                style={styles.tituloHeader}
-                                                numberOfLines={1}
-                                        >
-                                                {lugar.nombre}
-                                        </Text>
-
-                                        <BotonLugarFavorito id={lugar.id} />
+                                <View style={[styles.header, { height: insets.top + 64, paddingTop: insets.top }]}>
+                                        <BotonVolver style={styles.volverHeader} onPress={() => router.canGoBack() ? router.back() : router.navigate("/(tabs)/explore")} />
+                                        <Image source={require("../../../assets/images/logo-colon.png")} style={styles.logo} contentFit="contain" accessibilityLabel="Colón, Entre Ríos" />
                                 </View>
 
                                 <EstadoCatalogo
@@ -119,6 +105,8 @@ export default function DetalleLugarScreen() {
                                                 styles.contenidoScroll
                                         }
                                         showsVerticalScrollIndicator={false}
+                                        stickyHeaderIndices={[1]}
+                                        onLayout={evento => setAltoVisible(evento.nativeEvent.layout.height)}
                                 >
                                         <View style={styles.imagenContainer}>
                                                 {lugar.imagenes.length > 0 ? (
@@ -128,14 +116,14 @@ export default function DetalleLugarScreen() {
                                                                                 .imagenes[0]
                                                                 }
                                                                 style={
-                                                                        styles.imagen
+                                                                        [styles.imagen, { height: altoImagen }]
                                                                 }
                                                                 contentFit="cover"
                                                         />
                                                 ) : (
                                                         <View
                                                                 style={
-                                                                        styles.imagenVacia
+                                                                        [styles.imagenVacia, { height: altoImagen }]
                                                                 }
                                                         >
                                                                 <Ionicons
@@ -161,28 +149,15 @@ export default function DetalleLugarScreen() {
                                                 )}
                                         </View>
 
-                                        <View style={styles.contenido}>
+                                        <View style={styles.contenido} onLayout={evento => setAltoTitulo(evento.nativeEvent.layout.height)}>
+                                                <View style={styles.filaNombre}>
+                                                        <Text style={[styles.nombre, { flex: 1 }]} numberOfLines={2}>{lugar.nombre}</Text>
+                                                </View>
                                                 {categoria && (
-                                                        <View
-                                                                style={
-                                                                        styles.categoria
-                                                                }
-                                                        >
-                                                                <Text
-                                                                        style={
-                                                                                styles.categoriaTexto
-                                                                        }
-                                                                >
-                                                                        {
-                                                                                categoria.nombre
-                                                                        }
-                                                                </Text>
+                                                        <View style={styles.categoria}>
+                                                                <Text style={styles.categoriaTexto}>{categoria.nombre}</Text>
                                                         </View>
                                                 )}
-
-                                                <Text style={styles.nombre}>
-                                                        {lugar.nombre}
-                                                </Text>
 
                                                 <View style={styles.ubicacion}>
                                                         <Ionicons
@@ -204,10 +179,12 @@ export default function DetalleLugarScreen() {
                                                         </Text>
                                                 </View>
 
-                                                <View
-                                                        style={styles.separador}
-                                                />
-
+                                                <View style={[styles.separador, { marginBottom: 0 }]} />
+                                                <View style={styles.favoritoFicha}>
+                                                        <BotonLugarFavorito id={lugar.id} />
+                                                </View>
+                                        </View>
+                                        <View style={[styles.cuerpoLugar, { minHeight: Math.max(0, altoVisible - altoTitulo) }]}>
                                                 <Text
                                                         style={
                                                                 styles.seccionTitulo
@@ -552,10 +529,15 @@ export default function DetalleLugarScreen() {
                                                                 </View>
                                                         </View>
 
-                                                        <BotonRegistrarVisita
-                                                                lugar={lugar}
-                                                                modo="manual"
-                                                        />
+                                                        <Pressable
+                                                                accessibilityRole="button"
+                                                                accessibilityLabel={`Registrar una visita a ${lugar.nombre}`}
+                                                                onPress={() => router.push({ pathname: "/(tabs)/recorrido/recuerdo-visita", params: { lugarId: lugar.id } })}
+                                                                style={({ pressed }) => [styles.registrarVisita, { backgroundColor: coloresBoton.primarySolid, opacity: pressed ? 0.8 : 1 }]}
+                                                        >
+                                                                <Ionicons name="add-circle-outline" size={20} color={coloresBoton.onPrimary} />
+                                                                <Text style={[styles.registrarVisitaTexto, { color: coloresBoton.onPrimary }]}>Registrar visita</Text>
+                                                        </Pressable>
                                                 </View>
                                         </View>
                                 </ScrollView>
@@ -571,42 +553,21 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         backgroundColor: colors.background,
                 },
 
-                header: {
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        paddingHorizontal: spacing.md,
-                        paddingBottom: spacing.sm,
-                        backgroundColor: colors.background,
-                },
-
-                tituloHeader: {
-                        flex: 1,
-                        marginHorizontal: spacing.sm,
-                        textAlign: "center",
-                        fontSize: fontSize.body,
-                        fontWeight: "700",
-                        color: colors.text,
-                },
-
-                botonHeader: {
-                        width: 40,
-                        height: 40,
-                        borderRadius: 20,
-                        backgroundColor: colors.surface,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                },
+                header: { alignItems: "center", justifyContent: "center", paddingHorizontal: 70, backgroundColor: colors.background },
+                volverHeader: { position: "absolute", left: 18, bottom: 10 },
+                logo: { width: 90, height: 48 },
+                filaNombre: { flexDirection: "row", alignItems: "center", paddingRight: 56 },
+                favoritoFicha: { position: "absolute", top: 2, right: 2, width: 44, height: 44, zIndex: 1 },
 
                 contenidoScroll: {
                         paddingBottom: spacing.xl,
+                        maxWidth: 900,
+                        width: "100%",
+                        alignSelf: "center",
                 },
 
                 imagenContainer: {
-                        marginHorizontal: spacing.md,
-                        borderRadius: borderRadius.md,
+                        marginBottom: -24,
                         overflow: "hidden",
                 },
 
@@ -630,10 +591,17 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
 
                 contenido: {
-                        padding: spacing.md,
+                        position: "relative",
+                        borderTopLeftRadius: 28,
+                        borderTopRightRadius: 28,
+                        padding: 20,
+                        paddingBottom: 0,
+                        backgroundColor: colors.background,
                 },
+                cuerpoLugar: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, backgroundColor: colors.background },
 
                 categoria: {
+                        marginTop: 10,
                         alignSelf: "flex-start",
                         paddingHorizontal: spacing.sm,
                         paddingVertical: spacing.xs,
@@ -642,17 +610,18 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
 
                 categoriaTexto: {
-                        fontSize: fontSize.caption,
-                        fontWeight: "700",
-                        color: colors.green,
+                        fontSize: 12,
+                        fontWeight: "600",
+                        color: colors.secondary,
                 },
 
                 nombre: {
                         marginTop: spacing.sm,
-                        fontSize: 30,
-                        lineHeight: 36,
+                        fontFamily: fuenteTitulo,
+                        fontSize: 28,
+                        lineHeight: 34,
                         fontWeight: "700",
-                        color: colors.text,
+                        color: colors.secondary,
                 },
 
                 ubicacion: {
@@ -664,8 +633,9 @@ const crearEstilos = (colors: typeof paletaColors) =>
 
                 ubicacionTexto: {
                         flex: 1,
-                        fontSize: fontSize.body,
-                        color: colors.textSecondary,
+                        fontSize: 14,
+                        lineHeight: 20,
+                        color: colors.blueText,
                 },
 
                 separador: {
@@ -675,16 +645,16 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
 
                 seccionTitulo: {
-                        fontSize: fontSize.subtitle,
+                        fontSize: 19,
                         fontWeight: "700",
                         color: colors.secondary,
                         marginBottom: spacing.sm,
                 },
 
                 descripcion: {
-                        fontSize: fontSize.body,
+                        fontSize: 15,
                         lineHeight: 24,
-                        color: colors.text,
+                        color: colors.textSecondary,
                 },
 
                 info: {
@@ -728,6 +698,8 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         color: colors.textSecondary,
                 },
 
+                registrarVisita: { minHeight: 48, borderRadius: 24, paddingHorizontal: 18, paddingVertical: 12, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+                registrarVisitaTexto: { fontSize: 14, fontWeight: "600", flexShrink: 1 },
                 visitaCard: {
                         marginTop: spacing.lg,
                         gap: spacing.sm,
@@ -768,6 +740,6 @@ const crearEstilos = (colors: typeof paletaColors) =>
 
 function useEstilos() {
         const tema = useTema();
-        const colors = tema.colors;
-        return { colors, styles: crearEstilos(colors) };
+        const colors = tema.colorsInicio;
+        return { colors, styles: crearEstilos(colors), coloresBoton: tema.colorsInicio };
 }

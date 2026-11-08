@@ -433,7 +433,7 @@ export default function FavoritosScreen() {
                                                         style={styles.detalle}
                                                         onPress={() =>
                                                                 router.push({
-                                                                        pathname: "/lugar/[id]",
+                                                                        pathname: "/(tabs)/explore/lugar/[id]",
                                                                         params: {
                                                                                 id: item.id,
                                                                         },
