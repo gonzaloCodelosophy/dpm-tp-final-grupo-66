@@ -1,3 +1,4 @@
+import { BotonCategoria } from "../../components/boton-categoria";
 import { useTema } from "../../context/tema.context";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -7,7 +8,6 @@ import {
         Pressable,
         ScrollView,
         StyleSheet,
-        Switch,
         Text,
         TextInput,
         View,
@@ -30,10 +30,8 @@ import {
         TarjetaLugarInicio,
 } from "../../components/inicio/tarjetas-inicio";
 import {
-        AccesoInicio,
         BotonInicio,
         EstadoInicio,
-        IlustracionRecorrido,
         TituloInicio,
 } from "../../components/inicio/elementos-inicio";
 import {
@@ -42,38 +40,20 @@ import {
 } from "../../styles/inicio";
 import { borderRadius, fontSize, spacing } from "../../styles/theme";
 
-type PanelInicio =
-        | "visitas"
-        | "recorridos"
-        | "clima"
-        | "accesibilidad"
-        | "emergencias"
-        | "avisos";
+type PanelInicio = "visitas" | "accesibilidad" | "rio";
 
 const paneles = {
         visitas: {
                 titulo: "Mis visitas",
                 mensaje: "El registro de visitas estará disponible próximamente. Por ahora, podés descubrir los lugares y guardarlos en favoritos.",
         },
-        recorridos: {
-                titulo: "Armá tu recorrido",
-                mensaje: "La creación de recorridos estará disponible próximamente. Podés ir guardando tus lugares favoritos para organizar tu paseo.",
-        },
-        clima: {
-                titulo: "Clima",
-                mensaje: "El pronóstico de Colón todavía no está disponible en la app.",
-        },
         accesibilidad: {
                 titulo: "Lugares accesibles",
                 mensaje: "Estos lugares figuran como accesibles en el catálogo. Consultá el detalle antes de tu visita.",
         },
-        emergencias: {
-                titulo: "Emergencias",
-                mensaje: "La información de contactos de emergencia todavía no está disponible en la app.",
-        },
-        avisos: {
-                titulo: "Avisos de eventos",
-                mensaje: "La preferencia de avisos estará disponible próximamente. Los recordatorios de eventos se siguen gestionando desde cada evento en la agenda.",
+        rio: {
+                titulo: "Altura del río hoy",
+                mensaje: "(medición de las 12:00 del 7 de noviembre de 2026), con tendencia en baja.",
         },
 };
 
@@ -459,9 +439,10 @@ export default function HomeScreen() {
                                 )}
 
                                 <View style={styles.accesos}>
-                                        <AccesoInicio
-                                                titulo="Lugares"
-                                                icono="location-outline"
+                                        <BotonCategoria
+                                                nombre="Lugares"
+                                                style={styles.accesoCategoria}
+                                                icono="map-marker-outline"
                                                 color={colors.primary}
                                                 fondo={colors.primaryLight}
                                                 onPress={() =>
@@ -470,8 +451,9 @@ export default function HomeScreen() {
                                                         )
                                                 }
                                         />
-                                        <AccesoInicio
-                                                titulo="Eventos"
+                                        <BotonCategoria
+                                                nombre="Eventos"
+                                                style={styles.accesoCategoria}
                                                 icono="calendar-outline"
                                                 color={colors.green}
                                                 fondo={colors.greenLight}
@@ -481,8 +463,9 @@ export default function HomeScreen() {
                                                         )
                                                 }
                                         />
-                                        <AccesoInicio
-                                                titulo="Mapa"
+                                        <BotonCategoria
+                                                nombre="Mapa"
+                                                style={styles.accesoCategoria}
                                                 icono="map-outline"
                                                 color={colors.secondary}
                                                 fondo={colors.blueLight}
@@ -497,9 +480,10 @@ export default function HomeScreen() {
                                                         router.push(destino);
                                                 }}
                                         />
-                                        <AccesoInicio
-                                                titulo="Visitas"
-                                                icono="trail-sign-outline"
+                                        <BotonCategoria
+                                                nombre="Visitas"
+                                                style={styles.accesoCategoria}
+                                                icono="map-marker-path"
                                                 color="#A87721"
                                                 fondo={colors.yellowLight}
                                                 onPress={() =>
@@ -795,36 +779,6 @@ export default function HomeScreen() {
                                         />
                                 </Pressable>
 
-                                <View style={styles.crearRecorrido}>
-                                        <IlustracionRecorrido />
-                                        <View style={styles.flex}>
-                                                <Text
-                                                        style={
-                                                                styles.recorridoTitulo
-                                                        }
-                                                >
-                                                        Armá tu recorrido
-                                                </Text>
-                                                <Text
-                                                        style={
-                                                                styles.recorridoDescripcion
-                                                        }
-                                                >
-                                                        Guardá tus lugares
-                                                        favoritos y organizá tu
-                                                        paseo.
-                                                </Text>
-                                                <BotonInicio
-                                                        texto="Crear recorrido"
-                                                        onPress={() =>
-                                                                setPanel(
-                                                                        "recorridos",
-                                                                )
-                                                        }
-                                                />
-                                        </View>
-                                </View>
-
                                 <View style={styles.seccion}>
                                         <TituloInicio titulo="Mi recorrido" />
                                         <View style={styles.recorridoVacio}>
@@ -865,100 +819,49 @@ export default function HomeScreen() {
                                 <View style={styles.seccion}>
                                         <TituloInicio titulo="Información útil" />
                                         <View style={styles.filaInfo}>
-                                                <AccesoInicio
-                                                        compacto
-                                                        titulo="Cómo llegar"
+                                                <BotonCategoria
+                                                        nombre="Cómo llegar"
                                                         icono="car-outline"
                                                         color={colors.primary}
                                                         fondo={
                                                                 colors.primaryLight
                                                         }
+                                                        style={
+                                                                styles.accesoCategoria
+                                                        }
                                                         onPress={() => {
                                                                 void abrirMapa();
                                                         }}
                                                 />
-                                                <AccesoInicio
-                                                        compacto
-                                                        titulo="Clima"
-                                                        icono="sunny-outline"
-                                                        color={colors.green}
-                                                        fondo={
-                                                                colors.greenLight
-                                                        }
-                                                        onPress={() =>
-                                                                setPanel(
-                                                                        "clima",
-                                                                )
-                                                        }
-                                                />
-                                        </View>
-                                        <View style={styles.filaInfo}>
-                                                <AccesoInicio
-                                                        compacto
-                                                        titulo="Accesibilidad"
-                                                        icono="accessibility-outline"
+                                                <BotonCategoria
+                                                        nombre="Accesibilidad"
+                                                        icono="wheelchair-accessibility"
                                                         color={colors.secondary}
                                                         fondo={colors.blueLight}
+                                                        style={
+                                                                styles.accesoCategoria
+                                                        }
                                                         onPress={() =>
                                                                 setPanel(
                                                                         "accesibilidad",
                                                                 )
                                                         }
                                                 />
-                                                <AccesoInicio
-                                                        compacto
-                                                        titulo="Emergencias"
-                                                        icono="call-outline"
-                                                        color="#A87721"
+                                                <BotonCategoria
+                                                        nombre="Altura del río hoy"
+                                                        icono="waves"
+                                                        color={colors.yellow}
                                                         fondo={
                                                                 colors.yellowLight
                                                         }
+                                                        style={
+                                                                styles.accesoCategoria
+                                                        }
                                                         onPress={() =>
-                                                                setPanel(
-                                                                        "emergencias",
-                                                                )
+                                                                setPanel("rio")
                                                         }
                                                 />
                                         </View>
-                                        <Pressable
-                                                accessibilityRole="button"
-                                                accessibilityLabel="Avisos de eventos, integración pendiente"
-                                                style={styles.notificaciones}
-                                                onPress={() =>
-                                                        setPanel("avisos")
-                                                }
-                                        >
-                                                <Ionicons
-                                                        name="notifications-outline"
-                                                        size={25}
-                                                        color={colors.secondary}
-                                                />
-                                                <View style={styles.flex}>
-                                                        <Text
-                                                                style={
-                                                                        styles.notificacionesTexto
-                                                                }
-                                                        >
-                                                                Avisos de
-                                                                eventos
-                                                        </Text>
-                                                        <Text
-                                                                style={
-                                                                        styles.pendiente
-                                                                }
-                                                        >
-                                                                Próximamente
-                                                        </Text>
-                                                </View>
-                                                <Switch
-                                                        value={false}
-                                                        disabled
-                                                        accessibilityLabel="Avisos de eventos, próximamente"
-                                                        trackColor={{
-                                                                false: colors.border,
-                                                        }}
-                                                />
-                                        </Pressable>
                                 </View>
                         </ScrollView>
 
@@ -1024,12 +927,31 @@ export default function HomeScreen() {
                                                                                 styles.modalTexto
                                                                         }
                                                                 >
-                                                                        {panel
-                                                                                ? paneles[
-                                                                                          panel
-                                                                                  ]
-                                                                                          .mensaje
-                                                                                : ""}
+                                                                        {panel ===
+                                                                        "rio" ? (
+                                                                                <>
+                                                                                        <Text
+                                                                                                style={
+                                                                                                        styles.medicionRio
+                                                                                                }
+                                                                                        >
+                                                                                                4,23
+                                                                                                metros
+                                                                                        </Text>{" "}
+                                                                                        {
+                                                                                                paneles
+                                                                                                        .rio
+                                                                                                        .mensaje
+                                                                                        }
+                                                                                </>
+                                                                        ) : panel ? (
+                                                                                paneles[
+                                                                                        panel
+                                                                                ]
+                                                                                        .mensaje
+                                                                        ) : (
+                                                                                ""
+                                                                        )}
                                                                 </Text>
                                                                 {panel ===
                                                                         "accesibilidad" &&
@@ -1128,20 +1050,7 @@ export default function HomeScreen() {
                                                                                                 ),
                                                                                         )
                                                                         ))}
-                                                                {panel ===
-                                                                        "recorridos" && (
-                                                                        <BotonInicio
-                                                                                texto="Ver mis favoritos"
-                                                                                onPress={() => {
-                                                                                        setPanel(
-                                                                                                null,
-                                                                                        );
-                                                                                        router.push(
-                                                                                                "/(tabs)/favoritos",
-                                                                                        );
-                                                                                }}
-                                                                        />
-                                                                )}
+
                                                                 {panel ===
                                                                         "visitas" && (
                                                                         <BotonInicio
@@ -1239,6 +1148,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         fontSize: 14,
                         paddingVertical: spacing.xs,
                 },
+                accesoCategoria: { flex: 1, minWidth: 0 },
                 accesos: {
                         flexDirection: "row",
                         gap: spacing.sm,
@@ -1366,26 +1276,6 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         gap: spacing.sm,
                         marginBottom: spacing.sm,
                 },
-                notificaciones: {
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: spacing.md,
-                        backgroundColor: colors.surface,
-                        borderRadius: borderRadius.md,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                        padding: spacing.md,
-                        marginTop: spacing.sm,
-                },
-                notificacionesTexto: {
-                        fontSize: fontSize.caption,
-                        color: colors.secondary,
-                },
-                pendiente: {
-                        fontSize: 11,
-                        color: colors.textSecondary,
-                        marginTop: spacing.xs,
-                },
                 resultados: {
                         backgroundColor: colors.surface,
                         padding: spacing.md,
@@ -1455,6 +1345,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         justifyContent: "center",
                 },
                 modalContenido: { gap: spacing.md },
+                medicionRio: { fontWeight: "700", color: colors.secondary },
                 modalTexto: {
                         color: colors.textSecondary,
                         fontSize: fontSize.body,
