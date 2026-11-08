@@ -1,9 +1,16 @@
+import { useUbicacion } from "../../../hooks/use-ubicacion";
+import { distanciaMetros } from "../../../services/distancias";
+import { tipografia } from "../../../styles/tipografia";
+import { BotonCategoria } from "../../../components/boton-categoria";
+import { categoriasIntereses } from "../../../../constants/categorias-intereses";
 import { fuenteTitulo } from "../../../styles/inicio";
 import { Image } from "expo-image";
 import { useTema } from "../../../context/tema.context";
 import { EstadoPantalla } from "../../../components/estado-pantalla";
 import { useMemo, useState } from "react";
 import {
+        Alert,
+        Modal,
         FlatList,
         Pressable,
         ScrollView,
@@ -53,6 +60,31 @@ export default function ExploreScreen() {
                 string | null
         >(null);
         const [busqueda, setBusqueda] = useState("");
+        const ubicacion = useUbicacion();
+        const [ordenCercania, setOrdenCercania] = useState(false);
+        const [radioDistancia, setRadioDistancia] = useState<number | null>(null);
+        const [selectorFiltro, setSelectorFiltro] = useState<"orden" | "distancia" | null>(null);
+        const [aplicandoFiltro, setAplicandoFiltro] = useState(false);
+
+        async function elegirFiltro(valor: number | null) {
+                if (aplicandoFiltro) return;
+                const selector = selectorFiltro;
+                setAplicandoFiltro(true);
+                try {
+                        if (valor !== null && !ubicacion.coordenadas) {
+                                const posicion = await ubicacion.solicitar();
+                                if (!posicion) {
+                                        Alert.alert("Ubicación necesaria", "Permití la ubicación y activá el GPS para ordenar o filtrar por distancia.");
+                                        return;
+                                }
+                        }
+                        if (selector === "orden") setOrdenCercania(valor !== null);
+                        else if (selector === "distancia") setRadioDistancia(valor);
+                        setSelectorFiltro(null);
+                } catch {
+                        Alert.alert("Ubicación no disponible", "No pudimos obtener tu ubicación. Intentá de nuevo.");
+                } finally { setAplicandoFiltro(false); }
+        }
         const lugaresFiltrados = useMemo(() => {
                 const normalizar = (valor: string) =>
                         valor
@@ -61,22 +93,28 @@ export default function ExploreScreen() {
                                 .toLowerCase();
                 const texto = normalizar(busqueda.trim());
 
-                return (lugares ?? []).filter((lugar) => {
+                const filtrados = (lugares ?? []).filter((lugar) => {
                         const coincideCategoria =
                                 categoriaSeleccionada === null ||
                                 lugar.categoriaId === categoriaSeleccionada;
 
                         const coincideBusqueda =
-                                texto.length === 0 ||
+                                mostrarMapa || texto.length === 0 ||
                                 normalizar(lugar.nombre).includes(texto);
 
                         return (
                                 lugar.activo &&
                                 coincideCategoria &&
-                                coincideBusqueda
+                                coincideBusqueda &&
+                                (mostrarMapa || radioDistancia === null || !ubicacion.coordenadas || distanciaMetros(ubicacion.coordenadas, lugar.coordenadas) <= radioDistancia)
                         );
                 });
-        }, [lugares, categoriaSeleccionada, busqueda]);
+                if (!mostrarMapa && ordenCercania && ubicacion.coordenadas) {
+                        const posicion = ubicacion.coordenadas;
+                        filtrados.sort((a, b) => distanciaMetros(posicion, a.coordenadas) - distanciaMetros(posicion, b.coordenadas) || a.nombre.localeCompare(b.nombre));
+                }
+                return filtrados;
+        }, [lugares, categoriaSeleccionada, busqueda, radioDistancia, ordenCercania, ubicacion.coordenadas, mostrarMapa]);
 
         const obtenerNombreCategoria = (categoriaId: string) => {
                 const categoria = categorias.find(
@@ -141,7 +179,7 @@ export default function ExploreScreen() {
                                                         style={[
                                                                 styles.opcionVista,
                                                                 isSelected &&
-                                                                        styles.filtroSeleccionado,
+                                                                        styles.opcionVistaActiva,
                                                         ]}
                                                 >
                                                         <Ionicons
@@ -168,7 +206,7 @@ export default function ExploreScreen() {
                                                                 {opcion ===
                                                                 "mapa"
                                                                         ? "Mapa"
-                                                                        : "Lista"}
+                                                                        : "Lugares"}
                                                         </Text>
                                                 </Pressable>
                                         );
@@ -177,165 +215,14 @@ export default function ExploreScreen() {
 
                         {mostrarMapa ? (
                                 <View style={styles.contenedorMapa}>
-                                        <Text style={styles.tituloMapa}>
-                                                Mapa de Colón
-                                        </Text>
                                         <View style={styles.controlesMapa}>
-                                                <View style={styles.buscador}>
-                                                        <Ionicons
-                                                                name="search-outline"
-                                                                size={21}
-                                                                color={
-                                                                        colors.textSecondary
-                                                                }
-                                                        />
-                                                        <TextInput
-                                                                value={busqueda}
-                                                                onChangeText={
-                                                                        setBusqueda
-                                                                }
-                                                                accessibilityLabel="Buscar lugares en el mapa"
-                                                                placeholder="¿Qué querés descubrir?"
-                                                                placeholderTextColor={
-                                                                        colors.textSecondary
-                                                                }
-                                                                style={
-                                                                        styles.input
-                                                                }
-                                                                returnKeyType="search"
-                                                        />
-                                                        {!!busqueda && (
-                                                                <Pressable
-                                                                        accessibilityRole="button"
-                                                                        accessibilityLabel="Borrar búsqueda"
-                                                                        onPress={() =>
-                                                                                setBusqueda(
-                                                                                        "",
-                                                                                )
-                                                                        }
-                                                                        style={
-                                                                                styles.borrarMapa
-                                                                        }
-                                                                >
-                                                                        <Ionicons
-                                                                                name="close-circle"
-                                                                                size={
-                                                                                        21
-                                                                                }
-                                                                                color={
-                                                                                        colors.textSecondary
-                                                                                }
-                                                                        />
-                                                                </Pressable>
-                                                        )}
-                                                </View>
-                                                <ScrollView
-                                                        horizontal
-                                                        keyboardShouldPersistTaps="handled"
-                                                        showsHorizontalScrollIndicator={
-                                                                false
-                                                        }
-                                                        contentContainerStyle={
-                                                                styles.filtrosMapa
-                                                        }
-                                                >
-                                                        <Pressable
-                                                                accessibilityRole="button"
-                                                                accessibilityState={{
-                                                                        selected:
-                                                                                categoriaSeleccionada ===
-                                                                                null,
-                                                                }}
-                                                                onPress={() =>
-                                                                        setCategoriaSeleccionada(
-                                                                                null,
-                                                                        )
-                                                                }
-                                                                style={[
-                                                                        styles.filtro,
-                                                                        categoriaSeleccionada ===
-                                                                                null &&
-                                                                                styles.filtroSeleccionado,
-                                                                ]}
-                                                        >
-                                                                <Text
-                                                                        style={[
-                                                                                styles.filtroTexto,
-                                                                                categoriaSeleccionada ===
-                                                                                        null &&
-                                                                                        styles.filtroTextoSeleccionado,
-                                                                        ]}
-                                                                >
-                                                                        Todos
-                                                                </Text>
-                                                        </Pressable>
-                                                        {categorias.map(
-                                                                (categoria) => {
-                                                                        const activa =
-                                                                                categoria.id ===
-                                                                                categoriaSeleccionada;
-
-                                                                        return (
-                                                                                <Pressable
-                                                                                        key={
-                                                                                                categoria.id
-                                                                                        }
-                                                                                        accessibilityRole="button"
-                                                                                        accessibilityState={{
-                                                                                                selected: activa,
-                                                                                        }}
-                                                                                        onPress={() =>
-                                                                                                setCategoriaSeleccionada(
-                                                                                                        activa
-                                                                                                                ? null
-                                                                                                                : categoria.id,
-                                                                                                )
-                                                                                        }
-                                                                                        style={[
-                                                                                                styles.filtro,
-                                                                                                activa &&
-                                                                                                        styles.filtroSeleccionado,
-                                                                                        ]}
-                                                                                >
-                                                                                        <Text
-                                                                                                style={[
-                                                                                                        styles.filtroTexto,
-                                                                                                        activa &&
-                                                                                                                styles.filtroTextoSeleccionado,
-                                                                                                ]}
-                                                                                        >
-                                                                                                {
-                                                                                                        categoria.nombre
-                                                                                                }
-                                                                                        </Text>
-                                                                                </Pressable>
-                                                                        );
-                                                                },
-                                                        )}
-                                                        {hayMasCategorias && (
-                                                                <Pressable
-                                                                        accessibilityRole="button"
-                                                                        disabled={
-                                                                                actualizando ||
-                                                                                sinConexion
-                                                                        }
-                                                                        onPress={() => {
-                                                                                void cargarMasCategorias();
-                                                                        }}
-                                                                        style={
-                                                                                styles.filtro
-                                                                        }
-                                                                >
-                                                                        <Text
-                                                                                style={
-                                                                                        styles.filtroTexto
-                                                                                }
-                                                                        >
-                                                                                Más
-                                                                                categorías
-                                                                        </Text>
-                                                                </Pressable>
-                                                        )}
+                                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtrosMapa}>
+                                                        <BotonCategoria nombre="Todas" icono="view-grid-outline" color={colors.secondary} fondo={colors.secondaryLight} seleccionado={categoriaSeleccionada === null} onPress={() => setCategoriaSeleccionada(null)} />
+                                                        {categorias.map(item => {
+                                                                const estilo = categoriasIntereses.find(categoria => categoria.id === item.id);
+                                                                return <BotonCategoria key={item.id} nombre={item.nombre} icono={estilo?.icono ?? "shape-outline"} color={estilo?.color ?? colors.secondary} fondo={estilo?.fondo ?? colors.secondaryLight} seleccionado={categoriaSeleccionada === item.id} onPress={() => setCategoriaSeleccionada(actual => actual === item.id ? null : item.id)} />;
+                                                        })}
+                                                        {hayMasCategorias && <Pressable accessibilityRole="button" disabled={actualizando || sinConexion} onPress={() => void cargarMasCategorias()} style={styles.filtro}><Text style={styles.filtroTexto}>Más categorías</Text></Pressable>}
                                                 </ScrollView>
                                         </View>
                                         <MapaLugares
@@ -369,7 +256,100 @@ export default function ExploreScreen() {
                                         )}
                                 </View>
                         ) : (
+                                <View style={styles.vistaLista}>
+                                                <View style={styles.controlesLista}>
+                                                        <View
+                                                                style={
+                                                                        styles.buscador
+                                                                }
+                                                        >
+                                                                <Ionicons
+                                                                        name="search-outline"
+                                                                        size={
+                                                                                21
+                                                                        }
+                                                                        color={
+                                                                                colors.textSecondary
+                                                                        }
+                                                                />
+
+                                                                <TextInput
+                                                                        value={
+                                                                                busqueda
+                                                                        }
+                                                                        onChangeText={
+                                                                                setBusqueda
+                                                                        }
+                                                                        accessibilityLabel="Buscar lugares"
+                                                                        placeholder="Buscar lugares en Colón"
+                                                                        placeholderTextColor={
+                                                                                colors.textSecondary
+                                                                        }
+                                                                        style={
+                                                                                styles.input
+                                                                        }
+                                                                        returnKeyType="search"
+                                                                />
+
+                                                                {busqueda.length >
+                                                                        0 && (
+                                                                        <Pressable
+                                                                                accessibilityLabel="Borrar búsqueda"
+                                                                                accessibilityRole="button"
+                                                                                onPress={() =>
+                                                                                        setBusqueda(
+                                                                                                "",
+                                                                                        )
+                                                                                }
+                                                                                hitSlop={
+                                                                                        8
+                                                                                }
+                                                                        >
+                                                                                <Ionicons
+                                                                                        name="close-circle"
+                                                                                        size={
+                                                                                                21
+                                                                                        }
+                                                                                        color={
+                                                                                                colors.textSecondary
+                                                                                        }
+                                                                                />
+                                                                        </Pressable>
+                                                                )}
+                                                        </View>
+
+                                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categorias}>
+                                                                <BotonCategoria nombre="Todas" icono="view-grid-outline" color={colors.secondary} fondo={colors.secondaryLight} seleccionado={categoriaSeleccionada === null} onPress={() => setCategoriaSeleccionada(null)} />
+                                                                {categorias.map(item => {
+                                                                        const estilo = categoriasIntereses.find(categoria => categoria.id === item.id);
+                                                                        return <BotonCategoria key={item.id} nombre={item.nombre} icono={estilo?.icono ?? "shape-outline"} color={estilo?.color ?? colors.secondary} fondo={estilo?.fondo ?? colors.secondaryLight} seleccionado={categoriaSeleccionada === item.id} onPress={() => setCategoriaSeleccionada(actual => actual === item.id ? null : item.id)} />;
+                                                                })}
+                                                                {hayMasCategorias && <Pressable accessibilityRole="button" disabled={actualizando || sinConexion} onPress={() => void cargarMasCategorias()} style={styles.filtro}><Text style={styles.filtroTexto}>Más categorías</Text></Pressable>}
+                                                        </ScrollView>
+
+                                                        <View style={styles.controlesDistancia}>
+                                                                <Pressable accessibilityRole="button" accessibilityLabel="Ordenar lugares" onPress={() => setSelectorFiltro("orden")} style={styles.controlDistancia}>
+                                                                        <Ionicons name="location-outline" size={17} color={colors.secondary} />
+                                                                        <Text style={styles.controlDistanciaTexto}>{ordenCercania ? 'Ordenar: Más cerca' : 'Ordenar'}</Text>
+                                                                        <Ionicons name="chevron-down" size={16} color={colors.secondary} />
+                                                                </Pressable>
+                                                                <Pressable accessibilityRole="button" accessibilityLabel="Filtrar por distancia" onPress={() => setSelectorFiltro("distancia")} style={styles.controlDistancia}>
+                                                                        <Ionicons name="options-outline" size={17} color={colors.secondary} />
+                                                                        <Text style={styles.controlDistanciaTexto}>{radioDistancia === null ? 'Distancia' : `Hasta ${radioDistancia} m`}</Text>
+                                                                        <Ionicons name="chevron-down" size={16} color={colors.secondary} />
+                                                                </Pressable>
+                                                        </View>
+                                                        {(ordenCercania || radioDistancia !== null) && !ubicacion.coordenadas && <Text style={styles.avisoDistancia}>Se necesita ubicación para aplicar estos filtros.</Text>}
+                                                        <View
+                                                                style={
+                                                                        styles.encabezadoResultados
+                                                                }
+                                                        >
+                                                                <Text style={styles.tituloResultados}>{lugaresFiltrados.length} {lugaresFiltrados.length === 1 ? 'lugar encontrado' : 'lugares encontrados'}</Text>
+                                                        </View>
+                                                </View>
                                 <FlatList
+                                        style={styles.listaDesplazable}
                                         data={lugaresFiltrados}
                                         keyExtractor={(lugar) => lugar.id}
                                         renderItem={({ item }) => (
@@ -418,226 +398,64 @@ export default function ExploreScreen() {
                                                         </Pressable>
                                                 ) : null
                                         }
-                                        ListHeaderComponent={
-                                                <View>
-                                                        <View
-                                                                style={
-                                                                        styles.buscador
-                                                                }
-                                                        >
-                                                                <Ionicons
-                                                                        name="search-outline"
-                                                                        size={
-                                                                                21
-                                                                        }
-                                                                        color={
-                                                                                colors.textSecondary
-                                                                        }
-                                                                />
-
-                                                                <TextInput
-                                                                        value={
-                                                                                busqueda
-                                                                        }
-                                                                        onChangeText={
-                                                                                setBusqueda
-                                                                        }
-                                                                        accessibilityLabel="Buscar lugares"
-                                                                        placeholder="Buscar lugares..."
-                                                                        placeholderTextColor={
-                                                                                colors.textSecondary
-                                                                        }
-                                                                        style={
-                                                                                styles.input
-                                                                        }
-                                                                        returnKeyType="search"
-                                                                />
-
-                                                                {busqueda.length >
-                                                                        0 && (
-                                                                        <Pressable
-                                                                                accessibilityLabel="Borrar búsqueda"
-                                                                                accessibilityRole="button"
-                                                                                onPress={() =>
-                                                                                        setBusqueda(
-                                                                                                "",
-                                                                                        )
-                                                                                }
-                                                                                hitSlop={
-                                                                                        8
-                                                                                }
-                                                                        >
-                                                                                <Ionicons
-                                                                                        name="close-circle"
-                                                                                        size={
-                                                                                                21
-                                                                                        }
-                                                                                        color={
-                                                                                                colors.textSecondary
-                                                                                        }
-                                                                                />
-                                                                        </Pressable>
-                                                                )}
-                                                        </View>
-
-                                                        <FlatList
-                                                                horizontal
-                                                                data={
-                                                                        categorias
-                                                                }
-                                                                ListFooterComponent={
-                                                                        hayMasCategorias ? (
-                                                                                <Pressable
-                                                                                        accessibilityRole="button"
-                                                                                        disabled={
-                                                                                                actualizando ||
-                                                                                                sinConexion
-                                                                                        }
-                                                                                        onPress={() => {
-                                                                                                void cargarMasCategorias();
-                                                                                        }}
-                                                                                        style={
-                                                                                                styles.filtro
-                                                                                        }
-                                                                                >
-                                                                                        <Text
-                                                                                                style={
-                                                                                                        styles.filtroTexto
-                                                                                                }
-                                                                                        >
-                                                                                                Más
-                                                                                                categorías
-                                                                                        </Text>
-                                                                                </Pressable>
-                                                                        ) : null
-                                                                }
-                                                                keyExtractor={(
-                                                                        categoria,
-                                                                ) =>
-                                                                        categoria.id
-                                                                }
-                                                                showsHorizontalScrollIndicator={
-                                                                        false
-                                                                }
-                                                                contentContainerStyle={
-                                                                        styles.categorias
-                                                                }
-                                                                renderItem={({
-                                                                        item,
-                                                                }) => {
-                                                                        const seleccionada =
-                                                                                categoriaSeleccionada ===
-                                                                                item.id;
-
-                                                                        return (
-                                                                                <Pressable
-                                                                                        accessibilityRole="button"
-                                                                                        accessibilityState={{
-                                                                                                selected: seleccionada,
-                                                                                        }}
-                                                                                        onPress={() =>
-                                                                                                setCategoriaSeleccionada(
-                                                                                                        seleccionada
-                                                                                                                ? null
-                                                                                                                : item.id,
-                                                                                                )
-                                                                                        }
-                                                                                        style={[
-                                                                                                styles.filtro,
-                                                                                                seleccionada &&
-                                                                                                        styles.filtroSeleccionado,
-                                                                                        ]}
-                                                                                >
-                                                                                        <Ionicons
-                                                                                                name={
-                                                                                                        item.icono as React.ComponentProps<
-                                                                                                                typeof Ionicons
-                                                                                                        >["name"]
-                                                                                                }
-                                                                                                size={
-                                                                                                        18
-                                                                                                }
-                                                                                                color={
-                                                                                                        seleccionada
-                                                                                                                ? colors.onPrimary
-                                                                                                                : colors.secondary
-                                                                                                }
-                                                                                        />
-
-                                                                                        <Text
-                                                                                                style={[
-                                                                                                        styles.filtroTexto,
-                                                                                                        seleccionada &&
-                                                                                                                styles.filtroTextoSeleccionado,
-                                                                                                ]}
-                                                                                        >
-                                                                                                {
-                                                                                                        item.nombre
-                                                                                                }
-                                                                                        </Text>
-                                                                                </Pressable>
-                                                                        );
-                                                                }}
-                                                        />
-
-                                                        <View
-                                                                style={
-                                                                        styles.encabezadoResultados
-                                                                }
-                                                        >
-                                                                <Text
-                                                                        style={
-                                                                                styles.tituloResultados
-                                                                        }
-                                                                >
-                                                                        Lugares
-                                                                        para
-                                                                        descubrir
-                                                                </Text>
-
-                                                                <Text
-                                                                        style={
-                                                                                styles.contador
-                                                                        }
-                                                                >
-                                                                        {
-                                                                                lugaresFiltrados.length
-                                                                        }
-                                                                </Text>
-                                                        </View>
-                                                </View>
-                                        }
                                         ListEmptyComponent={
                                                 <EstadoPantalla
                                                         tipo="vacio"
                                                         titulo={
-                                                                busqueda.trim() ||
+                                                                busqueda.trim() || radioDistancia !== null ||
                                                                 categoriaSeleccionada
                                                                         ? "No encontramos lugares"
                                                                         : "Todavía no hay lugares disponibles"
                                                         }
                                                         mensaje={
-                                                                busqueda.trim() ||
+                                                                busqueda.trim() || radioDistancia !== null ||
                                                                 categoriaSeleccionada
-                                                                        ? "Probá con otra búsqueda o categoría."
+                                                                        ? "Probá con otra búsqueda, categoría o distancia."
                                                                         : "Volvé a consultar más tarde."
                                                         }
                                                 />
                                         }
                                 />
+                                </View>
                         )}
+                        <Modal visible={selectorFiltro !== null} transparent animationType="fade" onRequestClose={() => { if (!aplicandoFiltro) setSelectorFiltro(null); }}>
+                                <View style={styles.fondoSelector}>
+                                        <Pressable style={StyleSheet.absoluteFillObject} accessibilityRole="button" accessibilityLabel="Cerrar opciones" disabled={aplicandoFiltro} onPress={() => setSelectorFiltro(null)} />
+                                        <View style={styles.popupSelector} accessibilityViewIsModal>
+                                                <Text accessibilityRole="header" style={styles.tituloSelector}>{selectorFiltro === "orden" ? 'Ordenar lugares' : 'Distancia máxima'}</Text>
+                                                {(selectorFiltro === "orden" ? [{ valor: null, texto: 'Orden original' }, { valor: 1, texto: 'Más cerca' }] : [{ valor: null, texto: 'Sin límite' }, ...[100, 250, 500, 1000].map(valor => ({ valor, texto: `Hasta ${valor} metros` }))]).map(opcion => {
+                                                        const seleccionada = selectorFiltro === "orden" ? ordenCercania === (opcion.valor !== null) : radioDistancia === opcion.valor;
+                                                        return <Pressable key={opcion.texto} accessibilityRole="radio" accessibilityState={{ selected: seleccionada, disabled: aplicandoFiltro }} disabled={aplicandoFiltro} style={styles.opcionDistancia} onPress={() => void elegirFiltro(opcion.valor)}>
+                                                                <Text style={styles.controlDistanciaTexto}>{opcion.texto}</Text>
+                                                                <Ionicons name={seleccionada ? 'radio-button-on' : 'radio-button-off'} size={21} color={colors.primary} />
+                                                        </Pressable>;
+                                                })}
+                                                {aplicandoFiltro && <Text style={styles.avisoDistancia}>Obteniendo ubicación…</Text>}
+                                        </View>
+                                </View>
+                        </Modal>
                 </View>
         );
 }
 
 const crearEstilos = (colors: typeof paletaColors) =>
         StyleSheet.create({
+                controlesDistancia: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 8 },
+                controlDistancia: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderColor: colors.border, borderRadius: 24, paddingHorizontal: 12, backgroundColor: colors.surface },
+                controlDistanciaTexto: { fontSize: 13, color: colors.secondary },
+                avisoDistancia: { fontSize: 13, color: colors.textSecondary, marginBottom: 12 },
+                fondoSelector: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#00000066" },
+                popupSelector: { backgroundColor: colors.background, padding: 20, borderRadius: 24, width: "100%", maxWidth: 440, alignSelf: "center" },
+                tituloSelector: { fontSize: 19, fontWeight: "700", color: colors.secondary, marginBottom: 14 },
+                opcionDistancia: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: 48, gap: 12 },
                 selectorVista: {
                         flexDirection: "row",
-                        gap: spacing.sm,
-                        paddingHorizontal: spacing.md,
-                        paddingVertical: spacing.sm,
+                        marginHorizontal: spacing.md,
+                        padding: 3,
+                        borderRadius: 28,
+                        backgroundColor: colors.yellowLight,
                 },
+                opcionVistaActiva: { backgroundColor: colors.primarySolid },
 
                 opcionVista: {
                         flex: 1,
@@ -645,9 +463,8 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         alignItems: "center",
                         justifyContent: "center",
                         gap: spacing.sm,
-                        minHeight: 44,
+                        minHeight: 48,
                         borderRadius: borderRadius.pill,
-                        backgroundColor: colors.secondaryLight,
                 },
 
                 contenedorMapa: { flex: 1 },
@@ -693,9 +510,11 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 tituloCabecera: { fontFamily: fuenteTitulo, fontSize: 24, lineHeight: 30, fontWeight: "700", color: colors.blueText },
                 descripcionCabecera: { fontSize: 14, lineHeight: 20, color: colors.greenText, marginTop: 2 },
 
+                vistaLista: { flex: 1 },
+                controlesLista: { paddingHorizontal: spacing.md, paddingTop: spacing.lg / 2 },
+                listaDesplazable: { flex: 1 },
                 lista: {
                         paddingHorizontal: spacing.md,
-                        paddingTop: spacing.lg,
                         paddingBottom: spacing.xl,
                 },
 
@@ -713,28 +532,33 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
 
                 buscador: {
-                        minHeight: 50,
+                        minHeight: 48,
                         flexDirection: "row",
                         alignItems: "center",
                         gap: spacing.sm,
                         paddingHorizontal: spacing.md,
                         backgroundColor: colors.surface,
-                        borderRadius: borderRadius.md,
+                        borderRadius: borderRadius.pill,
                         borderWidth: 1,
                         borderColor: colors.border,
+                        paddingVertical: spacing.sm,
+                        shadowColor: colors.text,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.06,
+                        shadowRadius: 5,
+                        elevation: 2,
                 },
 
                 input: {
                         flex: 1,
-                        fontSize: fontSize.body,
+                        minWidth: 0,
+                        fontSize: 14,
+                        lineHeight: 20,
+                        paddingVertical: spacing.xs,
                         color: colors.text,
                 },
 
-                categorias: {
-                        gap: spacing.sm,
-                        paddingTop: spacing.md,
-                        paddingBottom: spacing.lg,
-                },
+                categorias: { gap: 8, paddingVertical: 7 },
 
                 filtro: {
                         flexDirection: "row",
@@ -771,11 +595,11 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
 
                 tituloResultados: {
+                        ...tipografia.seccion,
+                        fontFamily: fuenteTitulo,
                         flex: 1,
                         marginRight: spacing.sm,
-                        fontSize: fontSize.subtitle,
-                        fontWeight: "700",
-                        color: colors.text,
+                        color: colors.greenText,
                 },
 
                 contador: {

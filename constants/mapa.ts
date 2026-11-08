@@ -16,6 +16,10 @@ export const REGION_INICIAL_COLON = {
   lonDelta: 0.06,
 };
 
+// Altura inicial en Apple Maps y zoom aproximado en Google Maps.
+export const ALTURA_INICIAL_MAPA = 1000;
+export const ZOOM_INICIAL_MAPA = 15.3;
+
 // Encuadre cercano para centrar la posición o seleccionar un lugar.
 export const DELTA_CERCANIA = 0.015;
 
