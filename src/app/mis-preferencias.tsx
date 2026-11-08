@@ -1,3 +1,4 @@
+import { tipografia } from "../styles/tipografia";
 import { useTema } from "../context/tema.context";
 import { useState } from "react";
 import {
@@ -106,7 +107,7 @@ export default function MisPreferenciasScreen() {
                         edges={["top", "bottom", "left", "right"]}
                 >
                         <Stack.Screen options={{ headerShown: false }} />
-                        <ScrollView contentContainerStyle={styles.contenido}>
+                        <View style={styles.encabezadoFijo}>
                                 <View style={styles.cabecera}>
                                         <Pressable
                                                 accessibilityRole="button"
@@ -135,6 +136,11 @@ export default function MisPreferenciasScreen() {
                                         para personalizar tus recomendaciones.
                                         Podés elegir más de una.
                                 </Text>
+                        </View>
+                        <ScrollView
+                                style={styles.scroll}
+                                contentContainerStyle={styles.contenido}
+                        >
                                 <Text style={styles.seccionTitulo}>
                                         Tus intereses
                                 </Text>
@@ -326,10 +332,17 @@ export default function MisPreferenciasScreen() {
 
 const crearEstilos = (colors: typeof paletaColors) =>
         StyleSheet.create({
+                scroll: { flex: 1 },
+                encabezadoFijo: {
+                        flexShrink: 0,
+                        backgroundColor: colors.background,
+                        paddingHorizontal: 18,
+                        paddingTop: 8,
+                },
                 pantalla: { flex: 1, backgroundColor: colors.background },
                 contenido: {
                         paddingHorizontal: 18,
-                        paddingTop: 8,
+                        paddingTop: 0,
                         paddingBottom: 32,
                 },
                 cabecera: {
@@ -350,15 +363,13 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
                 logo: { width: 90, height: 48 },
                 titulo: {
+                        ...tipografia.titulo,
                         fontFamily: fuenteTitulo,
-                        fontSize: 24,
-                        fontWeight: "700",
-                        color: colors.secondary,
+                        color: colors.blueText,
                 },
                 descripcion: {
-                        fontSize: 14,
-                        color: colors.textSecondary,
-                        lineHeight: 21,
+                        ...tipografia.texto,
+                        color: colors.greenText,
                         marginTop: 8,
                         marginBottom: 20,
                 },

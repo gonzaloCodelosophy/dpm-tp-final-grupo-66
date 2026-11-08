@@ -31,6 +31,8 @@ import {
         colorsInicio as paletaColors,
         fuenteTitulo,
 } from "../../styles/inicio";
+import { borderRadius, spacing } from "../../styles/theme";
+import { tipografia } from "../../styles/tipografia";
 import type { Lugar } from "../../types/Lugar";
 
 const normalizar = (texto: string) =>
@@ -130,7 +132,7 @@ export default function FavoritosScreen() {
                                                                 name="chevron-back"
                                                                 size={24}
                                                                 color={
-                                                                        colors.secondary
+                                                                        colors.textSecondary
                                                                 }
                                                         />
                                                 </Pressable>
@@ -188,7 +190,134 @@ export default function FavoritosScreen() {
                         style={styles.container}
                         edges={["top", "left", "right"]}
                 >
+                        <View style={styles.encabezadoFijo}>
+                                <View style={styles.cabecera}>
+                                        <Pressable
+                                                accessibilityRole="button"
+                                                accessibilityLabel="Volver atrás"
+                                                style={styles.volver}
+                                                onPress={volver}
+                                        >
+                                                <Ionicons
+                                                        name="chevron-back"
+                                                        size={24}
+                                                        color={colors.secondary}
+                                                />
+                                        </Pressable>
+                                        <Image
+                                                source={require("../../../assets/images/logo-colon.png")}
+                                                style={styles.logo}
+                                                contentFit="contain"
+                                                accessibilityLabel="Colón, Entre Ríos"
+                                        />
+                                </View>
+                                <Text style={styles.titulo}>Mis favoritos</Text>
+                                <Text style={styles.descripcion}>
+                                        Los lugares que guardaste para tu
+                                        próxima visita
+                                </Text>
+                                <View style={styles.buscador}>
+                                        <Ionicons
+                                                name="search-outline"
+                                                size={23}
+                                                color={colors.primary}
+                                        />
+                                        <TextInput
+                                                accessibilityLabel="Buscar en favoritos"
+                                                placeholder="Buscar en tus favoritos"
+                                                placeholderTextColor={
+                                                        colors.textSecondary
+                                                }
+                                                value={busqueda}
+                                                onChangeText={setBusqueda}
+                                                style={styles.input}
+                                                returnKeyType="search"
+                                        />
+                                        {busqueda ? (
+                                                <Pressable
+                                                        accessibilityLabel="Limpiar búsqueda"
+                                                        accessibilityRole="button"
+                                                        onPress={() =>
+                                                                setBusqueda("")
+                                                        }
+                                                        hitSlop={8}
+                                                >
+                                                        <Ionicons
+                                                                name="close-circle-outline"
+                                                                size={22}
+                                                                color={
+                                                                        colors.textSecondary
+                                                                }
+                                                        />
+                                                </Pressable>
+                                        ) : null}
+                                </View>
+                                <ScrollView
+                                        style={styles.filtrosCategorias}
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={
+                                                styles.categorias
+                                        }
+                                >
+                                        <BotonCategoria
+                                                nombre="Todas"
+                                                icono="view-grid-outline"
+                                                color={colors.secondary}
+                                                fondo={colors.secondaryLight}
+                                                seleccionado={
+                                                        categoria === null
+                                                }
+                                                onPress={() =>
+                                                        setCategoria(null)
+                                                }
+                                        />
+                                        {datos?.categorias.map((item) => {
+                                                const estilo =
+                                                        categoriasIntereses.find(
+                                                                (
+                                                                        categoriaItem,
+                                                                ) =>
+                                                                        categoriaItem.id ===
+                                                                        item.id,
+                                                        );
+                                                return (
+                                                        <BotonCategoria
+                                                                key={item.id}
+                                                                nombre={
+                                                                        item.nombre
+                                                                }
+                                                                icono={
+                                                                        estilo?.icono ??
+                                                                        "shape-outline"
+                                                                }
+                                                                color={
+                                                                        estilo?.color ??
+                                                                        colors.secondary
+                                                                }
+                                                                fondo={
+                                                                        estilo?.fondo ??
+                                                                        colors.secondaryLight
+                                                                }
+                                                                seleccionado={
+                                                                        categoria ===
+                                                                        item.id
+                                                                }
+                                                                onPress={() =>
+                                                                        setCategoria(
+                                                                                categoria ===
+                                                                                        item.id
+                                                                                        ? null
+                                                                                        : item.id,
+                                                                        )
+                                                                }
+                                                        />
+                                                );
+                                        })}
+                                </ScrollView>
+                        </View>
                         <FlatList
+                                style={styles.scroll}
                                 data={
                                         cargando ||
                                         guardados.cargando ||
@@ -201,168 +330,6 @@ export default function FavoritosScreen() {
                                 keyboardShouldPersistTaps="handled"
                                 ListHeaderComponent={
                                         <>
-                                                <View style={styles.cabecera}>
-                                                        <Pressable
-                                                                accessibilityRole="button"
-                                                                accessibilityLabel="Volver atrás"
-                                                                style={
-                                                                        styles.volver
-                                                                }
-                                                                onPress={volver}
-                                                        >
-                                                                <Ionicons
-                                                                        name="chevron-back"
-                                                                        size={
-                                                                                24
-                                                                        }
-                                                                        color={
-                                                                                colors.secondary
-                                                                        }
-                                                                />
-                                                        </Pressable>
-                                                        <Image
-                                                                source={require("../../../assets/images/logo-colon.png")}
-                                                                style={
-                                                                        styles.logo
-                                                                }
-                                                                contentFit="contain"
-                                                                accessibilityLabel="Colón, Entre Ríos"
-                                                        />
-                                                </View>
-                                                <Text style={styles.titulo}>
-                                                        Mis favoritos
-                                                </Text>
-                                                <Text
-                                                        style={
-                                                                styles.descripcion
-                                                        }
-                                                >
-                                                        Los lugares que
-                                                        guardaste para tu
-                                                        próxima visita
-                                                </Text>
-                                                <View style={styles.buscador}>
-                                                        <Ionicons
-                                                                name="search-outline"
-                                                                size={21}
-                                                                color={
-                                                                        colors.secondary
-                                                                }
-                                                        />
-                                                        <TextInput
-                                                                accessibilityLabel="Buscar en favoritos"
-                                                                placeholder="Buscar en tus favoritos"
-                                                                placeholderTextColor={
-                                                                        colors.textSecondary
-                                                                }
-                                                                value={busqueda}
-                                                                onChangeText={
-                                                                        setBusqueda
-                                                                }
-                                                                style={
-                                                                        styles.input
-                                                                }
-                                                        />
-                                                        {busqueda ? (
-                                                                <Pressable
-                                                                        accessibilityLabel="Limpiar búsqueda"
-                                                                        accessibilityRole="button"
-                                                                        onPress={() =>
-                                                                                setBusqueda(
-                                                                                        "",
-                                                                                )
-                                                                        }
-                                                                        style={
-                                                                                styles.limpiar
-                                                                        }
-                                                                >
-                                                                        <Ionicons
-                                                                                name="close"
-                                                                                size={
-                                                                                        20
-                                                                                }
-                                                                                color={
-                                                                                        colors.secondary
-                                                                                }
-                                                                        />
-                                                                </Pressable>
-                                                        ) : null}
-                                                </View>
-                                                <ScrollView
-                                                        horizontal
-                                                        showsHorizontalScrollIndicator={
-                                                                false
-                                                        }
-                                                        contentContainerStyle={
-                                                                styles.categorias
-                                                        }
-                                                >
-                                                        <BotonCategoria
-                                                                nombre="Todas"
-                                                                icono="view-grid-outline"
-                                                                color={
-                                                                        colors.secondary
-                                                                }
-                                                                fondo={
-                                                                        colors.secondaryLight
-                                                                }
-                                                                seleccionado={
-                                                                        categoria ===
-                                                                        null
-                                                                }
-                                                                onPress={() =>
-                                                                        setCategoria(
-                                                                                null,
-                                                                        )
-                                                                }
-                                                        />
-                                                        {datos?.categorias.map(
-                                                                (item) => {
-                                                                        const estilo =
-                                                                                categoriasIntereses.find(
-                                                                                        (
-                                                                                                categoriaItem,
-                                                                                        ) =>
-                                                                                                categoriaItem.id ===
-                                                                                                item.id,
-                                                                                );
-                                                                        return (
-                                                                                <BotonCategoria
-                                                                                        key={
-                                                                                                item.id
-                                                                                        }
-                                                                                        nombre={
-                                                                                                item.nombre
-                                                                                        }
-                                                                                        icono={
-                                                                                                estilo?.icono ??
-                                                                                                "shape-outline"
-                                                                                        }
-                                                                                        color={
-                                                                                                estilo?.color ??
-                                                                                                colors.secondary
-                                                                                        }
-                                                                                        fondo={
-                                                                                                estilo?.fondo ??
-                                                                                                colors.secondaryLight
-                                                                                        }
-                                                                                        seleccionado={
-                                                                                                categoria ===
-                                                                                                item.id
-                                                                                        }
-                                                                                        onPress={() =>
-                                                                                                setCategoria(
-                                                                                                        categoria ===
-                                                                                                                item.id
-                                                                                                                ? null
-                                                                                                                : item.id,
-                                                                                                )
-                                                                                        }
-                                                                                />
-                                                                        );
-                                                                },
-                                                        )}
-                                                </ScrollView>
                                                 {(guardados.pendientes > 0 ||
                                                         guardados.errorSincronizacion) && (
                                                         <View
@@ -669,6 +636,13 @@ export default function FavoritosScreen() {
 
 const crearEstilos = (colors: typeof paletaColors) =>
         StyleSheet.create({
+                scroll: { flex: 1 },
+                encabezadoFijo: {
+                        flexShrink: 0,
+                        backgroundColor: colors.background,
+                        paddingHorizontal: 18,
+                        paddingTop: 8,
+                },
                 container: { flex: 1, backgroundColor: colors.background },
                 lista: {
                         paddingHorizontal: 18,
@@ -697,41 +671,41 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 },
                 logo: { width: 90, height: 48 },
                 titulo: {
+                        ...tipografia.titulo,
                         fontFamily: fuenteTitulo,
-                        fontSize: 24,
-                        fontWeight: "700",
-                        color: colors.secondary,
+                        color: colors.blueText,
                 },
                 descripcion: {
-                        fontSize: 14,
-                        color: colors.textSecondary,
+                        ...tipografia.texto,
+                        color: colors.greenText,
                         marginTop: 4,
                         marginBottom: 18,
-                        lineHeight: 20,
                 },
                 buscador: {
+                        minHeight: 48,
                         flexDirection: "row",
                         alignItems: "center",
-                        gap: 8,
+                        gap: 12,
+                        paddingHorizontal: spacing.md,
+                        paddingVertical: spacing.sm,
+                        backgroundColor: colors.surface,
+                        borderRadius: borderRadius.pill,
                         borderWidth: 1,
                         borderColor: colors.border,
-                        borderRadius: 24,
-                        paddingHorizontal: 14,
-                        minHeight: 46,
+                        shadowColor: colors.text,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.06,
+                        shadowRadius: 5,
+                        elevation: 2,
                 },
                 input: {
+                        ...tipografia.texto,
                         flex: 1,
-                        fontSize: 14,
-                        color: colors.secondary,
-                        paddingVertical: 12,
                         minWidth: 0,
+                        color: colors.text,
+                        paddingVertical: spacing.xs,
                 },
-                limpiar: {
-                        minWidth: 44,
-                        minHeight: 44,
-                        alignItems: "center",
-                        justifyContent: "center",
-                },
+                filtrosCategorias: { flexGrow: 0 },
                 categorias: { gap: 8, paddingVertical: 14 },
                 controles: {
                         flexDirection: "row",
