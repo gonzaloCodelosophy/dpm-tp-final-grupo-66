@@ -1,3 +1,5 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { categoriasIntereses } from "../../../constants/categorias-intereses";
 import { tipografia } from "../../styles/tipografia";
 import { useTema } from "../../context/tema.context";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -23,6 +25,9 @@ export function TarjetaLugarInicio({
         distancia,
 }: LugarInicioProps) {
         const { colors, styles } = useEstilos();
+        const categoriaVisual = categoriasIntereses.find(
+                (item) => item.id === lugar.categoriaId,
+        );
 
         return (
                 <View style={styles.tarjeta}>
@@ -89,15 +94,22 @@ export function TarjetaLugarInicio({
                                                         </Text>
                                                 </View>
                                         </View>
-                                        <View style={styles.categoria}>
-                                                <Text
-                                                        style={
-                                                                styles.categoriaTexto
+                                        <View
+                                                style={styles.categoria}
+                                                accessible
+                                                accessibilityLabel={categoria}
+                                        >
+                                                <MaterialCommunityIcons
+                                                        name={
+                                                                categoriaVisual?.icono ??
+                                                                "map-marker-outline"
                                                         }
-                                                        numberOfLines={2}
-                                                >
-                                                        {categoria}
-                                                </Text>
+                                                        size={24}
+                                                        color={
+                                                                categoriaVisual?.color ??
+                                                                colors.greenText
+                                                        }
+                                                />
                                         </View>
                                 </View>
                         </Pressable>
@@ -256,13 +268,12 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         color: colors.textSecondary,
                 },
                 categoria: {
-                        maxWidth: "35%",
-                        backgroundColor: colors.greenLight,
-                        paddingHorizontal: 10,
-                        paddingVertical: spacing.sm,
-                        borderRadius: borderRadius.pill,
+                        width: 32,
+                        height: 32,
+                        flexShrink: 0,
+                        alignItems: "center",
+                        justifyContent: "center",
                 },
-                categoriaTexto: { color: colors.green, fontSize: 12 },
                 evento: { flex: 1, minWidth: 0 },
                 imagenEvento: { height: 140, width: "100%" },
                 fecha: {

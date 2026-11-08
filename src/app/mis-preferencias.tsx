@@ -1,3 +1,4 @@
+import { BotonVolver } from "../components/boton-volver";
 import { tipografia } from "../styles/tipografia";
 import { useTema } from "../context/tema.context";
 import { useState } from "react";
@@ -14,7 +15,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { Image } from "expo-image";
-import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useAuth } from "../context/auth.context";
 import { useVolverPerfil } from "../hooks/use-volver-perfil";
 import { BotonCategoria } from "../components/boton-categoria";
@@ -109,19 +109,10 @@ export default function MisPreferenciasScreen() {
                         <Stack.Screen options={{ headerShown: false }} />
                         <View style={styles.encabezadoFijo}>
                                 <View style={styles.cabecera}>
-                                        <Pressable
-                                                accessibilityRole="button"
-                                                accessibilityLabel="Volver al perfil"
-                                                onPress={volver}
-                                                disabled={guardando}
+                                        <BotonVolver
                                                 style={styles.volver}
-                                        >
-                                                <Ionicons
-                                                        name="chevron-back"
-                                                        size={24}
-                                                        color={colors.secondary}
-                                                />
-                                        </Pressable>
+                                                onPress={volver}
+                                        />
                                         <Image
                                                 source={require("../../assets/images/logo-colon.png")}
                                                 style={styles.logo}
@@ -354,12 +345,6 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 volver: {
                         position: "absolute",
                         left: 0,
-                        width: 44,
-                        height: 44,
-                        borderRadius: 22,
-                        backgroundColor: colors.surface,
-                        alignItems: "center",
-                        justifyContent: "center",
                 },
                 logo: { width: 90, height: 48 },
                 titulo: {

@@ -1,3 +1,4 @@
+import { BotonVolver } from "../../components/boton-volver";
 import { useTema } from "../../context/tema.context";
 import { BotonRegistrarVisita } from "../../components/boton-visita-cercana";
 import { BotonLugarFavorito } from "../../components/boton-lugar-favorito";
@@ -5,7 +6,7 @@ import { EstadoPantalla } from "../../components/estado-pantalla";
 import { Audioguia } from "../../components/audioguia";
 import { ImagenPersistente } from "../../components/imagen-persistente";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 
@@ -95,17 +96,9 @@ export default function DetalleLugarScreen() {
                                                 },
                                         ]}
                                 >
-                                        <Pressable
-                                                style={styles.botonHeader}
+                                        <BotonVolver
                                                 onPress={() => router.back()}
-                                                hitSlop={8}
-                                        >
-                                                <Ionicons
-                                                        name="chevron-back"
-                                                        size={24}
-                                                        color={colors.text}
-                                                />
-                                        </Pressable>
+                                        />
 
                                         <Text
                                                 style={styles.tituloHeader}

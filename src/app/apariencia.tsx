@@ -1,3 +1,4 @@
+import { BotonVolver } from "../components/boton-volver";
 import { fuenteTitulo } from "../styles/inicio";
 import { tipografia } from "../styles/tipografia";
 import { useState } from "react";
@@ -74,19 +75,10 @@ export default function AparienciaScreen() {
                         <Stack.Screen options={{ headerShown: false }} />
                         <View style={styles.encabezadoFijo}>
                                 <View style={styles.cabecera}>
-                                        <Pressable
-                                                accessibilityRole="button"
-                                                accessibilityLabel="Volver al perfil"
-                                                onPress={volver}
-                                                disabled={guardando}
+                                        <BotonVolver
                                                 style={styles.volver}
-                                        >
-                                                <Ionicons
-                                                        name="chevron-back"
-                                                        size={24}
-                                                        color={colors.secondary}
-                                                />
-                                        </Pressable>
+                                                onPress={volver}
+                                        />
                                         <Image
                                                 source={require("../../assets/images/logo-colon.png")}
                                                 style={styles.logo}
@@ -314,12 +306,6 @@ const crearEstilos = (colors: typeof paleta) =>
                 volver: {
                         position: "absolute",
                         left: 0,
-                        width: 44,
-                        height: 44,
-                        borderRadius: 22,
-                        backgroundColor: colors.surface,
-                        alignItems: "center",
-                        justifyContent: "center",
                 },
                 logo: { width: 90, height: 48 },
                 titulo: {

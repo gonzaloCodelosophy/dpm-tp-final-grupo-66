@@ -13,8 +13,11 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colorsInicio as paletaColorsInicio, fuenteTitulo } from "../../styles/inicio";
-import { useRouter } from "expo-router";
+import {
+        colorsInicio as paletaColorsInicio,
+        fuenteTitulo,
+} from "../../styles/inicio";
+import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useAuth } from "../../context/auth.context";
 import {
@@ -65,10 +68,7 @@ export default function PerfilScreen() {
                         grupo: "Mi actividad",
                         color: "#7955A0",
                         onPress: () =>
-                                abrirSeccion(
-                                        "Eventos guardados",
-                                        "La lista de eventos guardados estará disponible próximamente. Podés consultar las actividades desde la agenda.",
-                                ),
+                                router.push("/eventos-guardados" as Href),
                 },
                 {
                         titulo: "Mis preferencias",
@@ -104,11 +104,7 @@ export default function PerfilScreen() {
                         icono: "help-circle-outline",
                         grupo: "Cuenta y ayuda",
                         color: colors.secondary,
-                        onPress: () =>
-                                abrirSeccion(
-                                        "Ayuda y soporte",
-                                        "Las preguntas frecuentes y los canales de soporte estarán disponibles próximamente.",
-                                ),
+                        onPress: () => router.push("/ayuda-soporte" as Href),
                 },
                 {
                         titulo: "Cerrar sesión",
@@ -610,7 +606,11 @@ const crearEstilos = (
                         minHeight: 130,
                         justifyContent: "flex-end",
                 },
-                headerTitle: { ...tipografia.titulo, fontFamily: fuenteTitulo, color: colors.blueText },
+                headerTitle: {
+                        ...tipografia.titulo,
+                        fontFamily: fuenteTitulo,
+                        color: colors.blueText,
+                },
 
                 profileCard: {
                         backgroundColor: colors.surface,
