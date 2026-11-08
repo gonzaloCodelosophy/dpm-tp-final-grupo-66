@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { solicitarJson } from './http';
 import { FalloDatos } from '../errores';
+import { POR_PAGINA, validarPagina } from './paginacion';
 import type { Visita } from '../../types/Visita';
 
 const visitaSchema = z.object({
@@ -16,6 +17,12 @@ export function validarVisita(entrada: unknown): Visita {
   if (!resultado.success) throw new FalloDatos({ tipo: 'contrato', codigo: 'VISITA_INVALIDA', mensaje: 'No se pudo validar la visita.', reintentable: false });
 
   return resultado.data;
+}
+
+export async function descargarVisitas(pagina: number, token: string) {
+
+  const respuesta = await solicitarJson(`/yo/visitas?pagina=${pagina}&porPagina=${POR_PAGINA}`, { token });
+  return validarPagina(respuesta, visitaSchema, pagina);
 }
 
 export async function enviarVisita(visita: Visita, token: string): Promise<Visita> {
