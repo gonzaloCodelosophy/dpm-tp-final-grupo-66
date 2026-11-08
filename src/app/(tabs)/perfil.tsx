@@ -70,16 +70,12 @@ export default function PerfilScreen() {
                                 ),
                 },
                 {
-                        titulo: "Mis intereses",
-                        descripcion: "Las categorías que te interesan",
+                        titulo: "Mis preferencias",
+                        descripcion: "Intereses y avisos de proximidad",
                         icono: "options-outline",
                         grupo: "Preferencias",
                         color: colors.secondary,
-                        onPress: () =>
-                                abrirSeccion(
-                                        "Mis intereses",
-                                        "La configuración de tus preferencias estará disponible próximamente.",
-                                ),
+                        onPress: () => router.push("../mis-preferencias"),
                 },
                 {
                         titulo: "Notificaciones",
@@ -204,15 +200,28 @@ export default function PerfilScreen() {
                                                                         styles.avatarCircle
                                                                 }
                                                         >
-                                                                <Text
-                                                                        style={
-                                                                                styles.avatarText
-                                                                        }
-                                                                >
-                                                                        {
-                                                                                iniciales
-                                                                        }
-                                                                </Text>
+                                                                {usuario.avatarUrl ? (
+                                                                        <Image
+                                                                                source={{
+                                                                                        uri: usuario.avatarUrl,
+                                                                                }}
+                                                                                style={
+                                                                                        styles.avatarImage
+                                                                                }
+                                                                                contentFit="cover"
+                                                                                accessibilityLabel="Foto de perfil"
+                                                                        />
+                                                                ) : (
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.avatarText
+                                                                                }
+                                                                        >
+                                                                                {
+                                                                                        iniciales
+                                                                                }
+                                                                        </Text>
+                                                                )}
                                                         </View>
                                                         <View
                                                                 style={
@@ -269,9 +278,8 @@ export default function PerfilScreen() {
                                                                         styles.editButton
                                                                 }
                                                                 onPress={() =>
-                                                                        abrirSeccion(
-                                                                                "Editar perfil",
-                                                                                "La edición de tus datos estará disponible próximamente.",
+                                                                        router.push(
+                                                                                "../editar-perfil",
                                                                         )
                                                                 }
                                                         >
@@ -594,6 +602,11 @@ const styles = StyleSheet.create({
                 backgroundColor: colors.primary,
                 justifyContent: "center",
                 alignItems: "center",
+        },
+        avatarImage: {
+                width: "100%",
+                height: "100%",
+                borderRadius: borderRadius.pill,
         },
         avatarText: {
                 color: colors.surface,

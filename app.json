@@ -66,6 +66,14 @@
                                 {
                                         "barStyle": "dark"
                                 }
+                        ],
+                        [
+                                "expo-image-picker",
+                                {
+                                        "photosPermission": "Usamos tus fotos para que puedas elegir una imagen de perfil.",
+                                        "cameraPermission": false,
+                                        "microphonePermission": false
+                                }
                         ]
                 ],
                 "experiments": {

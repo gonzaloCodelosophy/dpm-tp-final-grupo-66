@@ -6,6 +6,12 @@ import {
         obtenerSesion,
         registrarse as apiRegistrarse,
 } from "../services/auth.service";
+import {
+        guardarPreferencias,
+        guardarPerfil,
+        type CambiosPerfil,
+        type CambiosPreferencias,
+} from "../services/perfil.service";
 import { useSincronizacionFavoritos } from "../hooks/use-sincronizacion-favoritos";
 import { useSincronizacionVisitas } from "../hooks/use-sincronizacion-visitas";
 import {
@@ -25,6 +31,10 @@ interface AuthContextProps {
         cerrarSesion: () => Promise<void>;
         desbloquearConBiometria: () => Promise<boolean>;
         saltarBiometria: () => void;
+        actualizarPerfil: (cambios: CambiosPerfil) => Promise<void>;
+        actualizarPreferencias: (
+                preferencias: CambiosPreferencias,
+        ) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -89,6 +99,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 setStatus("autenticado");
         }
 
+        async function actualizarPerfil(cambios: CambiosPerfil) {
+                if (status !== "autenticado" || !usuario)
+                        throw new Error("Iniciá sesión para editar tu perfil.");
+                const actualizado = await guardarPerfil(usuario.id, cambios);
+                setUsuario((actual) =>
+                        actual?.id === actualizado.id ? actualizado : actual,
+                );
+        }
+
+        async function actualizarPreferencias(
+                preferencias: CambiosPreferencias,
+        ) {
+                if (status !== "autenticado" || !usuario)
+                        throw new Error(
+                                "Iniciá sesión para guardar tus preferencias.",
+                        );
+                const actualizado = await guardarPreferencias(
+                        usuario.id,
+                        preferencias,
+                );
+                setUsuario((actual) =>
+                        actual?.id === actualizado.id ? actualizado : actual,
+                );
+        }
+
         async function cerrarSesion() {
                 await apiCerrarSesion();
                 setUsuario(null);
@@ -127,6 +162,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                                 cerrarSesion,
                                 desbloquearConBiometria,
                                 saltarBiometria,
+                                actualizarPerfil,
+                                actualizarPreferencias,
                         }}
                 >
                         {children}

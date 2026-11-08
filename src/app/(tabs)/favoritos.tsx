@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
+import { useVolverPerfil } from "../../hooks/use-volver-perfil";
 import { useAuth } from "../../context/auth.context";
 import { sincronizarFavoritos } from "../../services/favoritos.service";
 import { Image } from "expo-image";
@@ -20,6 +21,8 @@ import { useDetallesLugares } from "../../hooks/use-detalles-lugares";
 import { useUbicacion } from "../../hooks/use-ubicacion";
 import { distanciaMetros, textoDistancia } from "../../services/distancias";
 import { ImagenPersistente } from "../../components/imagen-persistente";
+import { BotonCategoria } from "../../components/boton-categoria";
+import { categoriasIntereses } from "../../../constants/categorias-intereses";
 import { BotonLugarFavorito } from "../../components/boton-lugar-favorito";
 import { EstadoCatalogo } from "../../components/estado-catalogo";
 import { EstadoPantalla } from "../../components/estado-pantalla";
@@ -53,6 +56,7 @@ function horarioHoy(lugar: Lugar) {
 }
 
 export default function FavoritosScreen() {
+        const volver = useVolverPerfil();
         const { usuario, status } = useAuth();
         const autenticado = status === "autenticado" && usuario !== null;
         const usuarioId =
@@ -85,6 +89,12 @@ export default function FavoritosScreen() {
         const [accesible, setAccesible] = useState(false);
         const [gratis, setGratis] = useState(false);
         const favoritos = detalles.lugares.filter((lugar) => lugar.activo);
+        const categoriaSinFavoritos =
+                categoria !== null &&
+                !favoritos.some((lugar) => lugar.categoriaId === categoria);
+        const nombreCategoria = datos?.categorias.find(
+                (item) => item.id === categoria,
+        )?.nombre;
         const distancia = (lugar: Lugar) =>
                 ubicacion.coordenadas
                         ? distanciaMetros(
@@ -145,13 +155,7 @@ export default function FavoritosScreen() {
                                                         accessibilityRole="button"
                                                         accessibilityLabel="Volver atrás"
                                                         style={styles.volver}
-                                                        onPress={() =>
-                                                                router.canGoBack()
-                                                                        ? router.back()
-                                                                        : router.replace(
-                                                                                  "/(tabs)/perfil",
-                                                                          )
-                                                        }
+                                                        onPress={volver}
                                                 >
                                                         <Ionicons
                                                                 name="chevron-back"
@@ -235,13 +239,7 @@ export default function FavoritosScreen() {
                                                                 style={
                                                                         styles.volver
                                                                 }
-                                                                onPress={() =>
-                                                                        router.canGoBack()
-                                                                                ? router.back()
-                                                                                : router.replace(
-                                                                                          "/(tabs)/perfil",
-                                                                                  )
-                                                                }
+                                                                onPress={volver}
                                                         >
                                                                 <Ionicons
                                                                         name="chevron-back"
@@ -330,42 +328,71 @@ export default function FavoritosScreen() {
                                                                 styles.categorias
                                                         }
                                                 >
-                                                        {chip(
-                                                                "Todas",
-                                                                categoria ===
-                                                                        null,
-                                                                () =>
+                                                        <BotonCategoria
+                                                                nombre="Todas"
+                                                                icono="view-grid-outline"
+                                                                color={
+                                                                        colors.secondary
+                                                                }
+                                                                fondo={
+                                                                        colors.secondaryLight
+                                                                }
+                                                                seleccionado={
+                                                                        categoria ===
+                                                                        null
+                                                                }
+                                                                onPress={() =>
                                                                         setCategoria(
                                                                                 null,
-                                                                        ),
-                                                        )}
-                                                        {datos?.categorias
-                                                                .filter(
-                                                                        (
-                                                                                item,
-                                                                        ) =>
-                                                                                favoritos.some(
+                                                                        )
+                                                                }
+                                                        />
+                                                        {datos?.categorias.map(
+                                                                (item) => {
+                                                                        const estilo =
+                                                                                categoriasIntereses.find(
                                                                                         (
-                                                                                                lugar,
+                                                                                                categoriaItem,
                                                                                         ) =>
-                                                                                                lugar.categoriaId ===
+                                                                                                categoriaItem.id ===
                                                                                                 item.id,
-                                                                                ),
-                                                                )
-                                                                .map((item) =>
-                                                                        chip(
-                                                                                item.nombre,
-                                                                                categoria ===
-                                                                                        item.id,
-                                                                                () =>
-                                                                                        setCategoria(
+                                                                                );
+                                                                        return (
+                                                                                <BotonCategoria
+                                                                                        key={
+                                                                                                item.id
+                                                                                        }
+                                                                                        nombre={
+                                                                                                item.nombre
+                                                                                        }
+                                                                                        icono={
+                                                                                                estilo?.icono ??
+                                                                                                "shape-outline"
+                                                                                        }
+                                                                                        color={
+                                                                                                estilo?.color ??
+                                                                                                colors.secondary
+                                                                                        }
+                                                                                        fondo={
+                                                                                                estilo?.fondo ??
+                                                                                                colors.secondaryLight
+                                                                                        }
+                                                                                        seleccionado={
                                                                                                 categoria ===
-                                                                                                        item.id
-                                                                                                        ? null
-                                                                                                        : item.id,
-                                                                                        ),
-                                                                        ),
-                                                                )}
+                                                                                                item.id
+                                                                                        }
+                                                                                        onPress={() =>
+                                                                                                setCategoria(
+                                                                                                        categoria ===
+                                                                                                                item.id
+                                                                                                                ? null
+                                                                                                                : item.id,
+                                                                                                )
+                                                                                        }
+                                                                                />
+                                                                        );
+                                                                },
+                                                        )}
                                                 </ScrollView>
                                                 <View style={styles.controles}>
                                                         <Pressable
@@ -755,14 +782,18 @@ export default function FavoritosScreen() {
                                                 <EstadoPantalla
                                                         tipo="vacio"
                                                         titulo={
-                                                                favoritos.length
-                                                                        ? "No encontramos coincidencias"
-                                                                        : "Todavía no tenés favoritos"
+                                                                categoriaSinFavoritos
+                                                                        ? "No tenés favoritos de esta categoría"
+                                                                        : favoritos.length
+                                                                          ? "No encontramos coincidencias"
+                                                                          : "Todavía no tenés favoritos"
                                                         }
                                                         mensaje={
-                                                                favoritos.length
-                                                                        ? "Probá otra búsqueda o cambiá los filtros."
-                                                                        : "Tocá el corazón de un lugar para guardarlo acá."
+                                                                categoriaSinFavoritos
+                                                                        ? `Todavía no guardaste lugares de ${nombreCategoria ?? "esta categoría"}. Tocá el corazón de un lugar para agregarlo.`
+                                                                        : favoritos.length
+                                                                          ? "Probá otra búsqueda o cambiá los filtros."
+                                                                          : "Tocá el corazón de un lugar para guardarlo acá."
                                                         }
                                                         accion={
                                                                 favoritos.length

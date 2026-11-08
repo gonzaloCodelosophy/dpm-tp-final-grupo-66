@@ -2,7 +2,7 @@ import axios from "axios";
 import { FalloDatos } from "../errores";
 
 interface OpcionesSolicitud {
-        metodo?: "GET" | "POST" | "PUT" | "DELETE";
+        metodo?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
         cuerpo?: unknown;
         token?: string;
 }
@@ -21,7 +21,11 @@ export async function solicitarJson(
                 });
         const controller = new AbortController();
 
-        const timeout = setTimeout(() => controller.abort(), 10000);
+        const esArchivo = opciones.cuerpo instanceof FormData;
+        const timeout = setTimeout(
+                () => controller.abort(),
+                esArchivo ? 30000 : 10000,
+        );
 
         try {
                 const { metodo = "GET", cuerpo: datos, token } = opciones;
@@ -29,9 +33,17 @@ export async function solicitarJson(
                         url: `${base}${ruta}`,
                         method: metodo,
                         data: datos,
-                        headers: token
-                                ? { Authorization: `Bearer ${token}` }
-                                : undefined,
+                        headers: {
+                                ...(token
+                                        ? { Authorization: `Bearer ${token}` }
+                                        : {}),
+                                ...(esArchivo
+                                        ? {
+                                                  "Content-Type":
+                                                          "multipart/form-data",
+                                          }
+                                        : {}),
+                        },
                         signal: controller.signal,
                         validateStatus: () => true,
                 });
