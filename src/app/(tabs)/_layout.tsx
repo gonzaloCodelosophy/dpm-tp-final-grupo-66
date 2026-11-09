@@ -1,5 +1,5 @@
 import { useTema } from "../../context/tema.context";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React, { useState } from "react";
 import { Image } from "expo-image";
 import { useAuth } from "../../context/auth.context";
@@ -76,8 +76,11 @@ function IconoPerfil({ focused }: { focused: boolean }) {
 export default function TabLayout() {
         const { coloresBase, colors, styles } = useEstilos();
 
+        const { usuario, status } = useAuth();
         const insets = useSafeAreaInsets();
         const espacioInferior = Math.max(insets.bottom, 10);
+
+        if (status === "autenticado" && usuario?.rol === "admin") return <Redirect href="/(admin)" />;
 
         return (
                 <Tabs
