@@ -5,7 +5,8 @@ import { useTema } from "../context/tema.context";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, Switch, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { Stack, useRouter, type Href } from "expo-router";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { Image } from "expo-image";
 import { useAuth } from "../context/auth.context";
 import { useVolverPerfil } from "../hooks/use-volver-perfil";
@@ -16,6 +17,7 @@ import { colorsInicio as paletaColors, fuenteTitulo } from "../styles/inicio";
 
 export default function MisPreferenciasScreen() {
   const mostrarPopup = usePopup();
+        const router = useRouter();
         const { colors, styles } = useEstilos();
 
         const { usuario, status, actualizarPreferencias } = useAuth();
@@ -26,10 +28,6 @@ export default function MisPreferenciasScreen() {
         const [avisarProximidad, setAvisarProximidad] = useState(
                 usuario?.preferencias?.avisarProximidad ?? true,
         );
-        const radioInicial = usuario?.preferencias?.radioAvisoMetros;
-        const [radioAvisoMetros, setRadioAvisoMetros] = useState<
-                100 | 250 | 500
-        >(radioInicial === 100 || radioInicial === 500 ? radioInicial : 250);
         const [guardando, setGuardando] = useState(false);
         const [error, setError] = useState<string | null>(null);
         const originales = usuario?.preferencias?.categoriasFavoritas ?? [];
@@ -37,9 +35,10 @@ export default function MisPreferenciasScreen() {
                 JSON.stringify([...seleccionadas].sort()) !==
                         JSON.stringify([...originales].sort()) ||
                 avisarProximidad !==
-                        (usuario?.preferencias?.avisarProximidad ?? true) ||
-                radioAvisoMetros !==
-                        (usuario?.preferencias?.radioAvisoMetros ?? 250);
+                        (usuario?.preferencias?.avisarProximidad ?? true);
+        const radioCuenta = usuario?.preferencias?.radioAvisoMetros;
+        const radioApi: 100 | 250 | 500 =
+                radioCuenta === 100 || radioCuenta === 500 ? radioCuenta : 250;
 
         function cambiar(id: string) {
                 setSeleccionadas((actuales) =>
@@ -60,7 +59,7 @@ export default function MisPreferenciasScreen() {
                         await actualizarPreferencias({
                                 categoriasFavoritas: seleccionadas,
                                 avisarProximidad,
-                                radioAvisoMetros,
+                                radioAvisoMetros: radioApi,
                         });
                         mostrarPopup(
                                 "Preferencias actualizadas",
@@ -209,69 +208,28 @@ export default function MisPreferenciasScreen() {
                                         />
                                 </View>
                                 <Text style={styles.seccionTitulo}>
-                                        Distancia de avisos
+                                        Ajustes de notificaciones
                                 </Text>
-                                <View
-                                        style={styles.distancias}
-                                        accessibilityRole="radiogroup"
+                                <Pressable
+                                        accessibilityRole="button"
+                                        onPress={() =>
+                                                router.push(
+                                                        "/notificaciones" as Href,
+                                                )
+                                        }
+                                        style={styles.enlaceAjustes}
                                 >
-                                        {([100, 250, 500] as const).map(
-                                                (radio) => (
-                                                        <Pressable
-                                                                key={radio}
-                                                                accessibilityRole="radio"
-                                                                accessibilityLabel={`${radio} metros`}
-                                                                accessibilityState={{
-                                                                        checked:
-                                                                                radioAvisoMetros ===
-                                                                                radio,
-                                                                        disabled:
-                                                                                guardando ||
-                                                                                !avisarProximidad,
-                                                                }}
-                                                                disabled={
-                                                                        guardando ||
-                                                                        !avisarProximidad
-                                                                }
-                                                                onPress={() => {
-                                                                        setRadioAvisoMetros(
-                                                                                radio,
-                                                                        );
-                                                                        setError(
-                                                                                null,
-                                                                        );
-                                                                }}
-                                                                style={[
-                                                                        styles.distancia,
-                                                                        radioAvisoMetros ===
-                                                                                radio &&
-                                                                                styles.distanciaElegida,
-                                                                        !avisarProximidad &&
-                                                                                styles.deshabilitado,
-                                                                ]}
-                                                        >
-                                                                <Text
-                                                                        style={[
-                                                                                styles.distanciaTexto,
-                                                                                radioAvisoMetros ===
-                                                                                        radio &&
-                                                                                        styles.elegida,
-                                                                        ]}
-                                                                >
-                                                                        {radio}{" "}
-                                                                        m
-                                                                </Text>
-                                                        </Pressable>
-                                                ),
-                                        )}
-                                </View>
-                                {!avisarProximidad && (
-                                        <Text style={styles.ayuda}>
-                                                Activá los avisos para cambiar
-                                                la distancia. Conservamos la que
-                                                tenías elegida.
+                                        <Text style={styles.enlaceAjustesTexto}>
+                                                Horario de recordatorios,
+                                                distancia y cantidad de avisos
+                                                de cercanía
                                         </Text>
-                                )}
+                                        <Ionicons
+                                                name="chevron-forward"
+                                                size={18}
+                                                color={colors.textSecondary}
+                                        />
+                                </Pressable>
                                 <Text style={styles.ayuda}>
                                         Podés cambiar tu selección cuando
                                         quieras.
@@ -403,6 +361,24 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         backgroundColor: colors.primaryLight,
                 },
                 distanciaTexto: { fontSize: 14, color: colors.secondary },
+                enlaceAjustes: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        padding: 14,
+                        borderRadius: 14,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        backgroundColor: colors.surface,
+                },
+                enlaceAjustesTexto: {
+                        flex: 1,
+                        fontSize: 14,
+                        lineHeight: 20,
+                        color: colors.blueText,
+                        fontWeight: "600",
+                },
                 ayuda: {
                         fontSize: 12,
                         color: colors.textSecondary,

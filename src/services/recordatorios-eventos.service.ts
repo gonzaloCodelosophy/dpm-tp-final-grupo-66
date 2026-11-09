@@ -6,9 +6,11 @@ import { estadoVisible } from "./fechas-eventos";
 const ETIQUETA_EVENTO = "eventoId";
 const ETIQUETA_INICIO = "inicioEvento";
 const ETIQUETA_VERSION = "versionRecordatorio";
+const ETIQUETA_HORAS = "horasRecordatorio";
 const ETIQUETA_SIMULACION = "simulacion";
-const VERSION_RECORDATORIO = 2;
-const DOS_HORAS = 2 * 60 * 60 * 1000;
+const VERSION_RECORDATORIO = 3;
+const HORAS_POR_DEFECTO = 2;
+const UNA_HORA = 60 * 60 * 1000;
 const CANAL_EVENTOS = "recordatorios-eventos";
 
 async function asegurarCanal(): Promise<void> {
@@ -56,6 +58,15 @@ function versionDeRecordatorio(
                 : null;
 }
 
+function horasDeRecordatorio(
+        notificacion: Notifications.NotificationRequest,
+): number | null {
+        const datos = notificacion.content.data as DatosNotificacion;
+        return typeof datos?.[ETIQUETA_HORAS] === "number"
+                ? datos[ETIQUETA_HORAS]
+                : null;
+}
+
 function esSimulacion(
         notificacion: Notifications.NotificationRequest,
 ): boolean {
@@ -63,11 +74,16 @@ function esSimulacion(
         return datos?.[ETIQUETA_SIMULACION] === true;
 }
 
-function momentoDelRecordatorio(evento: Evento): Date | null {
+function momentoDelRecordatorio(
+        evento: Evento,
+        horasRecordatorio: number,
+): Date | null {
         if (estadoVisible(evento) !== "programado") return null;
         const inicio = new Date(evento.inicio);
         if (Number.isNaN(inicio.getTime())) return null;
-        const cuando = new Date(inicio.getTime() - DOS_HORAS);
+        const cuando = new Date(
+                inicio.getTime() - horasRecordatorio * UNA_HORA,
+        );
         return cuando.getTime() > Date.now() ? cuando : null;
 }
 
@@ -86,16 +102,20 @@ async function cancelarNotificaciones(
 async function crearRecordatorio(
         evento: Evento,
         cuando: Date,
+        horasRecordatorio: number,
 ): Promise<void> {
         await asegurarCanal();
         await Notifications.scheduleNotificationAsync({
                 content: {
                         title: "¡Evento próximo!",
-                        body: `${evento.titulo} comienza en 2 horas.`,
+                        body: `${evento.titulo} comienza en ${horasRecordatorio} ${
+                                horasRecordatorio === 1 ? "hora" : "horas"
+                        }.`,
                         data: {
                                 [ETIQUETA_EVENTO]: evento.id,
                                 [ETIQUETA_INICIO]: evento.inicio,
                                 [ETIQUETA_VERSION]: VERSION_RECORDATORIO,
+                                [ETIQUETA_HORAS]: horasRecordatorio,
                         },
                 },
                 trigger: {
@@ -109,13 +129,17 @@ async function crearRecordatorio(
 async function sincronizar(
         eventos: Evento[],
         notificaciones: Notifications.NotificationRequest[],
+        horasRecordatorio: number,
 ): Promise<void> {
         const deseados = new Map<
                 string,
                 { evento: Evento; cuando: Date }
         >();
         for (const evento of eventos) {
-                const cuando = momentoDelRecordatorio(evento);
+                const cuando = momentoDelRecordatorio(
+                        evento,
+                        horasRecordatorio,
+                );
                 if (cuando) deseados.set(evento.id, { evento, cuando });
         }
 
@@ -134,6 +158,8 @@ async function sincronizar(
                         inicioDeEvento(notificacion) !== deseado.evento.inicio ||
                         versionDeRecordatorio(notificacion) !==
                                 VERSION_RECORDATORIO ||
+                        horasDeRecordatorio(notificacion) !==
+                                horasRecordatorio ||
                         conservar.has(id)
                 ) {
                         cancelar.push(notificacion);
@@ -146,17 +172,18 @@ async function sincronizar(
 
         for (const [id, { evento, cuando }] of deseados) {
                 if (conservar.has(id)) continue;
-                await crearRecordatorio(evento, cuando);
+                await crearRecordatorio(evento, cuando, horasRecordatorio);
         }
 }
 
 /**
  * Deja los recordatorios locales de todos los eventos guardados alineados con
- * la API: agenda una notificación dos horas antes del inicio y cancela las de
- * eventos quitados, suspendidos, cancelados o finalizados.
+ * la API: agenda una notificación la cantidad de horas configurada antes del
+ * inicio y cancela las de eventos quitados, suspendidos, cancelados o finalizados.
  */
 export function sincronizarRecordatoriosEventos(
         eventos: Evento[],
+        horasRecordatorio: number = HORAS_POR_DEFECTO,
 ): Promise<void> {
         if (Platform.OS === "web") return Promise.resolve();
 
@@ -165,7 +192,11 @@ export function sincronizarRecordatoriosEventos(
                 if (permiso.status !== "granted") return;
                 const notificaciones =
                         await Notifications.getAllScheduledNotificationsAsync();
-                await sincronizar(eventos, notificaciones);
+                await sincronizar(
+                        eventos,
+                        notificaciones,
+                        horasRecordatorio,
+                );
         });
 }
 
@@ -176,6 +207,7 @@ export function sincronizarRecordatoriosEventos(
 export function sincronizarRecordatorioEvento(
         evento: Evento,
         guardado: boolean,
+        horasRecordatorio: number = HORAS_POR_DEFECTO,
 ): Promise<void> {
         if (Platform.OS === "web") return Promise.resolve();
 
@@ -197,16 +229,28 @@ export function sincronizarRecordatorioEvento(
                 if (permiso.status !== "granted") return;
 
                 await cancelarNotificaciones(propias);
-                const cuando = momentoDelRecordatorio(evento);
-                if (cuando) await crearRecordatorio(evento, cuando);
+                const cuando = momentoDelRecordatorio(
+                        evento,
+                        horasRecordatorio,
+                );
+                if (cuando)
+                        await crearRecordatorio(
+                                evento,
+                                cuando,
+                                horasRecordatorio,
+                        );
         });
 }
 
 /**
- * Dispara en el acto la notificación que se vería dos horas antes del evento.
- * Sirve para comprobar el texto, el canal y que al tocarla se abra el detalle.
+ * Dispara en el acto la notificación que se vería con la anticipación
+ * configurada. Sirve para comprobar el texto, el canal y que al tocarla se abra
+ * el detalle.
  */
-export async function simularRecordatorioEvento(evento: Evento): Promise<void> {
+export async function simularRecordatorioEvento(
+        evento: Evento,
+        horasRecordatorio: number = HORAS_POR_DEFECTO,
+): Promise<void> {
         if (Platform.OS === "web")
                 throw new Error(
                         "Las notificaciones no están disponibles en la versión web.",
@@ -225,10 +269,13 @@ export async function simularRecordatorioEvento(evento: Evento): Promise<void> {
         await Notifications.scheduleNotificationAsync({
                 content: {
                         title: "¡Evento próximo!",
-                        body: `${evento.titulo} comienza en 2 horas.`,
+                        body: `${evento.titulo} comienza en ${horasRecordatorio} ${
+                                horasRecordatorio === 1 ? "hora" : "horas"
+                        }.`,
                         data: {
                                 [ETIQUETA_EVENTO]: evento.id,
                                 [ETIQUETA_INICIO]: evento.inicio,
+                                [ETIQUETA_HORAS]: horasRecordatorio,
                                 [ETIQUETA_SIMULACION]: true,
                         },
                 },

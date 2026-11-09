@@ -20,6 +20,7 @@ import { useEventosGuardados } from "../../hooks/use-eventos-guardados";
 import { useEventoDetalle } from "../../hooks/use-evento-detalle";
 import { useAhora } from "../../hooks/use-ahora";
 import { useDetallesLugares } from "../../hooks/use-detalles-lugares";
+import { usePreferenciasNotificaciones } from "../../hooks/use-preferencias-notificaciones";
 import { EstadoCatalogo } from "../../components/estado-catalogo";
 import BotonEventoFavorito from "../../components/boton-evento-favorito";
 import { MapaEvento } from "../../components/mapa-evento";
@@ -43,6 +44,8 @@ export default function PantallaDetalleEvento() {
         }>();
         const router = useRouter();
         const ahora = useAhora();
+        const { horasRecordatorioEvento: horasRecordatorio } =
+                usePreferenciasNotificaciones();
         const { evento: eventoLocal, cargando, error, sinConexion } =
                 useEventoDetalle(id);
         const guardados = useEventosGuardados();
@@ -140,7 +143,10 @@ export default function PantallaDetalleEvento() {
                 if (!evento || simulando) return;
                 setSimulando(true);
                 try {
-                        await simularRecordatorioEvento(evento);
+                        await simularRecordatorioEvento(
+                                evento,
+                                horasRecordatorio,
+                        );
                 } catch (fallo) {
                         mostrarPopup(
                                 "Recordatorio",
@@ -161,13 +167,14 @@ export default function PantallaDetalleEvento() {
                 void sincronizarRecordatorioEvento(
                         evento,
                         estaGuardado,
+                        horasRecordatorio,
                 ).catch((fallo) => {
                         console.warn(
                                 "No se pudo sincronizar el recordatorio del evento",
                                 fallo,
                         );
                 });
-        }, [evento, estaGuardado, estado]);
+        }, [evento, estaGuardado, estado, horasRecordatorio]);
 
         return (
                 <SafeAreaView
