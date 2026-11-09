@@ -1,4 +1,3 @@
-import { usePopup } from '../../context/popup.context';
 import { tipografia, logoPrincipal } from "../../styles/tipografia";
 import { useTema } from "../../context/tema.context";
 import React, { useState } from "react";
@@ -20,7 +19,6 @@ import {
 } from "../../styles/theme";
 
 export default function PerfilScreen() {
-  const mostrarPopup = usePopup();
         const { colorsInicio, colors, styles } = useEstilos();
 
         const router = useRouter();
@@ -32,10 +30,6 @@ export default function PerfilScreen() {
                 setModalVisible(false);
                 await cerrarSesion();
                 router.replace("/(auth)/login" as any);
-        }
-
-        function abrirSeccion(titulo: string, mensaje: string) {
-                mostrarPopup(titulo, mensaje);
         }
 
         const opciones: {
@@ -73,15 +67,12 @@ export default function PerfilScreen() {
                 },
                 {
                         titulo: "Notificaciones",
-                        descripcion: "Avisos de eventos y cercanía",
+                        descripcion: "Recordatorios y avisos de cercanía",
                         icono: "notifications-outline",
                         grupo: "Preferencias",
                         color: colors.yellow,
                         onPress: () =>
-                                abrirSeccion(
-                                        "Notificaciones",
-                                        "La configuración de avisos estará disponible próximamente. Los recordatorios se gestionan desde cada evento en la agenda.",
-                                ),
+                                router.push("/notificaciones" as Href),
                 },
                 {
                         titulo: "Apariencia",

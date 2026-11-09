@@ -10,11 +10,14 @@ import {
 import { observarRed } from "../services/red.service";
 import { errorDatos } from "../services/errores";
 import { sincronizarRecordatoriosEventos } from "../services/recordatorios-eventos.service";
+import { usePreferenciasNotificaciones } from "./use-preferencias-notificaciones";
 import type { Evento } from "../types/evento";
 
 export function useEventosGuardados() {
         const { usuario, status } = useAuth();
         const usuarioId = status === "autenticado" ? usuario?.id : undefined;
+        const { horasRecordatorioEvento: horasRecordatorio } =
+                usePreferenciasNotificaciones();
         const [copia, setCopia] = useState<{
                 usuarioId: string;
                 eventos: Evento[];
@@ -41,6 +44,7 @@ export function useEventosGuardados() {
                                         setCopia({ usuarioId, eventos });
                                         void sincronizarRecordatoriosEventos(
                                                 eventos,
+                                                horasRecordatorio,
                                         ).catch(() => {
                                                 // Los recordatorios son accesorios: no
                                                 // deben romper la agenda guardada.
@@ -102,7 +106,7 @@ export function useEventosGuardados() {
                                 red();
                                 app.remove();
                         };
-                }, [usuarioId]),
+                }, [usuarioId, horasRecordatorio]),
         );
         return {
                 eventos:

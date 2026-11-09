@@ -9,7 +9,6 @@ import { useAuth } from "../context/auth.context";
 import { cambiarEventoGuardado } from "../services/eventos-guardados.service";
 import { errorDatos } from "../services/errores";
 import { estadoVisible } from "../services/fechas-eventos";
-import { sincronizarRecordatorioEvento } from "../services/recordatorios-eventos.service";
 import { ModalRequiereAuth } from "./auth/modal-requiere-auth";
 
 interface BotonEventoFavoritoProps {
@@ -62,16 +61,6 @@ export default function BotonEventoFavorito({
                         return;
                 }
 
-                // El detalle también lo sincroniza; repetirlo acá no molesta
-                // porque programar cancela el recordatorio anterior.
-                void sincronizarRecordatorioEvento(evento, nuevoEstado).catch(
-                        (fallo) => {
-                                console.warn(
-                                        "No se pudo actualizar el recordatorio del evento",
-                                        fallo,
-                                );
-                        },
-                );
                 setGuardando(false);
         };
 

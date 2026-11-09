@@ -1,4 +1,3 @@
-import { radioProximidad } from '../../constants/mapa';
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -6,14 +5,20 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../context/auth.context';
 import { useCatalogo } from './use-catalogo';
 import { useUbicacion } from './use-ubicacion';
+import { usePreferenciasNotificaciones } from './use-preferencias-notificaciones';
 import { evaluarCercania, type AvisoCercania } from '../services/proximidad';
 import { textoDistancia } from '../services/distancias';
+import {
+  puedeAvisarProximidad,
+  registrarAvisoProximidad,
+} from '../services/preferencias-notificaciones.service';
 
 export function useAvisosProximidad() {
   const { usuario, status } = useAuth();
   const catalogo = useCatalogo();
   const ubicacion = useUbicacion();
   const router = useRouter();
+  const { radioAvisoMetros, avisosProximidadPorDia } = usePreferenciasNotificaciones();
   const estadosPorUsuario = useRef(new Map<string, Map<string, AvisoCercania>>());
   const permisoSolicitado = useRef(new Set<string>());
   const ocupada = useRef(false);
@@ -45,7 +50,7 @@ export function useAvisosProximidad() {
 
   useEffect(() => {
     if (Platform.OS === 'web' || !habilitado || !usuarioId || !enPrimerPlano || permiso !== 'granted' || !coordenadas || !fechaPosicion) return;
-    const radio = radioProximidad(usuario);
+    const radio = radioAvisoMetros;
     if (!Number.isFinite(radio) || radio <= 0 || precision === null || !Number.isFinite(precision) || !Number.isFinite(fechaPosicion) || precision < 0 || precision > radio || Math.abs(Date.now() - fechaPosicion) > 30000) return;
     let vigente = true;
 
@@ -71,6 +76,8 @@ export function useAvisosProximidad() {
           estados = new Map();
           estadosPorUsuario.current.set(usuarioId!, estados);
         }
+        if (avisosProximidadPorDia <= 0) return;
+        if (!(await puedeAvisarProximidad(usuarioId!, avisosProximidadPorDia))) return;
         const candidatos = evaluarCercania(catalogo.datos?.lugares ?? [], coordenadas!, radio, estados, Date.now());
         // Un solo aviso por actualización, dando prioridad al lugar más cercano.
         const candidato = candidatos[0];
@@ -87,6 +94,11 @@ export function useAvisosProximidad() {
           await Notifications.dismissNotificationAsync(id);
           return;
         }
+        try {
+          await registrarAvisoProximidad(usuarioId!);
+        } catch (error) {
+          console.warn('No pudimos registrar el aviso de cercanía del día:', error);
+        }
         // Marcar también los demás lugares de esta entrada para no encadenar avisos.
         for (const cercano of candidatos) {
           cercano.estado.dentro = true;
@@ -101,5 +113,5 @@ export function useAvisosProximidad() {
 
     void avisar();
     return () => { vigente = false; };
-  }, [habilitado, usuarioId, enPrimerPlano, permiso, coordenadas, precision, fechaPosicion, usuario, catalogo.datos]);
+  }, [habilitado, usuarioId, enPrimerPlano, permiso, coordenadas, precision, fechaPosicion, catalogo.datos, radioAvisoMetros, avisosProximidadPorDia]);
 }
