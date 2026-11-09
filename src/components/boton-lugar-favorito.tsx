@@ -1,5 +1,4 @@
 import { useTema } from "../context/tema.context";
-import { useRouter } from "expo-router";
 import { useAuth } from "../context/auth.context";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet } from "react-native";
@@ -7,14 +6,15 @@ import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useFavoritos } from "../hooks/use-favoritos";
 import { guardarFavorito } from "../services/favoritos.service";
 import { colors as paletaColors } from "../styles/theme";
+import { ModalRequiereAuth } from "./auth/modal-requiere-auth";
 
 export function BotonLugarFavorito({ id, soloIcono = false }: { id: string; soloIcono?: boolean }) {
         const { colors, styles } = useEstilos();
 
-        const router = useRouter();
         const { usuario, status } = useAuth();
         const { favoritos, cargando, error, reintentar } = useFavoritos([id]);
         const [guardando, setGuardando] = useState(false);
+        const [mostrarAvisoAuth, setMostrarAvisoAuth] = useState(false);
         const activo =
                 status === "autenticado" &&
                 usuario !== null &&
@@ -23,40 +23,7 @@ export function BotonLugarFavorito({ id, soloIcono = false }: { id: string; solo
         const cambiar = async () => {
                 if (guardando || cargando) return;
                 if (status !== "autenticado" || usuario === null) {
-                        if (status === "no_autenticado") {
-                                Alert.alert(
-                                        "Iniciá sesión para guardar favoritos",
-                                        "Iniciá sesión para agregar o quitar lugares de tus favoritos.",
-                                        [
-                                                {
-                                                        text: "Ahora no",
-                                                        style: "cancel",
-                                                },
-                                                {
-                                                        text: "Iniciar sesión",
-                                                        onPress: () =>
-                                                                router.push(
-                                                                        "/(auth)/login",
-                                                                ),
-                                                },
-                                        ],
-                                );
-                        } else {
-                                Alert.alert(
-                                        status === "biometria_requerida"
-                                                ? "Desbloqueá tu sesión"
-                                                : "Cargando tu sesión",
-                                        status === "biometria_requerida"
-                                                ? "Autenticá tu sesión para guardar o quitar favoritos."
-                                                : "Esperá un momento y volvé a intentarlo.",
-                                        [
-                                                {
-                                                        text: "Entendido",
-                                                        style: "cancel",
-                                                },
-                                        ],
-                                );
-                        }
+                        setMostrarAvisoAuth(true);
                         return;
                 }
                 if (error) {
@@ -87,36 +54,53 @@ export function BotonLugarFavorito({ id, soloIcono = false }: { id: string; solo
         };
 
         return (
-                <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                                activo
-                                        ? "Quitar de favoritos"
-                                        : "Agregar a favoritos"
-                        }
-                        accessibilityState={{
-                                selected: activo,
-                                disabled: cargando || guardando,
-                                busy: guardando,
-                        }}
-                        disabled={cargando || guardando}
-                        onPress={(evento) => {
-                                evento.stopPropagation();
-                                void cambiar();
-                        }}
-                        style={[
-                                styles.boton,
-                                activo && !soloIcono && styles.activo,
-                                soloIcono && styles.soloIcono,
-                                (cargando || guardando) && styles.deshabilitado,
-                        ]}
-                >
-                        <Ionicons
-                                name={activo ? "heart" : "heart-outline"}
-                                size={24}
-                                color={activo ? colors.primary : colors.text}
+                <>
+                        <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={
+                                        activo
+                                                ? "Quitar de favoritos"
+                                                : "Agregar a favoritos"
+                                }
+                                accessibilityState={{
+                                        selected: activo,
+                                        disabled: cargando || guardando,
+                                        busy: guardando,
+                                }}
+                                disabled={cargando || guardando}
+                                onPress={(evento) => {
+                                        evento.stopPropagation();
+                                        void cambiar();
+                                }}
+                                style={[
+                                        styles.boton,
+                                        activo && !soloIcono && styles.activo,
+                                        soloIcono && styles.soloIcono,
+                                        (cargando || guardando) && styles.deshabilitado,
+                                ]}
+                        >
+                                <Ionicons
+                                        name={activo ? "heart" : "heart-outline"}
+                                        size={24}
+                                        color={activo ? colors.primary : colors.text}
+                                />
+                        </Pressable>
+                        <ModalRequiereAuth
+                                visible={mostrarAvisoAuth}
+                                onClose={() => setMostrarAvisoAuth(false)}
+                                titulo={
+                                        status === "biometria_requerida"
+                                                ? "Desbloqueá tu sesión"
+                                                : "Iniciá sesión para guardar favoritos"
+                                }
+                                mensaje={
+                                        status === "biometria_requerida"
+                                                ? "Autenticá tu sesión para guardar o quitar lugares de tus favoritos."
+                                                : "Iniciá sesión para agregar lugares a tus favoritos y conservarlos en tu cuenta."
+                                }
+                                status={status}
                         />
-                </Pressable>
+                </>
         );
 }
 

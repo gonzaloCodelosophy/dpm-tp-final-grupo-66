@@ -9,6 +9,7 @@ import { useAuth } from "../context/auth.context";
 import { useEventosGuardados } from "../hooks/use-eventos-guardados";
 import { cambiarEventoGuardado } from "../services/eventos-guardados.service";
 import { errorDatos } from "../services/errores";
+import { ModalRequiereAuth } from "./auth/modal-requiere-auth";
 
 interface BotonEventoFavoritoProps {
         evento: Evento;
@@ -25,6 +26,7 @@ export default function BotonEventoFavorito({
         const { eventos } = useEventosGuardados();
         const esFavorito = eventos.some((item) => item.id === evento.id);
         const [guardando, setGuardando] = useState(false);
+        const [mostrarAvisoAuth, setMostrarAvisoAuth] = useState(false);
         const [notificacionId, setNotificacionId] = useState<string | null>(
                 null,
         );
@@ -32,10 +34,7 @@ export default function BotonEventoFavorito({
         const toggleFavorito = async () => {
                 const nuevoEstado = !esFavorito;
                 if (status !== "autenticado" || !usuario) {
-                        Alert.alert(
-                                "Iniciá sesión",
-                                "Necesitás iniciar sesión para guardar eventos en tu agenda.",
-                        );
+                        setMostrarAvisoAuth(true);
                         return;
                 }
                 if (guardando) return;
@@ -100,44 +99,61 @@ export default function BotonEventoFavorito({
         };
 
         return (
-                <TouchableOpacity
-                        onPress={toggleFavorito}
-                        disabled={guardando}
-                        activeOpacity={0.7}
-                        style={[
-                                styles.button,
-                                compacto && {
-                                        paddingVertical: 10,
-                                        minHeight: 44,
-                                },
-                                esFavorito
-                                        ? styles.buttonAdded
-                                        : styles.buttonAdd,
-                        ]}
-                >
-                        <Ionicons
-                                name={
-                                        esFavorito
-                                                ? "calendar-clear"
-                                                : "calendar-outline"
-                                }
-                                size={20}
-                                color={esFavorito ? "#fff" : colors.primary}
-                        />
-                        <Text
+                <>
+                        <TouchableOpacity
+                                onPress={toggleFavorito}
+                                disabled={guardando}
+                                activeOpacity={0.7}
                                 style={[
-                                        styles.text,
-                                        compacto && { fontSize: 14 },
+                                        styles.button,
+                                        compacto && {
+                                                paddingVertical: 10,
+                                                minHeight: 44,
+                                        },
                                         esFavorito
-                                                ? styles.textAdded
-                                                : styles.textAdd,
+                                                ? styles.buttonAdded
+                                                : styles.buttonAdd,
                                 ]}
                         >
-                                {esFavorito
-                                        ? "Agregado a mi agenda"
-                                        : "Agregar a mi agenda"}
-                        </Text>
-                </TouchableOpacity>
+                                <Ionicons
+                                        name={
+                                                esFavorito
+                                                        ? "calendar-clear"
+                                                        : "calendar-outline"
+                                        }
+                                        size={20}
+                                        color={esFavorito ? "#fff" : colors.primary}
+                                />
+                                <Text
+                                        style={[
+                                                styles.text,
+                                                compacto && { fontSize: 14 },
+                                                esFavorito
+                                                        ? styles.textAdded
+                                                        : styles.textAdd,
+                                        ]}
+                                >
+                                        {esFavorito
+                                                ? "Agregado a mi agenda"
+                                                : "Agregar a mi agenda"}
+                                </Text>
+                        </TouchableOpacity>
+                        <ModalRequiereAuth
+                                visible={mostrarAvisoAuth}
+                                onClose={() => setMostrarAvisoAuth(false)}
+                                titulo={
+                                        status === "biometria_requerida"
+                                                ? "Desbloqueá tu sesión"
+                                                : "Iniciá sesión para tu agenda"
+                                }
+                                mensaje={
+                                        status === "biometria_requerida"
+                                                ? "Autenticá tu sesión para guardar eventos y recibir avisos."
+                                                : "Iniciá sesión para guardar este evento en tu agenda y recibir recordatorios antes de que empiece."
+                                }
+                                status={status}
+                        />
+                </>
         );
 }
 

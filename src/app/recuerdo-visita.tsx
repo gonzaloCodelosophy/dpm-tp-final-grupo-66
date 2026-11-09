@@ -19,6 +19,7 @@ import { registrarVisitaCercana, registrarVisitaManual, registrarVisitaQr } from
 import { subirFotoVisita } from '../services/foto-visita.service';
 import { RADIO_REGISTRO_METROS } from '../../constants/mapa';
 import { colorsInicio, fuenteTitulo } from '../styles/inicio';
+import { ModalRequiereAuth } from '../components/auth/modal-requiere-auth';
 
 export default function RecuerdoVisitaScreen() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export default function RecuerdoVisitaScreen() {
   const [fechaFormulario] = useState(() => new Date());
   const edicionIniciada = useRef(false);
   const [mostrarLugares, setMostrarLugares] = useState(modoManual);
+  const [mostrarAvisoAuth, setMostrarAvisoAuth] = useState(false);
   const [altoVisible, setAltoVisible] = useState(0);
   const [altoFicha, setAltoFicha] = useState(0);
   const [nota, setNota] = useState('');
@@ -105,7 +107,10 @@ export default function RecuerdoVisitaScreen() {
   async function guardar() {
     if (enCurso.current || guardada.current || !lugarRegistro) return;
     const usuarioId = cuentaActual.current;
-    if (!usuarioId) { router.push('/(auth)/login'); return; }
+    if (!usuarioId) {
+      setMostrarAvisoAuth(true);
+      return;
+    }
     edicionIniciada.current = true;
     enCurso.current = true;
     setGuardando(true);
@@ -248,6 +253,15 @@ export default function RecuerdoVisitaScreen() {
           </View>
         </SafeAreaView>
       </Modal>
+      <ModalRequiereAuth
+        visible={mostrarAvisoAuth}
+        onClose={() => setMostrarAvisoAuth(false)}
+        status={status}
+        titulo={status === 'biometria_requerida' ? 'Desbloqueá tu sesión' : 'Iniciá sesión para guardar'}
+        mensaje={status === 'biometria_requerida'
+          ? 'Confirmá tu identidad con huella o rostro para registrar esta visita.'
+          : 'Podés explorar los lugares y la guía como visitante, pero para registrar visitas y conservar tus recuerdos necesitás una cuenta.'}
+      />
     </SafeAreaView>
   );
 }
