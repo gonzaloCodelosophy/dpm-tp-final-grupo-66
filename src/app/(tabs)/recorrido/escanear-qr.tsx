@@ -1,3 +1,4 @@
+import { RequiereSesionVisita } from '../../../components/auth/requiere-sesion-visita';
 import { usePopup } from '../../../context/popup.context';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -10,7 +11,7 @@ import { leerCodigoLugar } from '../../../services/qr.service';
 import { useTema } from '../../../context/tema.context';
 import { EstadoPantalla } from '../../../components/estado-pantalla';
 
-export default function EscanearQrScreen() {
+function EscanearQrScreen() {
   const mostrarPopup = usePopup();
   const router = useRouter();
   const { colorsInicio: colors } = useTema();
@@ -66,3 +67,7 @@ const styles = StyleSheet.create({
   marco: { width: '70%', aspectRatio: 1, borderWidth: 3, borderColor: '#FFFFFF', borderRadius: 18 },
   ayuda: { fontSize: 14, lineHeight: 21, paddingHorizontal: 24, paddingBottom: 24, textAlign: 'center' },
 });
+
+export default function EscanearQrScreenProtegida() {
+  return <RequiereSesionVisita><EscanearQrScreen /></RequiereSesionVisita>;
+}

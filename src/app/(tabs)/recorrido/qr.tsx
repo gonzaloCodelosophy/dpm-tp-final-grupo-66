@@ -1,3 +1,4 @@
+import { RequiereSesionVisita } from '../../../components/auth/requiere-sesion-visita';
 import { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -6,7 +7,7 @@ import { resolverLugarQr } from '../../../services/qr.service';
 import { useTema } from '../../../context/tema.context';
 
 // Punto de entrada del lector interno y de los enlaces turismocolon://recorrido/qr.
-export default function AbrirRegistroQr() {
+function AbrirRegistroQr() {
   const { codigo } = useLocalSearchParams<{ codigo?: string }>();
   const router = useRouter();
   const { colorsInicio: colors } = useTema();
@@ -32,3 +33,7 @@ export default function AbrirRegistroQr() {
 }
 
 const styles = StyleSheet.create({ container: { flex: 1 } });
+
+export default function AbrirRegistroQrProtegida() {
+  return <RequiereSesionVisita><AbrirRegistroQr /></RequiereSesionVisita>;
+}

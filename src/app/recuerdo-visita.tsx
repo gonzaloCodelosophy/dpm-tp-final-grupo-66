@@ -1,3 +1,4 @@
+import { RequiereSesionVisita } from '../components/auth/requiere-sesion-visita';
 import { usePopup } from '../context/popup.context';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
@@ -22,7 +23,7 @@ import { RADIO_REGISTRO_METROS } from '../../constants/mapa';
 import { colorsInicio, fuenteTitulo } from '../styles/inicio';
 import { ModalRequiereAuth } from '../components/auth/modal-requiere-auth';
 
-export default function RecuerdoVisitaScreen() {
+function RecuerdoVisitaScreen() {
   const mostrarPopup = usePopup();
   const router = useRouter();
   const { lugarId: parametroLugar, modo, codigoQr } = useLocalSearchParams<{ lugarId?: string | string[]; modo?: string; codigoQr?: string }>();
@@ -306,3 +307,7 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   guardar: { marginTop: 20, backgroundColor: colors.primarySolid, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', padding: 14 }, guardarTexto: { color: colors.onPrimary, fontSize: 16, fontWeight: '700' },
   error: { color: colors.primary, fontSize: 14, lineHeight: 20, marginVertical: 12 },
 });
+
+export default function RecuerdoVisitaScreenProtegida() {
+  return <RequiereSesionVisita><RecuerdoVisitaScreen /></RequiereSesionVisita>;
+}

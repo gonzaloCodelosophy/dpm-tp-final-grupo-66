@@ -1,3 +1,4 @@
+import { RequiereSesionVisita } from '../components/auth/requiere-sesion-visita';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -6,7 +7,7 @@ import { Stack, useRouter } from 'expo-router';
 import { useTema } from '../context/tema.context';
 import { fuenteTitulo, colorsInicio } from '../styles/inicio';
 
-export default function RegistrarVisitaScreen() {
+function RegistrarVisitaScreen() {
   const router = useRouter();
   const { colorsInicio: colors } = useTema();
   const styles = crearEstilos(colors);
@@ -84,3 +85,7 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   nombre: { fontSize: 16, lineHeight: 22, fontWeight: '700', color: colors.secondary },
   detalle: { fontSize: 13, lineHeight: 19, color: colors.textSecondary },
 });
+
+export default function RegistrarVisitaScreenProtegida() {
+  return <RequiereSesionVisita><RegistrarVisitaScreen /></RequiereSesionVisita>;
+}
