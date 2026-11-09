@@ -318,6 +318,12 @@ export default function ExploreScreen() {
                                                                 )}
                                                         </View>
 
+                                                </View>
+                                <FlatList
+                                        style={styles.listaDesplazable}
+                                        keyboardShouldPersistTaps="handled"
+                                        keyboardDismissMode="on-drag"
+                                        ListHeaderComponent={<>
                                                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categorias}>
                                                                 <BotonCategoria nombre="Todas" icono="view-grid-outline" color={colors.secondary} fondo={colors.secondaryLight} seleccionado={categoriaSeleccionada === null} onPress={() => setCategoriaSeleccionada(null)} />
                                                                 {categorias.map(item => {
@@ -347,9 +353,7 @@ export default function ExploreScreen() {
                                                         >
                                                                 <Text style={styles.tituloResultados}>{lugaresFiltrados.length} {lugaresFiltrados.length === 1 ? 'lugar encontrado' : 'lugares encontrados'}</Text>
                                                         </View>
-                                                </View>
-                                <FlatList
-                                        style={styles.listaDesplazable}
+                                        </>}
                                         data={lugaresFiltrados}
                                         keyExtractor={(lugar) => lugar.id}
                                         renderItem={({ item }) => (
@@ -511,7 +515,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 descripcionCabecera: { fontSize: 14, lineHeight: 20, color: colors.greenText, marginTop: 2 },
 
                 vistaLista: { flex: 1 },
-                controlesLista: { paddingHorizontal: spacing.md, paddingTop: spacing.lg / 2 },
+                controlesLista: { paddingHorizontal: spacing.md, paddingTop: spacing.lg / 2, paddingBottom: spacing.sm },
                 listaDesplazable: { flex: 1 },
                 lista: {
                         paddingHorizontal: spacing.md,
