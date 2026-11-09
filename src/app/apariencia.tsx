@@ -1,10 +1,10 @@
 import { BotonVolver } from "../components/boton-volver";
 import { fuenteTitulo } from "../styles/inicio";
 import { tipografia } from "../styles/tipografia";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
         ActivityIndicator,
-        Alert,
+        Modal,
         Pressable,
         ScrollView,
         StyleSheet,
@@ -23,27 +23,46 @@ import { colors as paleta } from "../styles/theme";
 
 export default function AparienciaScreen() {
         const { usuario, status, actualizarTema } = useAuth();
-        const { colors, oscuro } = useTema();
-        const styles = crearEstilos(colors);
+        const { colors, colorsInicio, oscuro, cambiarTema } = useTema();
+        const temaColores = colorsInicio ?? colors;
+        const styles = useMemo(
+                () => crearEstilos(temaColores, oscuro),
+                [temaColores, oscuro],
+        );
         const volver = useVolverPerfil();
         const [elegido, setElegido] = useState<"claro" | "oscuro">(
                 oscuro ? "oscuro" : "claro",
         );
         const [guardando, setGuardando] = useState(false);
+        const [mostrarExito, setMostrarExito] = useState(false);
         const [error, setError] = useState<string | null>(null);
-        const cambiado = elegido !== usuario?.preferencias?.tema;
+
+        const temaActual: "claro" | "oscuro" =
+                usuario?.preferencias?.tema &&
+                usuario.preferencias.tema !== "sistema"
+                        ? usuario.preferencias.tema
+                        : oscuro
+                          ? "oscuro"
+                          : "claro";
+        const cambiado = elegido !== temaActual;
 
         async function guardar() {
                 if (guardando) return;
                 setGuardando(true);
                 setError(null);
                 try {
-                        await actualizarTema(elegido);
-                        Alert.alert(
-                                "Apariencia actualizada",
-                                "Guardamos el tema que elegiste.",
-                                [{ text: "Aceptar", onPress: volver }],
-                        );
+                        if (status === "autenticado" && usuario) {
+                                try {
+                                        await actualizarTema(elegido);
+                                } catch (falloApi) {
+                                        console.warn(
+                                                "No se pudo sincronizar el tema con la cuenta:",
+                                                falloApi,
+                                        );
+                                }
+                        }
+                        await cambiarTema(elegido);
+                        setMostrarExito(true);
                 } catch (fallo) {
                         setError(
                                 fallo instanceof Error
@@ -56,16 +75,6 @@ export default function AparienciaScreen() {
         }
 
         if (status === "cargando") return <EstadoPantalla tipo="cargando" />;
-        if (status !== "autenticado" || !usuario)
-                return (
-                        <EstadoPantalla
-                                tipo="vacio"
-                                titulo="Iniciá sesión"
-                                mensaje="Necesitás una sesión activa para guardar la apariencia."
-                                accion="Volver al perfil"
-                                onPress={volver}
-                        />
-                );
 
         return (
                 <SafeAreaView
@@ -240,9 +249,9 @@ export default function AparienciaScreen() {
                                         )}
                                 </View>
                                 <Text style={styles.ayuda}>
-                                        La elección se guarda en tu cuenta y
-                                        queda disponible en este dispositivo sin
-                                        conexión.
+                                        {status === "autenticado" && usuario
+                                                ? "La elección se guarda en tu cuenta y queda disponible en este dispositivo sin conexión."
+                                                : "La elección se guarda en este dispositivo y podés cambiarla cuando quieras."}
                                 </Text>
                                 {error && (
                                         <Text
@@ -278,11 +287,65 @@ export default function AparienciaScreen() {
                                         )}
                                 </Pressable>
                         </ScrollView>
+
+                        <Modal
+                                visible={mostrarExito}
+                                transparent
+                                animationType="fade"
+                                onRequestClose={volver}
+                        >
+                                <View style={styles.modalFondo}>
+                                        <Pressable
+                                                style={StyleSheet.absoluteFillObject}
+                                                accessibilityRole="button"
+                                                accessibilityLabel="Cerrar aviso"
+                                                onPress={volver}
+                                        />
+                                        <View
+                                                style={styles.modalCard}
+                                                accessibilityViewIsModal
+                                        >
+                                                <View style={styles.modalCabecera}>
+                                                        <Text style={styles.modalTitulo}>
+                                                                Apariencia actualizada
+                                                        </Text>
+                                                        <Pressable
+                                                                accessibilityRole="button"
+                                                                accessibilityLabel="Cerrar"
+                                                                hitSlop={8}
+                                                                onPress={volver}
+                                                                style={styles.modalCerrar}
+                                                        >
+                                                                <Ionicons
+                                                                        name="close"
+                                                                        size={24}
+                                                                        color={colors.secondary}
+                                                                />
+                                                        </Pressable>
+                                                </View>
+
+                                                <Text style={styles.modalMensaje}>
+                                                        Guardamos el tema que elegiste.
+                                                </Text>
+
+                                                <Pressable
+                                                        style={styles.btnAlertaNaranja}
+                                                        onPress={volver}
+                                                        accessibilityRole="button"
+                                                        accessibilityLabel="Aceptar"
+                                                >
+                                                        <Text style={styles.btnAlertaNaranjaTexto}>
+                                                                Aceptar
+                                                        </Text>
+                                                </Pressable>
+                                        </View>
+                                </View>
+                        </Modal>
                 </SafeAreaView>
         );
 }
 
-const crearEstilos = (colors: typeof paleta) =>
+const crearEstilos = (colors: typeof paleta, oscuro: boolean) =>
         StyleSheet.create({
                 scroll: { flex: 1 },
                 encabezadoFijo: {
@@ -383,4 +446,67 @@ const crearEstilos = (colors: typeof paleta) =>
                         color: colors.onPrimary,
                 },
                 deshabilitado: { opacity: 0.5 },
+                modalFondo: {
+                        flex: 1,
+                        backgroundColor: oscuro
+                                ? "rgba(0, 0, 0, 0.75)"
+                                : "rgba(7, 59, 83, 0.45)",
+                        justifyContent: "center",
+                        padding: 20,
+                },
+                modalCard: {
+                        width: "100%",
+                        maxWidth: 440,
+                        alignSelf: "center",
+                        backgroundColor: oscuro
+                                ? colors.surface
+                                : colors.background,
+                        borderRadius: 24,
+                        padding: 22,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        shadowColor: oscuro ? "#000000" : colors.secondary,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: oscuro ? 0.4 : 0.15,
+                        shadowRadius: 12,
+                        elevation: 8,
+                },
+                modalCabecera: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 8,
+                },
+                modalTitulo: {
+                        flex: 1,
+                        fontFamily: fuenteTitulo,
+                        fontSize: 21,
+                        fontWeight: "700",
+                        color: colors.secondary,
+                },
+                modalCerrar: {
+                        width: 40,
+                        height: 40,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                modalMensaje: {
+                        fontSize: 15,
+                        lineHeight: 22,
+                        color: colors.textSecondary,
+                        marginBottom: 22,
+                },
+                btnAlertaNaranja: {
+                        backgroundColor: colors.primary,
+                        minHeight: 50,
+                        borderRadius: 16,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        paddingHorizontal: 18,
+                },
+                btnAlertaNaranjaTexto: {
+                        color: "#FFFFFF",
+                        fontSize: 16,
+                        fontWeight: "700",
+                },
         });
