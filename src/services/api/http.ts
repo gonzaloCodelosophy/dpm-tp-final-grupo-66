@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Platform } from "react-native";
 import { FalloDatos } from "../errores";
 
 interface OpcionesSolicitud {
@@ -7,11 +8,37 @@ interface OpcionesSolicitud {
         token?: string;
 }
 
+/**
+ * En desarrollo la API corre en la computadora. `localhost` sirve para web e
+ * iOS, pero en el emulador Android el host es 10.0.2.2. Para un teléfono
+ * físico hay que configurar EXPO_PUBLIC_API_URL con la IP de la computadora.
+ */
+function baseApi(): string {
+        const configurada = process.env.EXPO_PUBLIC_API_URL?.trim();
+        const base =
+                configurada ||
+                (Platform.OS === "android"
+                        ? "http://10.0.2.2:3000"
+                        : "http://localhost:3000");
+
+        if (
+                Platform.OS === "android" &&
+                /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(base)
+        ) {
+                return base
+                        .replace("localhost", "10.0.2.2")
+                        .replace("127.0.0.1", "10.0.2.2")
+                        .replace(/\/$/, "");
+        }
+
+        return base.replace(/\/$/, "");
+}
+
 export async function solicitarJson(
         ruta: string,
         opciones: OpcionesSolicitud = {},
 ): Promise<unknown> {
-        const base = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
+        const base = baseApi();
         if (!base)
                 throw new FalloDatos({
                         tipo: "contrato",

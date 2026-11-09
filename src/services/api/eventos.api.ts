@@ -9,6 +9,7 @@ export const eventoSchema = z.object({
   direccionLibre: z.string().nullable(), coordenadas: z.object({ latitud: z.number().min(-90).max(90), longitud: z.number().min(-180).max(180) }).nullable(),
   inicio: fecha, fin: fecha.nullable(), imagenUrl: z.string().nullable(), precio: z.number().nonnegative().nullable(), estado: z.enum(['programado', 'suspendido', 'cancelado', 'finalizado']),
 });
+const respuestaEventoSchema = z.object({ datos: eventoSchema, meta: z.null() });
 
 export function validarEventos(entrada: unknown): Evento[] {
 
@@ -22,4 +23,14 @@ export function validarEventos(entrada: unknown): Evento[] {
 export async function descargarEventos(pagina: number) {
 
   return validarPagina(await solicitarJson(`/eventos?pagina=${pagina}&porPagina=${POR_PAGINA}`), eventoSchema, pagina);
+}
+
+export async function descargarEvento(id: string): Promise<Evento> {
+
+  const respuesta = await solicitarJson(`/eventos/${encodeURIComponent(id)}`);
+  const resultado = respuestaEventoSchema.safeParse(respuesta);
+
+  if (!resultado.success) throw new FalloDatos({ tipo: 'contrato', codigo: 'EVENTO_INVALIDO', mensaje: 'El detalle del evento no cumple el contrato.', reintentable: true });
+
+  return resultado.data.datos;
 }

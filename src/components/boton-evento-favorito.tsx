@@ -3,41 +3,50 @@ import { colors as paletaColors } from "../styles/theme";
 import { useState } from "react";
 import { TouchableOpacity, StyleSheet, Text, Alert } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import * as Notifications from "expo-notifications";
 import { Evento } from "../types/evento";
 import { useAuth } from "../context/auth.context";
-import { useEventosGuardados } from "../hooks/use-eventos-guardados";
 import { cambiarEventoGuardado } from "../services/eventos-guardados.service";
 import { errorDatos } from "../services/errores";
+import { estadoVisible } from "../services/fechas-eventos";
+import { sincronizarRecordatorioEvento } from "../services/recordatorios-eventos.service";
 import { ModalRequiereAuth } from "./auth/modal-requiere-auth";
 
 interface BotonEventoFavoritoProps {
         evento: Evento;
+        guardado: boolean;
         compacto?: boolean;
 }
 
 export default function BotonEventoFavorito({
         evento,
+        guardado,
         compacto = false,
 }: BotonEventoFavoritoProps) {
         const { colors, styles } = useEstilos();
 
         const { usuario, status } = useAuth();
-        const { eventos } = useEventosGuardados();
-        const esFavorito = eventos.some((item) => item.id === evento.id);
+        const esFavorito = guardado;
         const [guardando, setGuardando] = useState(false);
         const [mostrarAvisoAuth, setMostrarAvisoAuth] = useState(false);
-        const [notificacionId, setNotificacionId] = useState<string | null>(
-                null,
-        );
+
+        const estado = estadoVisible(evento);
+        const sePuedeAgregar = estado === "programado" || estado === "suspendido";
 
         const toggleFavorito = async () => {
-                const nuevoEstado = !esFavorito;
+                if (guardando) return;
                 if (status !== "autenticado" || !usuario) {
                         setMostrarAvisoAuth(true);
                         return;
                 }
-                if (guardando) return;
+                if (!esFavorito && !sePuedeAgregar) {
+                        Alert.alert(
+                                "Mi agenda",
+                                "Este evento ya no se puede guardar.",
+                        );
+                        return;
+                }
+
+                const nuevoEstado = !esFavorito;
                 setGuardando(true);
                 try {
                         await cambiarEventoGuardado(
@@ -45,62 +54,47 @@ export default function BotonEventoFavorito({
                                 evento,
                                 nuevoEstado,
                         );
-
-                        if (nuevoEstado) {
-                                const fechaEvento = new Date(evento.inicio);
-                                const esSinHorario =
-                                        evento.inicio.includes("T00:00:00");
-                                let triggerDate = new Date(
-                                        fechaEvento.getTime(),
-                                );
-
-                                if (esSinHorario) {
-                                        triggerDate.setHours(10, 0, 0, 0);
-                                } else {
-                                        triggerDate.setHours(
-                                                triggerDate.getHours() - 2,
-                                        );
-                                }
-
-                                if (triggerDate > new Date()) {
-                                        const identifier =
-                                                await Notifications.scheduleNotificationAsync(
-                                                        {
-                                                                content: {
-                                                                        title: "¡Evento próximo!",
-                                                                        body: `${evento.titulo} comienza pronto.`,
-                                                                },
-                                                                trigger: {
-                                                                        type: Notifications
-                                                                                .SchedulableTriggerInputTypes
-                                                                                .DATE,
-                                                                        date: triggerDate,
-                                                                },
-                                                        },
-                                                );
-                                        setNotificacionId(identifier);
-                                }
-                        } else {
-                                if (notificacionId) {
-                                        await Notifications.cancelScheduledNotificationAsync(
-                                                notificacionId,
-                                        );
-                                        setNotificacionId(null);
-                                }
-                        }
                 } catch (error) {
-                        Alert.alert(
-                                "Agenda guardada",
-                                errorDatos(error).mensaje,
-                        );
-                } finally {
+                        Alert.alert("Mi agenda", errorDatos(error).mensaje);
                         setGuardando(false);
+                        return;
                 }
+
+                // El detalle también lo sincroniza; repetirlo acá no molesta
+                // porque programar cancela el recordatorio anterior.
+                void sincronizarRecordatorioEvento(evento, nuevoEstado).catch(
+                        (fallo) => {
+                                console.warn(
+                                        "No se pudo actualizar el recordatorio del evento",
+                                        fallo,
+                                );
+                        },
+                );
+                setGuardando(false);
         };
+
+        if (!sePuedeAgregar && !esFavorito) return null;
+
+        const textoBoton = esFavorito
+                ? sePuedeAgregar
+                        ? "Agregado a mi agenda"
+                        : "Quitar de mi agenda"
+                : "Agregar a mi agenda";
 
         return (
                 <>
                         <TouchableOpacity
+                                accessibilityRole="button"
+                                accessibilityLabel={
+                                        esFavorito
+                                                ? "Quitar de mi agenda"
+                                                : "Agregar a mi agenda"
+                                }
+                                accessibilityState={{
+                                        selected: esFavorito,
+                                        disabled: guardando,
+                                        busy: guardando,
+                                }}
                                 onPress={toggleFavorito}
                                 disabled={guardando}
                                 activeOpacity={0.7}
@@ -113,6 +107,7 @@ export default function BotonEventoFavorito({
                                         esFavorito
                                                 ? styles.buttonAdded
                                                 : styles.buttonAdd,
+                                        guardando && styles.deshabilitado,
                                 ]}
                         >
                                 <Ionicons
@@ -133,9 +128,7 @@ export default function BotonEventoFavorito({
                                                         : styles.textAdd,
                                         ]}
                                 >
-                                        {esFavorito
-                                                ? "Agregado a mi agenda"
-                                                : "Agregar a mi agenda"}
+                                        {textoBoton}
                                 </Text>
                         </TouchableOpacity>
                         <ModalRequiereAuth
@@ -176,6 +169,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         backgroundColor: colors.primarySolid,
                         borderColor: colors.primary,
                 },
+                deshabilitado: { opacity: 0.6 },
                 text: {
                         fontSize: 16,
                         fontWeight: "bold",

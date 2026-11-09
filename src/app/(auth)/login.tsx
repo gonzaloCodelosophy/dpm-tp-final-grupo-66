@@ -100,7 +100,7 @@ export default function LoginScreen() {
                                         codigo === "TIEMPO_AGOTADO"
                                 ) {
                                         setErrorMsg(
-                                                "No se pudo conectar con el servidor. Comprobá tu conexión a internet.",
+                                                "No se pudo conectar con el servidor. Comprobá que tengas internet y que la API esté encendida y accesible desde el teléfono.",
                                         );
                                         return;
                                 }

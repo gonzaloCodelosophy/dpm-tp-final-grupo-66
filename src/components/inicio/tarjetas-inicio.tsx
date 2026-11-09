@@ -12,6 +12,11 @@ import type { Lugar } from "../../types/Lugar";
 import type { Evento } from "../../types/evento";
 import { colorsInicio as paletaColors } from "../../styles/inicio";
 import { borderRadius, spacing } from "../../styles/theme";
+import {
+        diaLocal,
+        estadoVisible,
+        numeroDeDia,
+} from "../../services/fechas-eventos";
 
 interface LugarInicioProps {
         lugar: Lugar;
@@ -130,8 +135,13 @@ export function TarjetaEventoInicio({
         const { colors, styles } = useEstilos();
 
         const fecha = new Date(evento.inicio);
+        const estado = estadoVisible(evento);
+        const dia = numeroDeDia(diaLocal(evento.inicio));
         const mes = fecha
-                .toLocaleDateString("es-AR", { month: "short" })
+                .toLocaleDateString("es-AR", {
+                        timeZone: "America/Argentina/Buenos_Aires",
+                        month: "short",
+                })
                 .replace(".", "")
                 .toUpperCase();
         return (
@@ -169,9 +179,7 @@ export function TarjetaEventoInicio({
                                         </View>
                                 )}
                                 <View style={styles.fecha}>
-                                        <Text style={styles.dia}>
-                                                {fecha.getDate()}
-                                        </Text>
+                                        <Text style={styles.dia}>{dia}</Text>
                                         <Text style={styles.mes}>{mes}</Text>
                                 </View>
                         </View>
@@ -195,25 +203,26 @@ export function TarjetaEventoInicio({
                                 <View
                                         style={[
                                                 styles.estado,
-                                                evento.estado ===
-                                                        "suspendido" &&
+                                                estado === "suspendido" &&
                                                         styles.suspendido,
-                                                evento.estado === "cancelado" &&
+                                                estado === "cancelado" &&
                                                         styles.cancelado,
+                                                estado === "finalizado" &&
+                                                        styles.finalizado,
                                         ]}
                                 >
                                         <Text
                                                 style={[
                                                         styles.estadoTexto,
-                                                        evento.estado ===
-                                                                "suspendido" &&
+                                                        estado === "suspendido" &&
                                                                 styles.suspendidoTexto,
-                                                        evento.estado ===
-                                                                "cancelado" &&
+                                                        estado === "cancelado" &&
                                                                 styles.canceladoTexto,
+                                                        estado === "finalizado" &&
+                                                                styles.finalizadoTexto,
                                                 ]}
                                         >
-                                                {evento.estado.toUpperCase()}
+                                                {estado.toUpperCase()}
                                         </Text>
                                 </View>
                         </View>
@@ -307,6 +316,8 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 suspendidoTexto: { color: colors.yellow },
                 cancelado: { backgroundColor: colors.primaryLight },
                 canceladoTexto: { color: colors.error },
+                finalizado: { backgroundColor: colors.secondaryLight },
+                finalizadoTexto: { color: colors.textSecondary },
         });
 
 function useEstilos() {

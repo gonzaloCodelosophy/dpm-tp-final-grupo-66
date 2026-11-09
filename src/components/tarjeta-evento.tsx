@@ -4,6 +4,10 @@ import { ImagenPersistente } from "./imagen-persistente";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { Evento } from "../types/evento";
+import {
+        estadoVisible,
+        formatearFechaEvento,
+} from "../services/fechas-eventos";
 
 interface TarjetaEventoProps {
         evento: Evento;
@@ -15,26 +19,19 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
 
         if (!evento || !evento.inicio) return null;
 
-        const fechaObj = new Date(evento.inicio);
-        const textoFecha = evento.inicio.includes("T00:00:00")
-                ? `${fechaObj.toLocaleDateString("es-AR", { day: "2-digit", month: "short" })} - Sin horario`
-                : fechaObj
-                          .toLocaleDateString("es-AR", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                          })
-                          .replace(",", " ·");
+        const textoFecha = formatearFechaEvento(evento);
 
-        // Asumimos 'Programado' por defecto si el backend no lo envía
-        const estado = evento.estado || "programado";
+        // La API calcula `finalizado`; también se recalcula por si la copia
+        // guardada quedó con el estado anterior.
+        const estado = estadoVisible(evento);
 
         const getBadgeStyle = () => {
                 if (estado === "cancelado")
                         return [styles.badge, styles.badgeCancelado];
                 if (estado === "suspendido")
                         return [styles.badge, styles.badgeSuspendido];
+                if (estado === "finalizado")
+                        return [styles.badge, styles.badgeFinalizado];
                 return [styles.badge, styles.badgeProgramado];
         };
 
@@ -106,6 +103,9 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
                                                         estado ===
                                                                 "suspendido" &&
                                                                 styles.badgeTextoOscuro,
+                                                        estado ===
+                                                                "finalizado" &&
+                                                                styles.badgeTextoFinalizado,
                                                 ]}
                                         >
                                                 {estado.toUpperCase()}
@@ -191,7 +191,9 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 badgeProgramado: { backgroundColor: "#17B3A7" },
                 badgeSuspendido: { backgroundColor: "#FFC137" },
                 badgeCancelado: { backgroundColor: "#F34D4D" },
+                badgeFinalizado: { backgroundColor: colors.secondaryLight },
                 badgeTextoOscuro: { color: "#473400" },
+                badgeTextoFinalizado: { color: colors.textSecondary },
                 badgeText: {
                         paddingHorizontal: 3,
                         lineHeight: 16,

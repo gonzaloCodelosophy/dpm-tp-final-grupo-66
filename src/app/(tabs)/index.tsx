@@ -29,6 +29,7 @@ import { useEventos } from "../../hooks/use-eventos";
 import { useUbicacion } from "../../hooks/use-ubicacion";
 import { distanciaMetros, textoDistancia } from "../../services/distancias";
 import { actualizarEventos } from "../../services/eventos.service";
+import { estadoVisible, finEfectivo } from "../../services/fechas-eventos";
 import {
         TarjetaEventoInicio,
         TarjetaLugarInicio,
@@ -128,15 +129,18 @@ export default function HomeScreen() {
         const proximos = useMemo(
                 () =>
                         (agenda.datos ?? [])
-                                .filter(
-                                        (evento) =>
-                                                evento.estado !==
-                                                        "finalizado" &&
-                                                Date.parse(
-                                                        evento.fin ??
-                                                                evento.inicio,
-                                                ) >= ahora,
-                                )
+                                .filter((evento) => {
+                                        const ahoraFecha = new Date(ahora);
+                                        return (
+                                                estadoVisible(
+                                                        evento,
+                                                        ahoraFecha,
+                                                ) !== "finalizado" &&
+                                                finEfectivo(
+                                                        evento,
+                                                ).getTime() >= ahora
+                                        );
+                                })
                                 .sort(
                                         (a, b) =>
                                                 Date.parse(a.inicio) -

@@ -5,9 +5,11 @@ import { colors as paletaColors, spacing } from "../styles/theme";
 export function EstadoCatalogo({
         sinConexion,
         error = false,
+        recurso = "lugares",
 }: {
         sinConexion: boolean;
         error?: boolean;
+        recurso?: "lugares" | "eventos";
 }) {
         const { styles } = useEstilos();
 
@@ -15,8 +17,9 @@ export function EstadoCatalogo({
         return (
                 <View accessibilityRole="alert" style={styles.aviso}>
                         <Text style={styles.texto}>
-                                No pudimos actualizar los lugares. Mostramos la
-                                información guardada.
+                                {recurso === "eventos"
+                                        ? "No pudimos actualizar la agenda. Mostramos la información guardada."
+                                        : "No pudimos actualizar los lugares. Mostramos la información guardada."}
                         </Text>
                 </View>
         );

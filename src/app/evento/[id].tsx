@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useTema } from "../../context/tema.context";
 import { colors as paletaColors } from "../../styles/theme";
 import { fuenteTitulo } from "../../styles/inicio";
@@ -27,9 +27,15 @@ import {
 } from "expo-router";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useEventosGuardados } from "../../hooks/use-eventos-guardados";
-import { useEventos } from "../../hooks/use-eventos";
+import { useEventoDetalle } from "../../hooks/use-evento-detalle";
+import { useAhora } from "../../hooks/use-ahora";
 import { EstadoCatalogo } from "../../components/estado-catalogo";
 import BotonEventoFavorito from "../../components/boton-evento-favorito";
+import {
+        estadoVisible,
+        formatearFechaEvento,
+} from "../../services/fechas-eventos";
+import { sincronizarRecordatorioEvento } from "../../services/recordatorios-eventos.service";
 
 export default function PantallaDetalleEvento() {
         const { colorsInicio: colors } = useTema();
@@ -41,12 +47,15 @@ export default function PantallaDetalleEvento() {
                 origen?: string;
         }>();
         const router = useRouter();
-        const { datos, sinConexion, cargando } = useEventos();
+        const ahora = useAhora();
+        const { evento: eventoLocal, cargando, error, sinConexion } =
+                useEventoDetalle(id);
         const guardados = useEventosGuardados();
+        const eventoGuardado =
+                guardados.eventos.find((item) => item.id === id) ?? null;
         const evento =
-                datos?.find((item) => item.id === id) ??
-                guardados.eventos.find((item) => item.id === id) ??
-                null;
+                (eventoLocal?.id === id ? eventoLocal : null) ?? eventoGuardado;
+        const esperando = !evento && (cargando || guardados.cargando);
         const volver = useCallback(
                 () =>
                         router.navigate(
@@ -84,25 +93,32 @@ export default function PantallaDetalleEvento() {
                 );
         };
 
-        const estado = evento?.estado || "programado";
+        const estado = evento ? estadoVisible(evento, new Date(ahora)) : "programado";
         const programado = estado === "programado";
         const suspendido = estado === "suspendido";
         const cancelado = estado === "cancelado";
-        const textoFecha = evento
-                ? new Date(evento.inicio)
-                          .toLocaleDateString("es-AR", {
-                                  day: "numeric",
-                                  month: "long",
-                                  ...(evento.inicio.includes("T00:00:00")
-                                          ? {}
-                                          : {
-                                                    hour: "2-digit",
-                                                    minute: "2-digit",
-                                            }),
-                          })
-                          .replace(",", " ·") +
-                  (evento.inicio.includes("T00:00:00") ? " · Sin horario" : "")
-                : "";
+        const finalizado = estado === "finalizado";
+        const puedeGuardarse = programado || suspendido;
+        const estaGuardado =
+                evento !== null &&
+                guardados.eventos.some((item) => item.id === evento.id);
+        const textoFecha = evento ? formatearFechaEvento(evento, true) : "";
+
+        // Mantiene el recordatorio local alineado con el estado y con si el
+        // evento está guardado (la API avisa los cambios, pero el recordatorio
+        // lo programa el teléfono).
+        useEffect(() => {
+                if (!evento) return;
+                void sincronizarRecordatorioEvento(
+                        evento,
+                        estaGuardado,
+                ).catch((fallo) => {
+                        console.warn(
+                                "No se pudo sincronizar el recordatorio del evento",
+                                fallo,
+                        );
+                });
+        }, [evento, estaGuardado, estado]);
 
         return (
                 <SafeAreaView
@@ -122,7 +138,7 @@ export default function PantallaDetalleEvento() {
                                         accessibilityLabel="Colón, Entre Ríos"
                                 />
                         </View>
-                        {cargando && !evento ? (
+                        {esperando ? (
                                 <View style={styles.center}>
                                         <ActivityIndicator
                                                 color={colors.primary}
@@ -131,12 +147,15 @@ export default function PantallaDetalleEvento() {
                         ) : !evento ? (
                                 <View style={styles.center}>
                                         <Text style={styles.infoText}>
-                                                {datos === null
-                                                        ? "Agenda aún no descargada."
+                                                {error &&
+                                                error.codigo !==
+                                                        "EVENTO_NO_ENCONTRADO"
+                                                        ? "No pudimos cargar el evento."
                                                         : "Evento no encontrado."}
                                         </Text>
                                         <EstadoCatalogo
                                                 sinConexion={sinConexion}
+                                                recurso="eventos"
                                         />
                                 </View>
                         ) : (
@@ -145,6 +164,7 @@ export default function PantallaDetalleEvento() {
                                 >
                                         <EstadoCatalogo
                                                 sinConexion={sinConexion}
+                                                recurso="eventos"
                                         />
                                         <View style={styles.tarjeta}>
                                                 {evento.imagenUrl ? (
@@ -191,7 +211,9 @@ export default function PantallaDetalleEvento() {
                                                                                 ? styles.badgeSuspendido
                                                                                 : cancelado
                                                                                   ? styles.badgeCancelado
-                                                                                  : styles.badgeProgramado,
+                                                                                  : finalizado
+                                                                                    ? styles.badgeFinalizado
+                                                                                    : styles.badgeProgramado,
                                                                 ]}
                                                         >
                                                                 <Text
@@ -313,7 +335,7 @@ export default function PantallaDetalleEvento() {
                                                                                 "Colón, Entre Ríos"}
                                                                 </Text>
                                                         </View>
-                                                        {programado && (
+                                                        {(
                                                                 <>
                                                                         <Text
                                                                                 style={
@@ -368,44 +390,33 @@ export default function PantallaDetalleEvento() {
                                                                         styles.acciones
                                                                 }
                                                         >
-                                                                {programado ? (
-                                                                        <>
-                                                                                {evento.coordenadas && (
-                                                                                        <TouchableOpacity
+                                                                {programado &&
+                                                                        evento.coordenadas && (
+                                                                                <TouchableOpacity
+                                                                                        style={
+                                                                                                styles.boton
+                                                                                        }
+                                                                                        onPress={
+                                                                                                abrirMapaNativo
+                                                                                        }
+                                                                                >
+                                                                                        <Ionicons
+                                                                                                name="location-outline"
+                                                                                                size={19}
+                                                                                                color={colors.onPrimary}
+                                                                                        />
+                                                                                        <Text
                                                                                                 style={
-                                                                                                        styles.boton
-                                                                                                }
-                                                                                                onPress={
-                                                                                                        abrirMapaNativo
+                                                                                                        styles.botonTexto
                                                                                                 }
                                                                                         >
-                                                                                                <Ionicons
-                                                                                                        name="location-outline"
-                                                                                                        size={
-                                                                                                                19
-                                                                                                        }
-                                                                                                        color={
-                                                                                                                colors.onPrimary
-                                                                                                        }
-                                                                                                />
-                                                                                                <Text
-                                                                                                        style={
-                                                                                                                styles.botonTexto
-                                                                                                        }
-                                                                                                >
-                                                                                                        Cómo
-                                                                                                        llegar
-                                                                                                </Text>
-                                                                                        </TouchableOpacity>
-                                                                                )}
-                                                                                <BotonEventoFavorito
-                                                                                        evento={
-                                                                                                evento
-                                                                                        }
-                                                                                        compacto
-                                                                                />
-                                                                        </>
-                                                                ) : (
+                                                                                                Cómo llegar
+                                                                                        </Text>
+                                                                                </TouchableOpacity>
+                                                                        )}
+                                                                {(suspendido ||
+                                                                        cancelado ||
+                                                                        finalizado) && (
                                                                         <View
                                                                                 style={[
                                                                                         styles.boton,
@@ -419,9 +430,21 @@ export default function PantallaDetalleEvento() {
                                                                                 >
                                                                                         {suspendido
                                                                                                 ? "Fecha por confirmar"
-                                                                                                : "Evento no disponible"}
+                                                                                                : finalizado
+                                                                                                  ? "Evento finalizado"
+                                                                                                  : "Evento no disponible"}
                                                                                 </Text>
                                                                         </View>
+                                                                )}
+                                                                {(puedeGuardarse ||
+                                                                        estaGuardado) && (
+                                                                        <BotonEventoFavorito
+                                                                                evento={evento}
+                                                                                guardado={
+                                                                                        estaGuardado
+                                                                                }
+                                                                                compacto
+                                                                        />
                                                                 )}
                                                                 {cancelado && (
                                                                         <TouchableOpacity
@@ -512,6 +535,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 badgeProgramado: { backgroundColor: colors.greenLight },
                 badgeSuspendido: { backgroundColor: colors.yellowLight },
                 badgeCancelado: { backgroundColor: colors.primaryLight },
+                badgeFinalizado: { backgroundColor: colors.secondaryLight },
                 badgeText: {
                         paddingHorizontal: 3,
                         lineHeight: 16,
