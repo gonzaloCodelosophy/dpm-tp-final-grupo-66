@@ -1,16 +1,8 @@
+import { usePopup } from '../../context/popup.context';
 import { tipografia, logoPrincipal } from "../../styles/tipografia";
 import { useTema } from "../../context/tema.context";
 import React, { useState } from "react";
-import {
-        Alert,
-        Modal,
-        ScrollView,
-        StyleSheet,
-        Text,
-        TouchableOpacity,
-        TouchableWithoutFeedback,
-        View,
-} from "react-native";
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -28,6 +20,7 @@ import {
 } from "../../styles/theme";
 
 export default function PerfilScreen() {
+  const mostrarPopup = usePopup();
         const { colorsInicio, colors, styles } = useEstilos();
 
         const router = useRouter();
@@ -42,7 +35,7 @@ export default function PerfilScreen() {
         }
 
         function abrirSeccion(titulo: string, mensaje: string) {
-                Alert.alert(titulo, mensaje);
+                mostrarPopup(titulo, mensaje);
         }
 
         const opciones: {

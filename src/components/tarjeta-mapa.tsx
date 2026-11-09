@@ -1,5 +1,6 @@
+import { usePopup } from '../context/popup.context';
 import { useTema } from "../context/tema.context";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { router } from "expo-router";
 
@@ -28,13 +29,14 @@ export function TarjetaMapa({
         distancia,
         onCerrar,
 }: TarjetaMapaProps) {
+  const mostrarPopup = usePopup();
         const { colors, styles } = useEstilos();
 
         const comoLlegar = async () => {
                 try {
                         await abrirIndicaciones(lugar.coordenadas);
                 } catch {
-                        Alert.alert(
+                        mostrarPopup(
                                 "Cómo llegar",
                                 "No pudimos abrir el mapa. Intentá de nuevo.",
                         );

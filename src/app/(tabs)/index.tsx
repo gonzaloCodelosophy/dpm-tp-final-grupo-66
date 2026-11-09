@@ -1,18 +1,9 @@
+import { usePopup } from '../../context/popup.context';
 import { tipografia, logoPrincipal } from "../../styles/tipografia";
 import { BotonCategoria } from "../../components/boton-categoria";
 import { useTema } from "../../context/tema.context";
 import { useCallback, useMemo, useState } from "react";
-import {
-        Alert,
-        Linking,
-        Modal,
-        Pressable,
-        ScrollView,
-        StyleSheet,
-        Text,
-        TextInput,
-        View,
-} from "react-native";
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, {
         FadeInDown,
         FadeOut,
@@ -73,6 +64,7 @@ function normalizar(texto: string) {
 }
 
 export default function HomeScreen() {
+  const mostrarPopup = usePopup();
         const { colors, styles } = useEstilos();
 
         const { usuario, status } = useAuth();
@@ -160,7 +152,7 @@ export default function HomeScreen() {
                                 "https://www.google.com/maps/search/?api=1&query=Col%C3%B3n%2C+Entre+R%C3%ADos%2C+Argentina",
                         );
                 } catch {
-                        Alert.alert(
+                        mostrarPopup(
                                 "Cómo llegar",
                                 "No pudimos abrir el mapa. Intentá de nuevo.",
                         );
@@ -1020,10 +1012,7 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 scroll: { flex: 1 },
                 encabezadoFijo: {
                         backgroundColor: colors.background,
-                        // En Android el header sticky necesita elevación para
-                        // quedar por encima de las tarjetas con sombra.
-                        zIndex: 10,
-                        elevation: 10,
+                        zIndex: 1,
                 },
                 content: {
                         paddingHorizontal: 18,

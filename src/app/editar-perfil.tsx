@@ -1,19 +1,9 @@
+import { usePopup } from '../context/popup.context';
 import { BotonVolver } from "../components/boton-volver";
 import { tipografia } from "../styles/tipografia";
 import { useTema } from "../context/tema.context";
 import { useState } from "react";
-import {
-        ActivityIndicator,
-        Alert,
-        KeyboardAvoidingView,
-        Platform,
-        Pressable,
-        ScrollView,
-        StyleSheet,
-        Text,
-        TextInput,
-        View,
-} from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { router, Stack } from "expo-router";
@@ -25,6 +15,7 @@ import { EstadoPantalla } from "../components/estado-pantalla";
 import { colorsInicio as paletaColors, fuenteTitulo } from "../styles/inicio";
 
 export default function EditarPerfilScreen() {
+  const mostrarPopup = usePopup();
         const { colors, styles } = useEstilos();
 
         const { usuario, status, actualizarPerfil } = useAuth();
@@ -98,7 +89,7 @@ export default function EditarPerfilScreen() {
                 setError(null);
                 try {
                         await actualizarPerfil({ nombre: nombre.trim(), foto });
-                        Alert.alert(
+                        mostrarPopup(
                                 "Perfil actualizado",
                                 "Tus cambios se guardaron correctamente.",
                                 [{ text: "Aceptar", onPress: volver }],

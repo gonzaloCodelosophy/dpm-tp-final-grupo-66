@@ -1,3 +1,4 @@
+import { PopupProvider } from '../context/popup.context';
 import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
@@ -158,9 +159,11 @@ export default function RootLayout() {
         return (
                 <AuthProvider>
                         <TemaProvider>
-                                <UbicacionProvider>
-                                        <RootNavigation />
-                                </UbicacionProvider>
+                                <PopupProvider>
+                                        <UbicacionProvider>
+                                                <RootNavigation />
+                                        </UbicacionProvider>
+                                </PopupProvider>
                         </TemaProvider>
                 </AuthProvider>
         );

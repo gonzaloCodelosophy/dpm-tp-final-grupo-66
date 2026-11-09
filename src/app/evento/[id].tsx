@@ -1,22 +1,11 @@
+import { usePopup } from '../../context/popup.context';
 import { useCallback, useEffect, useState } from "react";
 import { useTema } from "../../context/tema.context";
 import { colors as paletaColors } from "../../styles/theme";
 import { fuenteTitulo } from "../../styles/inicio";
 import { ImagenPersistente } from "../../components/imagen-persistente";
 import { BotonVolver } from "../../components/boton-volver";
-import {
-        BackHandler,
-        View,
-        Text,
-        StyleSheet,
-        ActivityIndicator,
-        ScrollView,
-        Linking,
-        Platform,
-        TouchableOpacity,
-        Alert,
-        useWindowDimensions,
-} from "react-native";
+import { BackHandler, View, Text, StyleSheet, ActivityIndicator, ScrollView, Linking, Platform, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import {
@@ -43,6 +32,7 @@ import {
 import { sincronizarRecordatorioEvento, simularRecordatorioEvento } from "../../services/recordatorios-eventos.service";
 
 export default function PantallaDetalleEvento() {
+  const mostrarPopup = usePopup();
         const { colorsInicio: colors } = useTema();
         const styles = crearEstilos(colors);
         const { width } = useWindowDimensions();
@@ -152,7 +142,7 @@ export default function PantallaDetalleEvento() {
                 try {
                         await simularRecordatorioEvento(evento);
                 } catch (fallo) {
-                        Alert.alert(
+                        mostrarPopup(
                                 "Recordatorio",
                                 fallo instanceof Error
                                         ? fallo.message

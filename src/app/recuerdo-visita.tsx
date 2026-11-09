@@ -1,5 +1,6 @@
+import { usePopup } from '../context/popup.context';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,6 +23,7 @@ import { colorsInicio, fuenteTitulo } from '../styles/inicio';
 import { ModalRequiereAuth } from '../components/auth/modal-requiere-auth';
 
 export default function RecuerdoVisitaScreen() {
+  const mostrarPopup = usePopup();
   const router = useRouter();
   const { lugarId: parametroLugar, modo, codigoQr } = useLocalSearchParams<{ lugarId?: string | string[]; modo?: string; codigoQr?: string }>();
   const [modoManual] = useState(() => modo === 'manual');
@@ -126,11 +128,14 @@ export default function RecuerdoVisitaScreen() {
       else if (registroManual) await registrarVisitaManual(lugarRegistro, usuarioId, { nota, fotoUri });
       else await registrarVisitaCercana(lugarRegistro, usuarioId, { nota, fotoUri });
       guardada.current = true;
-      Alert.alert('Visita guardada', 'Guardamos tu recuerdo. Si no hay conexión, la visita se enviará cuando vuelva.', [
-        { text: 'Ver mi recorrido', onPress: () => router.replace('/(tabs)/recorrido') },
-      ]);
+      mostrarPopup('Visita guardada', 'Guardamos tu recuerdo. Si no hay conexión, la visita se enviará cuando vuelva.',
+        [{ text: 'Ver mi recorrido', onPress: cerrarExito }], { onDismiss: cerrarExito });
     } catch (fallo) { setError(fallo instanceof Error ? fallo.message : 'No pudimos guardar la visita.'); }
     finally { enCurso.current = false; setGuardando(false); }
+  }
+
+  function cerrarExito() {
+    router.dismissTo('/(tabs)/recorrido');
   }
 
   const selectorLugares = (
@@ -228,9 +233,6 @@ export default function RecuerdoVisitaScreen() {
               </Pressable>
             </View>
             {foto && <Text style={styles.ayuda}>La foto necesita conexión para guardarse. Podés adjuntar una imagen.</Text>}
-            {lugarRegistro && <Pressable disabled={guardando} accessibilityRole="button" onPress={() => router.push({ pathname: '/(tabs)/explore/lugar/[id]', params: { id: lugarRegistro.id } })} style={styles.verLugar}>
-              <Ionicons name="map-outline" size={23} color={colors.primary} /><Text style={styles.enlace}>Ver lugar</Text>
-            </Pressable>}
             {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
             <Pressable disabled={!lugarRegistro || guardando || eligiendo} accessibilityRole="button" onPress={() => void guardar()} style={[styles.guardar, (!lugarRegistro || guardando || eligiendo) && { opacity: 0.5 }]}>
               {guardando ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.guardarTexto}>Guardar visita</Text>}
@@ -301,7 +303,6 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   quitar: { position: 'absolute', right: 4, top: 4, padding: 4, borderRadius: 16, backgroundColor: colors.surface },
   agregarFoto: { minWidth: 140, minHeight: 100, flex: 1, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.primary, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12 },
   enlace: { color: colors.primary, fontSize: 15, fontWeight: '600' }, ayuda: { fontSize: 12, lineHeight: 18, color: colors.textSecondary, marginTop: 8 },
-  verLugar: { marginTop: 24, padding: 14, borderWidth: 1, borderColor: colors.primary, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   guardar: { marginTop: 20, backgroundColor: colors.primarySolid, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', padding: 14 }, guardarTexto: { color: colors.onPrimary, fontSize: 16, fontWeight: '700' },
   error: { color: colors.primary, fontSize: 14, lineHeight: 20, marginVertical: 12 },
 });

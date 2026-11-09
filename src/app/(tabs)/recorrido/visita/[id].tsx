@@ -1,5 +1,6 @@
+import { usePopup } from '../../../../context/popup.context';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
@@ -23,6 +24,7 @@ const origenes = {
 } as const;
 
 export default function DetalleVisitaScreen() {
+  const mostrarPopup = usePopup();
   const { id: parametro } = useLocalSearchParams<{ id: string | string[] }>();
   const id = Array.isArray(parametro) ? parametro[0] : parametro;
   const router = useRouter();
@@ -100,7 +102,7 @@ export default function DetalleVisitaScreen() {
             {lugar ? <>
               <Text style={styles.dato}>{lugar.descripcionCorta}</Text>
               <View style={styles.fila}><Ionicons name="location-outline" size={19} color={colors.secondary} /><Text style={styles.dato}>{lugar.direccion}</Text></View>
-              <Pressable accessibilityRole="button" onPress={() => void abrirIndicaciones(lugar.coordenadas).catch(() => Alert.alert('No pudimos abrir el mapa', 'Intentá de nuevo.'))} style={styles.boton}><Ionicons name="navigate-outline" size={20} color={colors.primary} /><Text style={styles.botonTexto}>Cómo llegar</Text></Pressable>
+              <Pressable accessibilityRole="button" onPress={() => void abrirIndicaciones(lugar.coordenadas).catch(() => mostrarPopup('No pudimos abrir el mapa', 'Intentá de nuevo.'))} style={styles.boton}><Ionicons name="navigate-outline" size={20} color={colors.primary} /><Text style={styles.botonTexto}>Cómo llegar</Text></Pressable>
               <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/(tabs)/explore/lugar/[id]', params: { id: lugar.id } })} style={styles.boton}><Ionicons name="map-outline" size={20} color={colors.primary} /><Text style={styles.botonTexto}>Ver lugar</Text></Pressable>
             </> : <Text style={styles.dato}>{detalles.cargando ? 'Cargando información del lugar…' : 'La información del lugar no está disponible en este momento.'}</Text>}
           </View>

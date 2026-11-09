@@ -1,17 +1,9 @@
+import { usePopup } from '../context/popup.context';
 import { BotonVolver } from "../components/boton-volver";
 import { tipografia } from "../styles/tipografia";
 import { useTema } from "../context/tema.context";
 import { useState } from "react";
-import {
-        ActivityIndicator,
-        Alert,
-        Pressable,
-        ScrollView,
-        StyleSheet,
-        Text,
-        Switch,
-        View,
-} from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, Switch, View } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { Image } from "expo-image";
@@ -23,6 +15,7 @@ import { EstadoPantalla } from "../components/estado-pantalla";
 import { colorsInicio as paletaColors, fuenteTitulo } from "../styles/inicio";
 
 export default function MisPreferenciasScreen() {
+  const mostrarPopup = usePopup();
         const { colors, styles } = useEstilos();
 
         const { usuario, status, actualizarPreferencias } = useAuth();
@@ -69,7 +62,7 @@ export default function MisPreferenciasScreen() {
                                 avisarProximidad,
                                 radioAvisoMetros,
                         });
-                        Alert.alert(
+                        mostrarPopup(
                                 "Preferencias actualizadas",
                                 "Guardamos tus categorías y la configuración de avisos.",
                                 [{ text: "Aceptar", onPress: volver }],

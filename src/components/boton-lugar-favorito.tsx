@@ -1,7 +1,8 @@
+import { usePopup } from '../context/popup.context';
 import { useTema } from "../context/tema.context";
 import { useAuth } from "../context/auth.context";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useFavoritos } from "../hooks/use-favoritos";
 import { guardarFavorito } from "../services/favoritos.service";
@@ -9,6 +10,7 @@ import { colors as paletaColors } from "../styles/theme";
 import { ModalRequiereAuth } from "./auth/modal-requiere-auth";
 
 export function BotonLugarFavorito({ id, soloIcono = false }: { id: string; soloIcono?: boolean }) {
+  const mostrarPopup = usePopup();
         const { colors, styles } = useEstilos();
 
         const { usuario, status } = useAuth();
@@ -28,7 +30,7 @@ export function BotonLugarFavorito({ id, soloIcono = false }: { id: string; solo
                 }
                 if (error) {
                         reintentar();
-                        Alert.alert(
+                        mostrarPopup(
                                 "Mis favoritos",
                                 "No pudimos leer tus favoritos. Intentá de nuevo en unos momentos.",
                         );
@@ -44,7 +46,7 @@ export function BotonLugarFavorito({ id, soloIcono = false }: { id: string; solo
                                         : null,
                         );
                 } catch {
-                        Alert.alert(
+                        mostrarPopup(
                                 "Mis favoritos",
                                 "No pudimos guardar el cambio. Intentá de nuevo.",
                         );

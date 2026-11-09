@@ -1,3 +1,4 @@
+import { usePopup } from '../../../context/popup.context';
 import { useUbicacion } from "../../../hooks/use-ubicacion";
 import { distanciaMetros } from "../../../services/distancias";
 import { tipografia } from "../../../styles/tipografia";
@@ -8,17 +9,7 @@ import { Image } from "expo-image";
 import { useTema } from "../../../context/tema.context";
 import { EstadoPantalla } from "../../../components/estado-pantalla";
 import { useMemo, useState } from "react";
-import {
-        Alert,
-        Modal,
-        FlatList,
-        Pressable,
-        ScrollView,
-        StyleSheet,
-        Text,
-        TextInput,
-        View,
-} from "react-native";
+import { Modal, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -37,6 +28,7 @@ import {
 } from "../../../styles/theme";
 
 export default function ExploreScreen() {
+  const mostrarPopup = usePopup();
         const { colors, styles } = useEstilos();
 
         const insets = useSafeAreaInsets();
@@ -74,7 +66,7 @@ export default function ExploreScreen() {
                         if (valor !== null && !ubicacion.coordenadas) {
                                 const posicion = await ubicacion.solicitar();
                                 if (!posicion) {
-                                        Alert.alert("Ubicación necesaria", "Permití la ubicación y activá el GPS para ordenar o filtrar por distancia.");
+                                        mostrarPopup("Ubicación necesaria", "Permití la ubicación y activá el GPS para ordenar o filtrar por distancia.");
                                         return;
                                 }
                         }
@@ -82,7 +74,7 @@ export default function ExploreScreen() {
                         else if (selector === "distancia") setRadioDistancia(valor);
                         setSelectorFiltro(null);
                 } catch {
-                        Alert.alert("Ubicación no disponible", "No pudimos obtener tu ubicación. Intentá de nuevo.");
+                        mostrarPopup("Ubicación no disponible", "No pudimos obtener tu ubicación. Intentá de nuevo.");
                 } finally { setAplicandoFiltro(false); }
         }
         const lugaresFiltrados = useMemo(() => {

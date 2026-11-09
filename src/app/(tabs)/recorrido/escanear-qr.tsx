@@ -1,5 +1,6 @@
+import { usePopup } from '../../../context/popup.context';
 import { useEffect, useRef, useState } from 'react';
-import { AppState, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { useIsFocused } from '@react-navigation/native';
@@ -10,6 +11,7 @@ import { useTema } from '../../../context/tema.context';
 import { EstadoPantalla } from '../../../components/estado-pantalla';
 
 export default function EscanearQrScreen() {
+  const mostrarPopup = usePopup();
   const router = useRouter();
   const { colorsInicio: colors } = useTema();
   const enfocada = useIsFocused();
@@ -32,7 +34,7 @@ export default function EscanearQrScreen() {
     setPausada(true);
     const codigo = leerCodigoLugar(data);
     if (!codigo) {
-      Alert.alert('QR no reconocido', 'Escaneá el QR de un lugar de Colón.', [{ text: 'Volver a escanear', onPress: () => { procesando.current = false; setPausada(false); } }], { cancelable: false });
+      mostrarPopup('QR no reconocido', 'Escaneá el QR de un lugar de Colón.', [{ text: 'Volver a escanear', onPress: () => { procesando.current = false; setPausada(false); } }], { cancelable: false });
       return;
     }
     router.replace({ pathname: '/(tabs)/recorrido/qr', params: { codigo } });
@@ -45,11 +47,11 @@ export default function EscanearQrScreen() {
     </View>
     {!permiso ? <EstadoPantalla tipo="cargando" /> : !permiso.granted ? (
       <EstadoPantalla tipo="vacio" titulo="Permití usar la cámara" mensaje="La usamos para leer el código del lugar y abrir el registro de tu visita." accion={permiso.canAskAgain ? 'Permitir cámara' : 'Abrir ajustes'} onPress={() => {
-        void (permiso.canAskAgain ? pedirPermiso() : Linking.openSettings()).catch(() => Alert.alert('Cámara', 'No pudimos abrir los permisos. Intentá de nuevo.'));
+        void (permiso.canAskAgain ? pedirPermiso() : Linking.openSettings()).catch(() => mostrarPopup('Cámara', 'No pudimos abrir los permisos. Intentá de nuevo.'));
       }} />
     ) : <>
       <View style={styles.visor}>
-        {enfocada && activa && !pausada && <CameraView style={StyleSheet.absoluteFillObject} facing="back" barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={escanear} onMountError={() => Alert.alert('Cámara no disponible', 'Revisá los permisos y volvé a abrir el lector.')} />}
+        {enfocada && activa && !pausada && <CameraView style={StyleSheet.absoluteFillObject} facing="back" barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={escanear} onMountError={() => mostrarPopup('Cámara no disponible', 'Revisá los permisos y volvé a abrir el lector.')} />}
         <View pointerEvents="none" style={styles.marco} />
       </View>
       <Text style={[styles.ayuda, { color: colors.textSecondary }]}>Apuntá al QR del lugar. Se abrirá el formulario para agregar tu recuerdo.</Text>

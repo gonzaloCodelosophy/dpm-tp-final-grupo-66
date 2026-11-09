@@ -1,7 +1,8 @@
+import { usePopup } from '../context/popup.context';
 import { useTema } from "../context/tema.context";
 import { colors as paletaColors } from "../styles/theme";
 import { useState } from "react";
-import { TouchableOpacity, StyleSheet, Text, Alert } from "react-native";
+import { TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { Evento } from "../types/evento";
 import { useAuth } from "../context/auth.context";
@@ -22,6 +23,7 @@ export default function BotonEventoFavorito({
         guardado,
         compacto = false,
 }: BotonEventoFavoritoProps) {
+  const mostrarPopup = usePopup();
         const { colors, styles } = useEstilos();
 
         const { usuario, status } = useAuth();
@@ -39,7 +41,7 @@ export default function BotonEventoFavorito({
                         return;
                 }
                 if (!esFavorito && !sePuedeAgregar) {
-                        Alert.alert(
+                        mostrarPopup(
                                 "Mi agenda",
                                 "Este evento ya no se puede guardar.",
                         );
@@ -55,7 +57,7 @@ export default function BotonEventoFavorito({
                                 nuevoEstado,
                         );
                 } catch (error) {
-                        Alert.alert("Mi agenda", errorDatos(error).mensaje);
+                        mostrarPopup("Mi agenda", errorDatos(error).mensaje);
                         setGuardando(false);
                         return;
                 }

@@ -1,6 +1,7 @@
+import { usePopup } from '../context/popup.context';
 import { useTema } from "../context/tema.context";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -27,6 +28,7 @@ export function BotonRegistrarVisita({
         lugar: Lugar;
         modo: ModoRegistro;
 }) {
+  const mostrarPopup = usePopup();
         const { styles } = useEstilos();
 
         const { usuario, status } = useAuth();
@@ -76,7 +78,7 @@ export function BotonRegistrarVisita({
                                 Haptics.NotificationFeedbackType.Success,
                         ).catch(() => undefined);
                 } catch (error) {
-                        Alert.alert(
+                        mostrarPopup(
                                 "Registrar visita",
                                 error instanceof Error
                                         ? error.message
@@ -94,7 +96,7 @@ export function BotonRegistrarVisita({
                         return;
                 }
                 if (actual) {
-                        Alert.alert(
+                        mostrarPopup(
                                 "Registrar otra visita",
                                 "¿Querés registrar una nueva visita a este lugar?",
                                 [
@@ -117,7 +119,7 @@ export function BotonRegistrarVisita({
                 try {
                         await reintentarVisita(actual.visita.id, usuarioId);
                 } catch {
-                        Alert.alert(
+                        mostrarPopup(
                                 "Visita guardada",
                                 "No se pudo enviar. La visita sigue guardada en el teléfono.",
                         );
