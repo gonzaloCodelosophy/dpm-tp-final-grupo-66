@@ -49,10 +49,6 @@ const salidaCercanos = FadeOut.duration(140).reduceMotion(ReduceMotion.System);
 type PanelInicio = "visitas" | "accesibilidad" | "rio";
 
 const paneles = {
-        visitas: {
-                titulo: "Mis visitas",
-                mensaje: "El registro de visitas estará disponible próximamente. Por ahora, podés descubrir los lugares y guardarlos en favoritos.",
-        },
         accesibilidad: {
                 titulo: "Lugares accesibles",
                 mensaje: "Estos lugares figuran como accesibles en el catálogo. Consultá el detalle antes de tu visita.",
@@ -309,10 +305,11 @@ export default function HomeScreen() {
                                                                 colors.yellowLight
                                                         }
                                                         onPress={() =>
-                                                                setPanel(
-                                                                        "visitas",
+                                                                {
+                                                                router.push(
+                                                                        "/(tabs)/recorrido",
                                                                 )
-                                                        }
+                                                        }}
                                                 />
                                         </View>
                                 </View>
