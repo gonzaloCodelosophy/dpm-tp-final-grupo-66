@@ -6,6 +6,7 @@ export interface Preferencias {
 }
 
 export interface Usuario {
+  rol?: 'admin' | 'turista';
   id: string;
   nombre: string;
   email: string;

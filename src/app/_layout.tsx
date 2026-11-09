@@ -6,7 +6,7 @@ import {
         DefaultTheme,
         ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import "react-native-reanimated";
@@ -16,7 +16,7 @@ import { useAvisosProximidad } from "../hooks/use-avisos-proximidad";
 
 import { TemaProvider, useTema } from "../context/tema.context";
 
-import { AuthProvider } from "../context/auth.context";
+import { AuthProvider, useAuth } from "../context/auth.context";
 import { ModalReingresoBiometrico } from "../components/auth/modal-reingreso-biometrico";
 
 Notifications.setNotificationHandler({
@@ -35,6 +35,14 @@ export const unstable_settings = {
 
 function RootNavigation() {
         useAvisosProximidad();
+        const { usuario, status } = useAuth();
+        const router = useRouter();
+        const segments = useSegments();
+        useEffect(() => {
+                if (status === "autenticado" && usuario?.rol === "admin" && segments[0] !== "(admin)") {
+                        router.replace("/(admin)");
+                }
+        }, [router, segments, status, usuario?.rol]);
         const { colors, oscuro } = useTema();
         const tema = oscuro ? DarkTheme : DefaultTheme;
         const temaAplicacion = {
@@ -95,6 +103,7 @@ function RootNavigation() {
                                         },
                                 }}
                         >
+                                <Stack.Screen name="(admin)" options={{ headerShown: false }} />
                                 <Stack.Screen
                                         name="(tabs)"
                                         options={{ headerShown: false }}

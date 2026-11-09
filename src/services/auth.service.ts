@@ -10,6 +10,17 @@ import {
   obtenerUsuarioCache,
 } from './storage.service';
 
+// El rol del JWT solo elige la interfaz; la API autoriza cada cambio con la base.
+function conRol(usuario: Usuario, token: string): Usuario {
+  try {
+    const segmento = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const carga = JSON.parse(atob(segmento.padEnd(Math.ceil(segmento.length / 4) * 4, '=')));
+    return { ...usuario, rol: carga.rol === 'admin' ? 'admin' : 'turista' };
+  } catch {
+    return { ...usuario, rol: 'turista' };
+  }
+}
+
 export async function iniciarSesion(credenciales: CredencialesLogin): Promise<RespuestaAuth> {
   const { email, password } = credenciales;
   const { datos } = (await solicitarJson('/auth/ingreso', {
@@ -18,6 +29,7 @@ export async function iniciarSesion(credenciales: CredencialesLogin): Promise<Re
   })) as { datos: RespuestaAuth };
 
   await guardarToken(datos.token);
+  datos.usuario = conRol(datos.usuario, datos.token);
   await guardarUsuarioCache(datos.usuario);
   return datos;
 }
@@ -30,6 +42,7 @@ export async function registrarse(datos: DatosRegistro): Promise<RespuestaAuth> 
   })) as { datos: RespuestaAuth };
 
   await guardarToken(sesion.token);
+  sesion.usuario = conRol(sesion.usuario, sesion.token);
   await guardarUsuarioCache(sesion.usuario);
   return sesion;
 }
@@ -41,8 +54,9 @@ export async function obtenerSesion(): Promise<Usuario | null> {
   try {
     const { datos } = (await solicitarJson('/yo', { token })) as { datos: Usuario };
     if (datos) {
-      await guardarUsuarioCache(datos);
-      return datos;
+      const usuario = conRol(datos, token);
+      await guardarUsuarioCache(usuario);
+      return usuario;
     }
   } catch (error) {
     if (error instanceof FalloDatos && (error.detalle.codigo === 'HTTP_401' || error.detalle.codigo === 'NO_AUTENTICADO')) {
