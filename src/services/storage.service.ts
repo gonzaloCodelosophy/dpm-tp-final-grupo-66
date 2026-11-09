@@ -142,6 +142,65 @@ export async function esFavoritoLocal(id: string): Promise<boolean> {
   }
 }
 
+const TEMA_KEY = 'preferencia_tema';
+
+export async function guardarTemaLocal(
+  tema: 'claro' | 'oscuro' | 'sistema',
+): Promise<void> {
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(TEMA_KEY, tema);
+      }
+      return;
+    }
+    await Storage.setItem(TEMA_KEY, tema);
+  } catch (error) {
+    console.error('Error al guardar tema local:', error);
+  }
+}
+
+export async function obtenerTemaLocal(): Promise<
+  'claro' | 'oscuro' | 'sistema' | null
+> {
+  try {
+    let valor: string | null = null;
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        valor = localStorage.getItem(TEMA_KEY);
+      }
+    } else {
+      valor = await Storage.getItem(TEMA_KEY);
+    }
+    if (valor === 'claro' || valor === 'oscuro' || valor === 'sistema') {
+      return valor;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error al obtener tema local:', error);
+    return null;
+  }
+}
+
+export function obtenerTemaLocalSync(): 'claro' | 'oscuro' | 'sistema' | null {
+  try {
+    let valor: string | null = null;
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        valor = localStorage.getItem(TEMA_KEY);
+      }
+    } else {
+      valor = Storage.getItemSync(TEMA_KEY);
+    }
+    if (valor === 'claro' || valor === 'oscuro' || valor === 'sistema') {
+      return valor;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function leerTokenCompatible(valor: string | null): string | null {
   if (!valor?.startsWith('{')) return valor;
   try {

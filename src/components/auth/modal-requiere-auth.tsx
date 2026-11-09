@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
@@ -21,9 +21,9 @@ export function ModalRequiereAuth({
   status,
 }: ModalRequiereAuthProps) {
   const router = useRouter();
-  const tema = useTema();
-  const colors = tema.colorsInicio ?? tema.colors;
-  const styles = crearEstilos(colors);
+  const { colorsInicio, colors: colorsBase, oscuro } = useTema();
+  const colors = colorsInicio ?? colorsBase;
+  const styles = useMemo(() => crearEstilos(colors, oscuro), [colors, oscuro]);
 
   const esBiometria = status === 'biometria_requerida';
 
@@ -92,11 +92,11 @@ export function ModalRequiereAuth({
   );
 }
 
-const crearEstilos = (colors: any) =>
+const crearEstilos = (colors: any, oscuro: boolean) =>
   StyleSheet.create({
     modalFondoAlerta: {
       flex: 1,
-      backgroundColor: 'rgba(7, 59, 83, 0.45)',
+      backgroundColor: oscuro ? 'rgba(0, 0, 0, 0.75)' : 'rgba(7, 59, 83, 0.45)',
       justifyContent: 'center',
       padding: 20,
     },
@@ -104,12 +104,14 @@ const crearEstilos = (colors: any) =>
       width: '100%',
       maxWidth: 440,
       alignSelf: 'center',
-      backgroundColor: colors.background,
+      backgroundColor: oscuro ? colors.surface : colors.background,
       borderRadius: 24,
       padding: 22,
-      shadowColor: colors.secondary,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: oscuro ? '#000000' : colors.secondary,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
+      shadowOpacity: oscuro ? 0.4 : 0.15,
       shadowRadius: 12,
       elevation: 8,
     },
@@ -165,4 +167,3 @@ const crearEstilos = (colors: any) =>
       fontWeight: '600',
     },
   });
-

@@ -343,55 +343,107 @@ export default function PerfilScreen() {
                                                 ))}
                                         </>
                                 ) : (
-                                        <View style={styles.guestCard}>
-                                                <View
-                                                        style={
-                                                                styles.guestIconCircle
-                                                        }
-                                                >
-                                                        <Ionicons
-                                                                name="person-outline"
-                                                                size={40}
-                                                                color={
-                                                                        colors.secondary
+                                        <>
+                                                <View style={styles.guestCard}>
+                                                        <View
+                                                                style={
+                                                                        styles.guestIconCircle
                                                                 }
-                                                        />
-                                                </View>
-                                                <Text style={styles.guestTitle}>
-                                                        Modo Visitante
-                                                </Text>
-                                                <Text
-                                                        style={
-                                                                styles.guestSubtitle
-                                                        }
-                                                >
-                                                        Podés explorar el mapa y
-                                                        lugares libremente.
-                                                        Iniciá sesión para
-                                                        guardar tus eventos
-                                                        favoritos y registrar
-                                                        tus visitas.
-                                                </Text>
+                                                        >
+                                                                <Ionicons
+                                                                        name="person-outline"
+                                                                        size={40}
+                                                                        color={
+                                                                                colors.secondary
+                                                                        }
+                                                                />
+                                                        </View>
+                                                        <Text style={styles.guestTitle}>
+                                                                Modo Visitante
+                                                        </Text>
+                                                        <Text
+                                                                style={
+                                                                        styles.guestSubtitle
+                                                                }
+                                                        >
+                                                                Podés explorar el mapa y
+                                                                lugares libremente.
+                                                                Iniciá sesión para
+                                                                guardar tus eventos
+                                                                favoritos y registrar
+                                                                tus visitas.
+                                                        </Text>
 
-                                                <TouchableOpacity
-                                                        style={styles.btnLogin}
-                                                        onPress={() =>
-                                                                router.push(
-                                                                        "/(auth)/login" as any,
-                                                                )
-                                                        }
-                                                        activeOpacity={0.85}
+                                                        <TouchableOpacity
+                                                                style={styles.btnLogin}
+                                                                onPress={() =>
+                                                                        router.push(
+                                                                                "/(auth)/login" as any,
+                                                                        )
+                                                                }
+                                                                activeOpacity={0.85}
+                                                        >
+                                                                <Text
+                                                                        style={
+                                                                                styles.btnLoginText
+                                                                        }
+                                                                >
+                                                                        Iniciar sesión /
+                                                                        Registrarse
+                                                                </Text>
+                                                        </TouchableOpacity>
+                                                </View>
+
+                                                <View
+                                                        style={[
+                                                                styles.menu,
+                                                                {
+                                                                        marginTop:
+                                                                                spacing.lg,
+                                                                },
+                                                        ]}
                                                 >
                                                         <Text
                                                                 style={
-                                                                        styles.btnLoginText
+                                                                        styles.sectionTitle
                                                                 }
                                                         >
-                                                                Iniciar sesión /
-                                                                Registrarse
+                                                                Preferencias
                                                         </Text>
-                                                </TouchableOpacity>
-                                        </View>
+                                                        {opciones
+                                                                .filter(
+                                                                        (
+                                                                                opcion,
+                                                                        ) =>
+                                                                                opcion.titulo ===
+                                                                                "Apariencia",
+                                                                )
+                                                                .map(
+                                                                        renderOpcion,
+                                                                )}
+                                                </View>
+
+                                                <View style={styles.menu}>
+                                                        <Text
+                                                                style={
+                                                                        styles.sectionTitle
+                                                                }
+                                                        >
+                                                                Cuenta y ayuda
+                                                        </Text>
+                                                        {opciones
+                                                                .filter(
+                                                                        (
+                                                                                opcion,
+                                                                        ) =>
+                                                                                opcion.titulo ===
+                                                                                "Ayuda y soporte",
+                                                                )
+                                                                .map(
+                                                                        renderOpcion,
+                                                                )}
+                                                </View>
+                                        </>
                                 )}
                         </ScrollView>
 
