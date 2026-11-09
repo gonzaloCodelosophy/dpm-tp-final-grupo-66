@@ -33,6 +33,7 @@ Notifications.setNotificationHandler({
 
 export const unstable_settings = {
         anchor: "(tabs)",
+        initialRouteName: "(tabs)",
 };
 
 function RootNavigation() {
@@ -118,6 +119,7 @@ function RootNavigation() {
         return (
                 <ThemeProvider value={temaAplicacion}>
                         <Stack
+                                initialRouteName="(tabs)"
                                 screenOptions={{
                                         statusBarStyle: oscuro
                                                 ? "light"
