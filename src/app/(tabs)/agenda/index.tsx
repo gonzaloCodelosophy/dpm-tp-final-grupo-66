@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { logoPrincipal, tipografia } from "../../../styles/tipografia";
 import { useTema } from "../../../context/tema.context";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
         StyleSheet,
         Text,
@@ -13,13 +13,27 @@ import {
         ScrollView,
         ActivityIndicator,
 } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useEventos } from "../../../hooks/use-eventos";
 import { EstadoCatalogo } from "../../../components/estado-catalogo";
 import TarjetaEvento from "../../../components/tarjeta-evento";
 import { colors as paletaColors } from "../../../styles/theme";
+import {
+        diaLocal,
+        diaSemanaCorto,
+        estadoVisible,
+        numeroDeDia,
+        ocurreEnDia,
+        sumarDias,
+} from "../../../services/fechas-eventos";
 
-const ESTADOS = ["Todos", "Programados", "Suspendidos", "Cancelados"];
+const ESTADOS = [
+        "Todos",
+        "Programados",
+        "Suspendidos",
+        "Cancelados",
+        "Finalizados",
+];
 
 export default function AgendaScreen() {
         const { colors, styles } = useEstilos();
@@ -35,34 +49,26 @@ export default function AgendaScreen() {
                 reintentar,
         } = useEventos();
         const eventos = datos ?? [];
-        const fechasUnicas = useMemo(() => {
-                const hoy = new Date();
-                return Array.from({ length: 14 }, (_, indice) => {
-                        const fecha = new Date(
-                                hoy.getFullYear(),
-                                hoy.getMonth(),
-                                hoy.getDate() + indice,
-                        );
-                        return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
-                });
-        }, []);
+        const ahora = new Date();
+        const hoy = diaLocal(ahora);
+        const fechasUnicas = useMemo(
+                () =>
+                        Array.from({ length: 14 }, (_, indice) =>
+                                sumarDias(hoy, indice),
+                        ),
+                [hoy],
+        );
         const [filtroFecha, setFiltroFecha] = useState<string | null>(
                 fechasUnicas[0],
         );
         const [filtroEstado, setFiltroEstado] = useState("Todos");
-        useFocusEffect(
-                useCallback(() => {
-                        setFiltroFecha(null);
-                        setFiltroEstado("Todos");
-                }, []),
-        );
         const router = useRouter();
 
         const eventosFiltrados = eventos.filter((evento) => {
                 const coincideFecha =
                         filtroFecha === null ||
-                        evento.inicio.startsWith(filtroFecha);
-                const estadoEv = evento.estado || "Programado";
+                        ocurreEnDia(evento, filtroFecha);
+                const estadoEv = estadoVisible(evento, ahora);
 
                 let coincideEstado = true;
                 if (filtroEstado === "Programados")
@@ -71,18 +77,16 @@ export default function AgendaScreen() {
                         coincideEstado = estadoEv === "suspendido";
                 if (filtroEstado === "Cancelados")
                         coincideEstado = estadoEv === "cancelado";
+                if (filtroEstado === "Finalizados")
+                        coincideEstado = estadoEv === "finalizado";
 
                 return coincideFecha && coincideEstado;
         });
 
-        const formatearDiaTab = (fechaStr: string) => {
-                const fecha = new Date(fechaStr + "T12:00:00");
-                const diaSemana = fecha
-                        .toLocaleDateString("es-AR", { weekday: "short" })
-                        .toUpperCase();
-                const numero = fecha.getDate();
-                return { diaSemana, numero };
-        };
+        const formatearDiaTab = (fechaStr: string) => ({
+                diaSemana: diaSemanaCorto(fechaStr),
+                numero: numeroDeDia(fechaStr),
+        });
 
         return (
                 <SafeAreaView
@@ -106,7 +110,10 @@ export default function AgendaScreen() {
                                         Qué hacer en Colón
                                 </Text>
                         </View>
-                        <EstadoCatalogo sinConexion={sinConexion} />
+                        <EstadoCatalogo
+                                sinConexion={sinConexion}
+                                recurso="eventos"
+                        />
 
                         <View style={{ paddingHorizontal: 16 }}>
                                 {cargando && (

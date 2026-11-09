@@ -100,9 +100,17 @@ export async function eliminarUsuarioCache(): Promise<void> {
   }
 }
 
+const claveFavorito = (id: string) => `fav_evt_${id}`;
+
 export async function guardarFavoritoLocal(id: string): Promise<void> {
   try {
-    await Storage.setItem(`fav_evt_${id}`, 'true');
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(claveFavorito(id), 'true');
+      }
+      return;
+    }
+    await Storage.setItem(claveFavorito(id), 'true');
   } catch (error) {
     console.error(`Error al guardar el favorito ${id}:`, error);
   }
@@ -110,7 +118,13 @@ export async function guardarFavoritoLocal(id: string): Promise<void> {
 
 export async function removerFavoritoLocal(id: string): Promise<void> {
   try {
-    await Storage.removeItem(`fav_evt_${id}`);
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(claveFavorito(id));
+      }
+      return;
+    }
+    await Storage.removeItem(claveFavorito(id));
   } catch (error) {
     console.error(`Error al remover el favorito ${id}:`, error);
   }
@@ -118,7 +132,9 @@ export async function removerFavoritoLocal(id: string): Promise<void> {
 
 export async function esFavoritoLocal(id: string): Promise<boolean> {
   try {
-    const valor = await Storage.getItem(`fav_evt_${id}`);
+    const valor = Platform.OS === 'web'
+      ? (typeof window !== 'undefined' ? localStorage.getItem(claveFavorito(id)) : null)
+      : await Storage.getItem(claveFavorito(id));
     return valor === 'true';
   } catch (error) {
     console.error(`Error al consultar el favorito ${id}:`, error);

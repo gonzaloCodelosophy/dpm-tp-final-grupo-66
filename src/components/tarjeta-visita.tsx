@@ -5,12 +5,6 @@ import { ImagenPersistente } from './imagen-persistente';
 import type { Visita } from '../types/Visita';
 import type { Lugar } from '../types/Lugar';
 
-const tipos = {
-  gps: { nombre: 'Por cercanía', icono: 'location-outline', color: '#467338', fondo: '#EAF0E3' },
-  qr: { nombre: 'Código QR', icono: 'qr-code-outline', color: '#147885', fondo: '#E5F3F5' },
-  manual: { nombre: 'Registro manual', icono: 'create-outline', color: '#A74B26', fondo: '#FDE9E3' },
-} as const;
-
 function fechaVisita(fecha: string) {
   const valor = new Date(fecha);
   const opciones = { timeZone: 'America/Argentina/Buenos_Aires' };
@@ -24,6 +18,11 @@ function fechaVisita(fecha: string) {
 
 export function TarjetaVisita({ visita, lugar, onPress }: { visita: Visita; lugar?: Lugar; onPress: () => void }) {
   const { colorsInicio: colors } = useTema();
+  const tipos = {
+    gps: { nombre: 'Por cercanía', icono: 'location-outline', color: colors.green, fondo: colors.greenLight },
+    qr: { nombre: 'Código QR', icono: 'qr-code-outline', color: colors.blueText, fondo: colors.blueLight },
+    manual: { nombre: 'Registro manual', icono: 'create-outline', color: colors.primary, fondo: colors.primaryLight },
+  } as const;
   const tipo = tipos[visita.origen];
   const imagen = visita.fotoUri || lugar?.imagenes[0];
   const nota = visita.nota?.replace(/\s+/g, ' ').trim();

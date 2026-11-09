@@ -2,7 +2,7 @@ import type { BotonCategoriaProps } from "../src/components/boton-categoria";
 
 export const categoriasIntereses: (Pick<
         BotonCategoriaProps,
-        "nombre" | "icono" | "color" | "fondo"
+        "nombre" | "icono" | "color" | "fondo" | "colorOscuro" | "fondoOscuro"
 > & { id: string })[] = [
         {
                 id: "cat-playas",
@@ -10,6 +10,8 @@ export const categoriasIntereses: (Pick<
                 icono: "palm-tree",
                 color: "#367B47",
                 fondo: "#E4EED7",
+                colorOscuro: "#A5CA8B",
+                fondoOscuro: "#253E3A",
         },
         {
                 id: "cat-termas",
@@ -17,6 +19,8 @@ export const categoriasIntereses: (Pick<
                 icono: "hot-tub",
                 color: "#32808B",
                 fondo: "#E4F1F2",
+                colorOscuro: "#8FD3DC",
+                fondoOscuro: "#243D40",
         },
         {
                 id: "cat-museos",
@@ -24,6 +28,8 @@ export const categoriasIntereses: (Pick<
                 icono: "bank",
                 color: "#81549F",
                 fondo: "#EEE5F2",
+                colorOscuro: "#C9A7DC",
+                fondoOscuro: "#352E3D",
         },
         {
                 id: "cat-gastronomia",
@@ -31,6 +37,8 @@ export const categoriasIntereses: (Pick<
                 icono: "silverware-fork-knife",
                 color: "#E49A28",
                 fondo: "#FCF0DA",
+                colorOscuro: "#F0C36D",
+                fondoOscuro: "#3D3324",
         },
         {
                 id: "cat-naturaleza",
@@ -38,6 +46,8 @@ export const categoriasIntereses: (Pick<
                 icono: "leaf",
                 color: "#59864A",
                 fondo: "#E5EFCF",
+                colorOscuro: "#B4D99A",
+                fondoOscuro: "#2C3A24",
         },
         {
                 id: "cat-alojamiento",
@@ -45,6 +55,8 @@ export const categoriasIntereses: (Pick<
                 icono: "bed",
                 color: "#4A7FA4",
                 fondo: "#E2ECF6",
+                colorOscuro: "#9CC7E8",
+                fondoOscuro: "#25323D",
         },
         {
                 id: "cat-artesanias",
@@ -52,5 +64,7 @@ export const categoriasIntereses: (Pick<
                 icono: "palette",
                 color: "#B36C50",
                 fondo: "#F6E7DB",
+                colorOscuro: "#E0A98F",
+                fondoOscuro: "#3B2E26",
         },
 ];

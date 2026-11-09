@@ -2,6 +2,7 @@ import { useTema } from "../context/tema.context";
 import { useEffect, useState } from "react";
 import { Image, type ImageProps } from "expo-image";
 import { View, Text, type StyleProp, type ViewStyle } from "react-native";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import {
         descargarImagen,
         obtenerImagenLocal,
@@ -13,10 +14,12 @@ export function ImagenPersistente({
         url,
         style,
         contentFit = "cover",
+        iconoError = false,
 }: {
         url: string;
         style: ImageProps["style"];
         contentFit?: ImageProps["contentFit"];
+        iconoError?: boolean;
 }) {
         const { colors } = useTema();
         const [local, setLocal] = useState<{ url: string; uri: string } | null>(
@@ -58,7 +61,31 @@ export function ImagenPersistente({
         }, [url]);
 
         const uri = local?.url === url ? local.uri : urlImagenRemota(url);
-        if (fallida === uri)
+        if (fallida === uri) {
+                if (iconoError)
+                        return (
+                                <View
+                                        accessibilityRole="image"
+                                        accessibilityLabel="Imagen no disponible"
+                                        style={[
+                                                style as StyleProp<ViewStyle>,
+                                                {
+                                                        backgroundColor:
+                                                                colors.secondaryLight,
+                                                        alignItems: "center",
+                                                        justifyContent:
+                                                                "center",
+                                                },
+                                        ]}
+                                >
+                                        <Ionicons
+                                                name="image-outline"
+                                                size={32}
+                                                color={colors.textSecondary}
+                                        />
+                                </View>
+                        );
+
                 return (
                         <View
                                 style={[
@@ -81,6 +108,7 @@ export function ImagenPersistente({
                                 </Text>
                         </View>
                 );
+        }
 
         return (
                 <Image

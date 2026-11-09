@@ -5,7 +5,8 @@ import { eventoSchema } from "./api/eventos.api";
 import { POR_PAGINA, validarPagina } from "./api/paginacion";
 import { obtenerToken } from "./storage.service";
 import { puedeConsultarApi } from "./red.service";
-import { errorDatos } from "./errores";
+import { precargarImagenes } from "./imagenes.service";
+import { FalloDatos, errorDatos } from "./errores";
 import type { Evento } from "../types/evento";
 
 type Copia = {
@@ -15,6 +16,7 @@ type Copia = {
 const oyentes = new Set<() => void>();
 const tareas = new Map<string, Promise<unknown>>();
 const clave = (usuarioId: string) => `eventos_guardados_v1_${usuarioId}`;
+const unoSchema = z.object({ datos: eventoSchema, meta: z.null() });
 
 export function observarEventosGuardados(oyente: () => void) {
         oyentes.add(oyente);
@@ -25,7 +27,13 @@ export function observarEventosGuardados(oyente: () => void) {
 
 async function leer(usuarioId: string): Promise<Copia> {
         const valor = await Storage.getItem(clave(usuarioId));
-        return valor ? JSON.parse(valor) : { eventos: [], pendientes: {} };
+        const copia = valor
+                ? (JSON.parse(valor) as Partial<Copia>)
+                : null;
+        return {
+                eventos: copia?.eventos ?? [],
+                pendientes: copia?.pendientes ?? {},
+        };
 }
 
 async function escribir(usuarioId: string, copia: Copia) {
@@ -74,7 +82,7 @@ async function sincronizar(usuarioId: string) {
         const copia = await leer(usuarioId);
         for (const [id, pendiente] of Object.entries(copia.pendientes)) {
                 try {
-                        await solicitarJson(
+                        const respuesta = await solicitarJson(
                                 `/yo/eventos-guardados/${encodeURIComponent(id)}`,
                                 {
                                         metodo: pendiente.guardar
@@ -83,10 +91,32 @@ async function sincronizar(usuarioId: string) {
                                         token,
                                 },
                         );
+                        if (pendiente.guardar) {
+                                const parseada = unoSchema.safeParse(respuesta);
+                                if (!parseada.success)
+                                        throw new FalloDatos({
+                                                tipo: "contrato",
+                                                codigo: "EVENTO_GUARDADO_INVALIDO",
+                                                mensaje: "La API no devolvió el evento guardado.",
+                                                reintentable: true,
+                                        });
+                                copia.eventos = copia.eventos.filter(
+                                        (evento) => evento.id !== id,
+                                );
+                                copia.eventos.push(parseada.data.datos);
+                        } else {
+                                copia.eventos = copia.eventos.filter(
+                                        (evento) => evento.id !== id,
+                                );
+                        }
                         delete copia.pendientes[id];
                         await escribir(usuarioId, copia);
                 } catch (error) {
-                        if (errorDatos(error).codigo === "EVENTO_NO_VIGENTE") {
+                        const codigo = errorDatos(error).codigo;
+                        if (
+                                codigo === "EVENTO_NO_VIGENTE" ||
+                                codigo === "EVENTO_NO_ENCONTRADO"
+                        ) {
                                 delete copia.pendientes[id];
                                 copia.eventos = copia.eventos.filter(
                                         (evento) => evento.id !== id,
@@ -113,6 +143,16 @@ async function sincronizar(usuarioId: string) {
                 pagina += 1;
         } while (eventos.length < total);
         await escribir(usuarioId, { eventos, pendientes: {} });
+        const urls = eventos
+                .map((evento) => evento.imagenUrl)
+                .filter((url): url is string => url !== null);
+        if (urls.length)
+                void precargarImagenes(urls).catch((error) =>
+                        console.error(
+                                "No se pudieron preparar las imágenes de los eventos guardados",
+                                error,
+                        ),
+                );
 }
 
 export function actualizarEventosGuardados(usuarioId: string) {
@@ -132,6 +172,24 @@ export function cambiarEventoGuardado(
                 if (guardar) copia.eventos.push(evento);
                 copia.pendientes[evento.id] = { guardar, evento };
                 await escribir(usuarioId, copia);
-                await sincronizar(usuarioId);
+
+                try {
+                        await sincronizar(usuarioId);
+                } catch (error) {
+                        const codigo = errorDatos(error).codigo;
+                        // El cambio ya quedó guardado en el teléfono. Si fue
+                        // por red o sesión, se reintenta al recuperar la
+                        // conexión; sólo se avisa si la API rechazó el evento.
+                        if (
+                                codigo === "EVENTO_NO_VIGENTE" ||
+                                codigo === "EVENTO_NO_ENCONTRADO"
+                        )
+                                throw error;
+                        if (__DEV__)
+                                console.warn(
+                                        "El cambio de evento guardado quedó pendiente",
+                                        error,
+                                );
+                }
         });
 }

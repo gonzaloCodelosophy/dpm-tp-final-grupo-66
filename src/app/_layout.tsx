@@ -13,6 +13,7 @@ import "react-native-reanimated";
 
 import { UbicacionProvider } from "../context/ubicacion.context";
 import { useAvisosProximidad } from "../hooks/use-avisos-proximidad";
+import { useRegistroPush } from "../hooks/use-registro-push";
 
 import { TemaProvider, useTema } from "../context/tema.context";
 
@@ -35,9 +36,32 @@ export const unstable_settings = {
 
 function RootNavigation() {
         useAvisosProximidad();
+        useRegistroPush();
         const { usuario, status } = useAuth();
         const router = useRouter();
         const segments = useSegments();
+
+        // Tocar un recordatorio o un aviso de cambio de estado abre el evento.
+        useEffect(() => {
+                const suscripcion =
+                        Notifications.addNotificationResponseReceivedListener(
+                                (respuesta) => {
+                                        const datos = respuesta.notification
+                                                .request.content.data as
+                                                | { eventoId?: unknown }
+                                                | undefined;
+                                        if (typeof datos?.eventoId !== "string")
+                                                return;
+                                        router.push({
+                                                pathname:
+                                                        "/(tabs)/agenda/evento/[id]",
+                                                params: { id: datos.eventoId },
+                                        });
+                                },
+                        );
+                return () => suscripcion.remove();
+        }, [router]);
+
         useEffect(() => {
                 if (status === "autenticado" && usuario?.rol === "admin" && segments[0] !== "(admin)") {
                         router.replace("/(admin)");

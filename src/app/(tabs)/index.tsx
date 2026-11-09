@@ -29,6 +29,7 @@ import { useEventos } from "../../hooks/use-eventos";
 import { useUbicacion } from "../../hooks/use-ubicacion";
 import { distanciaMetros, textoDistancia } from "../../services/distancias";
 import { actualizarEventos } from "../../services/eventos.service";
+import { estadoVisible, finEfectivo } from "../../services/fechas-eventos";
 import {
         TarjetaEventoInicio,
         TarjetaLugarInicio,
@@ -56,6 +57,10 @@ const paneles = {
         rio: {
                 titulo: "Altura del río hoy",
                 mensaje: "(medición de las 12:00 del 7 de noviembre de 2026), con tendencia en baja.",
+        },
+        visitas: {
+                titulo: "Mis visitas",
+                mensaje: "Registrá tus visitas desde el recorrido y consultalas en Mi recorrido.",
         },
 };
 
@@ -128,15 +133,18 @@ export default function HomeScreen() {
         const proximos = useMemo(
                 () =>
                         (agenda.datos ?? [])
-                                .filter(
-                                        (evento) =>
-                                                evento.estado !==
-                                                        "finalizado" &&
-                                                Date.parse(
-                                                        evento.fin ??
-                                                                evento.inicio,
-                                                ) >= ahora,
-                                )
+                                .filter((evento) => {
+                                        const ahoraFecha = new Date(ahora);
+                                        return (
+                                                estadoVisible(
+                                                        evento,
+                                                        ahoraFecha,
+                                                ) !== "finalizado" &&
+                                                finEfectivo(
+                                                        evento,
+                                                ).getTime() >= ahora
+                                        );
+                                })
                                 .sort(
                                         (a, b) =>
                                                 Date.parse(a.inicio) -
@@ -300,7 +308,7 @@ export default function HomeScreen() {
                                                                 styles.accesoCategoria
                                                         }
                                                         icono="map-marker-path"
-                                                        color="#A87721"
+                                                        color={colors.yellow}
                                                         fondo={
                                                                 colors.yellowLight
                                                         }
@@ -1012,7 +1020,10 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 scroll: { flex: 1 },
                 encabezadoFijo: {
                         backgroundColor: colors.background,
-                        zIndex: 1,
+                        // En Android el header sticky necesita elevación para
+                        // quedar por encima de las tarjetas con sombra.
+                        zIndex: 10,
+                        elevation: 10,
                 },
                 content: {
                         paddingHorizontal: 18,

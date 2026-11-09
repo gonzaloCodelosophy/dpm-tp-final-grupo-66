@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "../context/auth.context";
@@ -9,6 +9,7 @@ import {
 } from "../services/eventos-guardados.service";
 import { observarRed } from "../services/red.service";
 import { errorDatos } from "../services/errores";
+import { sincronizarRecordatoriosEventos } from "../services/recordatorios-eventos.service";
 import type { Evento } from "../types/evento";
 
 export function useEventosGuardados() {
@@ -20,6 +21,15 @@ export function useEventosGuardados() {
         } | null>(null);
         const [error, setError] = useState<string | null>(null);
         const [cargando, setCargando] = useState(true);
+
+        // Al cerrar sesión no deben quedar recordatorios de una cuenta ajena.
+        useEffect(() => {
+                if (status !== "no_autenticado") return;
+                void sincronizarRecordatoriosEventos([]).catch(() => {
+                        // Si no hay permisos o notificaciones, no hay nada que hacer.
+                });
+        }, [status]);
+
         useFocusEffect(
                 useCallback(() => {
                         let activo = true;
@@ -27,7 +37,15 @@ export function useEventosGuardados() {
                                 if (!usuarioId) return;
                                 const eventos =
                                         await leerEventosGuardados(usuarioId);
-                                if (activo) setCopia({ usuarioId, eventos });
+                                if (activo) {
+                                        setCopia({ usuarioId, eventos });
+                                        void sincronizarRecordatoriosEventos(
+                                                eventos,
+                                        ).catch(() => {
+                                                // Los recordatorios son accesorios: no
+                                                // deben romper la agenda guardada.
+                                        });
+                                }
                         };
                         const actualizar = async () => {
                                 if (!usuarioId) {

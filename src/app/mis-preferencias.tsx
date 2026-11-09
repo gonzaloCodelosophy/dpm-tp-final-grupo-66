@@ -154,6 +154,12 @@ export default function MisPreferenciasScreen() {
                                                                 fondo={
                                                                         categoria.fondo
                                                                 }
+                                                                colorOscuro={
+                                                                        categoria.colorOscuro
+                                                                }
+                                                                fondoOscuro={
+                                                                        categoria.fondoOscuro
+                                                                }
                                                                 seleccionado={seleccionadas.includes(
                                                                         categoria.id,
                                                                 )}

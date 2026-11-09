@@ -19,6 +19,7 @@ import {
         autenticarConBiometria,
         comprobarSoporteBiometrico,
 } from "../services/biometrics.service";
+import { olvidarTokenPush } from "../services/push.service";
 
 export type EstadoAuth =
         "cargando" | "autenticado" | "no_autenticado" | "biometria_requerida";
@@ -139,6 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         async function cerrarSesion() {
                 await apiCerrarSesion();
+                olvidarTokenPush();
                 setUsuario(null);
                 setStatus("no_autenticado");
         }

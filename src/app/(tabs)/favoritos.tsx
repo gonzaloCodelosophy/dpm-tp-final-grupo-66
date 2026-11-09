@@ -290,6 +290,12 @@ export default function FavoritosScreen() {
                                                                         estilo?.fondo ??
                                                                         colors.secondaryLight
                                                                 }
+                                                                colorOscuro={
+                                                                        estilo?.colorOscuro
+                                                                }
+                                                                fondoOscuro={
+                                                                        estilo?.fondoOscuro
+                                                                }
                                                                 seleccionado={
                                                                         categoria ===
                                                                         item.id

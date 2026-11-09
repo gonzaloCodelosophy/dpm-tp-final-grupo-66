@@ -1,6 +1,6 @@
 import { precargarImagenes } from './imagenes.service';
-import { leerEventosLocal as leerLocal } from '../data/repositories/eventos.repository';
-import { descargarEventos } from './api/eventos.api';
+import { leerEventosLocal as leerLocal, leerEventoLocal as leerEventoDeLocal } from '../data/repositories/eventos.repository';
+import { descargarEvento, descargarEventos } from './api/eventos.api';
 import { leerPaginas, guardarPaginas } from '../data/repositories/paginas.repository';
 import type { Evento } from '../types/evento';
 import { FalloDatos, errorDatos } from './errores';
@@ -51,7 +51,11 @@ export async function leerEventosLocal() {
 //Ya no se deberian guardar eventos pasados.
 //Lo hice con push, aun que esto muta el arreglo
 
-export function cargarMasEventos() {
+export async function cargarMasEventos() {
+
+  // Si ya hay una actualización en curso, esperarla. Si no, esta llamada
+  // reutilizaría esa misma promesa y nunca pediría la página siguiente.
+  if (actualizacion) await actualizacion;
 
   return actualizarEventos(true);
 }
@@ -64,14 +68,21 @@ export function actualizarEventos(mas = false): Promise<ResultadoActualizacion> 
     publicar({ actualizando: true });
 
     try {
-      const local = await leerPaginas<Evento>('eventos');
-      const numeros = mas ? (local.siguientePagina ? [local.siguientePagina] : []) : (local.exploradas.length ? local.exploradas : [1]);
       const paginas: Pagina<Evento>[] = [];
 
-      for (const numero of numeros) {
-        if (paginas[0] && (numero - 1) * paginas[0].meta.porPagina >= paginas[0].meta.total) break;
+      if (mas) {
+        const local = await leerPaginas<Evento>('eventos');
+        if (local.siguientePagina) paginas.push(await descargarEventos(local.siguientePagina));
+      } else {
+        // La agenda guarda todas las fechas: se descargan todas las páginas
+        // para que "Todos" no quede limitado a la primera.
+        const primera = await descargarEventos(1);
+        paginas.push(primera);
 
-        paginas.push(await descargarEventos(numero));
+        const ultima = Math.max(1, Math.ceil(primera.meta.total / primera.meta.porPagina));
+        for (let numero = 2; numero <= ultima; numero++) {
+          paginas.push(await descargarEventos(numero));
+        }
       }
 
       const descargadoEn = new Date().toISOString();
@@ -117,5 +128,11 @@ export async function obtenerEventos() {
 
 export async function obtenerEventoPorId(id: string) {
 
-  return (await obtenerAgenda()).find(evento => evento.id === id);
+  try {
+    return await descargarEvento(id);
+  } catch (error) {
+    const local = await leerEventoDeLocal(id);
+    if (local) return local;
+    throw error;
+  }
 }
