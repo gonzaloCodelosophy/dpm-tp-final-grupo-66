@@ -13,17 +13,17 @@ export default function RegistrarVisitaScreen() {
   const opciones = [
     {
       titulo: 'Usar mi ubicación', descripcion: 'Detectamos el lugar con GPS.',
-      icono: 'location-outline' as const, color: '#467338', fondo: colors.greenLight,
+      icono: 'location-outline' as const, color: colors.green, fondo: colors.greenLight,
       abrir: () => router.push('/(tabs)/recorrido/recuerdo-visita'),
     },
     {
       titulo: 'Escanear código QR', descripcion: 'Encontrá el código en el lugar.',
-      icono: 'qr-code-outline' as const, color: '#147885', fondo: colors.blueLight,
+      icono: 'qr-code-outline' as const, color: colors.blueText, fondo: colors.blueLight,
       abrir: () => router.push('/(tabs)/recorrido/escanear-qr'),
     },
     {
       titulo: 'Cargar manualmente', descripcion: 'Buscá y seleccioná un lugar.',
-      icono: 'create-outline' as const, color: '#A74B26', fondo: colors.primaryLight,
+      icono: 'create-outline' as const, color: colors.primary, fondo: colors.primaryLight,
       abrir: () => router.push({ pathname: '/(tabs)/recorrido/recuerdo-visita', params: { modo: 'manual' } }),
     },
   ];

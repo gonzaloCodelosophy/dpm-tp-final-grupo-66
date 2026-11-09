@@ -29,7 +29,7 @@ export function TarjetaLugarInicio({
         categoria,
         distancia,
 }: LugarInicioProps) {
-        const { colors, styles } = useEstilos();
+        const { colors, styles, oscuro } = useEstilos();
         const categoriaVisual = categoriasIntereses.find(
                 (item) => item.id === lugar.categoriaId,
         );
@@ -111,7 +111,9 @@ export function TarjetaLugarInicio({
                                                         }
                                                         size={24}
                                                         color={
-                                                                categoriaVisual?.color ??
+                                                                (oscuro &&
+                                                                        categoriaVisual?.colorOscuro) ||
+                                                                categoriaVisual?.color ||
                                                                 colors.greenText
                                                         }
                                                 />
@@ -161,6 +163,7 @@ export function TarjetaEventoInicio({
                                         <ImagenPersistente
                                                 url={evento.imagenUrl}
                                                 style={styles.imagenEvento}
+                                                iconoError
                                         />
                                 ) : (
                                         <View
@@ -323,5 +326,5 @@ const crearEstilos = (colors: typeof paletaColors) =>
 function useEstilos() {
         const tema = useTema();
         const colors = tema.colorsInicio;
-        return { colors, styles: crearEstilos(colors) };
+        return { colors, oscuro: tema.oscuro, styles: crearEstilos(colors) };
 }

@@ -16,6 +16,8 @@ export interface BotonCategoriaProps {
         icono: ComponentProps<typeof MaterialCommunityIcons>["name"];
         color: string;
         fondo: string;
+        colorOscuro?: string;
+        fondoOscuro?: string;
         seleccionado?: boolean;
         deshabilitado?: boolean;
         multiple?: boolean;
@@ -28,6 +30,8 @@ export function BotonCategoria({
         icono,
         color,
         fondo,
+        colorOscuro,
+        fondoOscuro,
         seleccionado = false,
         deshabilitado = false,
         multiple = false,
@@ -35,6 +39,9 @@ export function BotonCategoria({
         style,
 }: BotonCategoriaProps) {
         const { colors, styles } = useEstilos();
+        const { oscuro } = useTema();
+        const colorFinal = oscuro && colorOscuro ? colorOscuro : color;
+        const fondoFinal = oscuro && fondoOscuro ? fondoOscuro : fondo;
 
         return (
                 <Pressable
@@ -65,7 +72,7 @@ export function BotonCategoria({
                                         {
                                                 backgroundColor: seleccionado
                                                         ? colors.primarySolid
-                                                        : fondo,
+                                                        : fondoFinal,
                                         },
                                 ]}
                         >
@@ -75,7 +82,7 @@ export function BotonCategoria({
                                         color={
                                                 seleccionado
                                                         ? colors.onPrimary
-                                                        : color
+                                                        : colorFinal
                                         }
                                 />
                                 {multiple && seleccionado && (

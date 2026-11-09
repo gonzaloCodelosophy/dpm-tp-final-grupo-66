@@ -186,9 +186,9 @@ export default function RecuerdoVisitaScreen() {
                 <Ionicons name={registroQr ? 'qr-code-outline' : registroManual ? 'create-outline' : 'location-outline'} size={15} color={colors.secondary} />
                 <Text style={styles.insigniaTexto}>{registroQr ? 'Lugar del QR' : registroManual ? 'Lugar seleccionado' : 'Lugar cercano'}</Text>
               </View>
-              {esFavorito && <View style={[styles.insignia, { backgroundColor: '#FCE4EC' }]}>
-                <Ionicons name="heart" size={15} color="#D32F2F" />
-                <Text style={styles.insigniaTexto}>Favorito</Text>
+              {esFavorito && <View style={[styles.insignia, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="heart" size={15} color={colors.error} />
+                <Text style={[styles.insigniaTexto, { color: colors.error }]}>Favorito</Text>
               </View>}
             </View>}
             <View style={styles.metadatos}>
@@ -233,7 +233,7 @@ export default function RecuerdoVisitaScreen() {
             </Pressable>}
             {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
             <Pressable disabled={!lugarRegistro || guardando || eligiendo} accessibilityRole="button" onPress={() => void guardar()} style={[styles.guardar, (!lugarRegistro || guardando || eligiendo) && { opacity: 0.5 }]}>
-              {guardando ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.guardarTexto}>Guardar visita</Text>}
+              {guardando ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.guardarTexto}>Guardar visita</Text>}
             </Pressable>
           </View>
         </ScrollView>
@@ -302,6 +302,6 @@ const crearEstilos = (colors: typeof colorsInicio) => StyleSheet.create({
   agregarFoto: { minWidth: 140, minHeight: 100, flex: 1, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.primary, borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12 },
   enlace: { color: colors.primary, fontSize: 15, fontWeight: '600' }, ayuda: { fontSize: 12, lineHeight: 18, color: colors.textSecondary, marginTop: 8 },
   verLugar: { marginTop: 24, padding: 14, borderWidth: 1, borderColor: colors.primary, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  guardar: { marginTop: 20, backgroundColor: colors.primary, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', padding: 14 }, guardarTexto: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  guardar: { marginTop: 20, backgroundColor: colors.primarySolid, minHeight: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', padding: 14 }, guardarTexto: { color: colors.onPrimary, fontSize: 16, fontWeight: '700' },
   error: { color: colors.primary, fontSize: 14, lineHeight: 20, marginVertical: 12 },
 });

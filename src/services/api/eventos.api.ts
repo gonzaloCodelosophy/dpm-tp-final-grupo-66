@@ -22,7 +22,8 @@ export function validarEventos(entrada: unknown): Evento[] {
 
 export async function descargarEventos(pagina: number) {
 
-  return validarPagina(await solicitarJson(`/eventos?pagina=${pagina}&porPagina=${POR_PAGINA}`), eventoSchema, pagina);
+  // La agenda "Todos" incluye fechas pasadas; la API por defecto arranca hoy.
+  return validarPagina(await solicitarJson(`/eventos?pagina=${pagina}&porPagina=${POR_PAGINA}&desde=1900-01-01`), eventoSchema, pagina);
 }
 
 export async function descargarEvento(id: string): Promise<Evento> {

@@ -76,9 +76,7 @@ export default function BotonEventoFavorito({
         if (!sePuedeAgregar && !esFavorito) return null;
 
         const textoBoton = esFavorito
-                ? sePuedeAgregar
-                        ? "Agregado a mi agenda"
-                        : "Quitar de mi agenda"
+                ? "Eliminar de mi agenda"
                 : "Agregar a mi agenda";
 
         return (
@@ -87,7 +85,7 @@ export default function BotonEventoFavorito({
                                 accessibilityRole="button"
                                 accessibilityLabel={
                                         esFavorito
-                                                ? "Quitar de mi agenda"
+                                                ? "Eliminar de mi agenda"
                                                 : "Agregar a mi agenda"
                                 }
                                 accessibilityState={{
@@ -117,7 +115,7 @@ export default function BotonEventoFavorito({
                                                         : "calendar-outline"
                                         }
                                         size={20}
-                                        color={esFavorito ? "#fff" : colors.primary}
+                                        color={esFavorito ? colors.onPrimary : colors.primary}
                                 />
                                 <Text
                                         style={[

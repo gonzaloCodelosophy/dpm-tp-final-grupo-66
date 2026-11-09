@@ -66,7 +66,7 @@ export default function PerfilScreen() {
                         descripcion: "Actividades que te interesan",
                         icono: "calendar-outline",
                         grupo: "Mi actividad",
-                        color: "#7955A0",
+                        color: colors.secondary,
                         onPress: () =>
                                 router.push("/eventos-guardados" as Href),
                 },
@@ -83,7 +83,7 @@ export default function PerfilScreen() {
                         descripcion: "Avisos de eventos y cercanía",
                         icono: "notifications-outline",
                         grupo: "Preferencias",
-                        color: "#B58227",
+                        color: colors.yellow,
                         onPress: () =>
                                 abrirSeccion(
                                         "Notificaciones",
@@ -95,7 +95,7 @@ export default function PerfilScreen() {
                         descripcion: "Tema claro u oscuro",
                         icono: "moon-outline",
                         grupo: "Preferencias",
-                        color: "#24657C",
+                        color: colors.blueText,
                         onPress: () => router.push("../apariencia"),
                 },
                 {

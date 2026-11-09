@@ -88,7 +88,7 @@ export default function DetalleVisitaScreen() {
             <Text style={styles.titulo}>{lugar?.nombre ?? 'Mi visita'}</Text>
             <View style={styles.insignias}>
               <View style={styles.insignia}><Ionicons name="checkmark-circle-outline" size={16} color={colors.secondary} /><Text style={styles.insigniaTexto}>Visitado</Text></View>
-              {esFavorito && <View style={[styles.insignia, { backgroundColor: '#FCE4EC' }]}><Ionicons name="heart" size={16} color="#D32F2F" /><Text style={styles.insigniaTexto}>Favorito</Text></View>}
+              {esFavorito && <View style={[styles.insignia, { backgroundColor: colors.primaryLight }]}><Ionicons name="heart" size={16} color={colors.error} /><Text style={[styles.insigniaTexto, { color: colors.error }]}>Favorito</Text></View>}
             </View>
             <Text style={styles.seccion}>Mi recuerdo</Text>
             <View style={styles.recuerdo}><Text style={[styles.nota, !visita.nota && { color: colors.textSecondary }]}>{visita.nota || 'No agregaste una nota a esta visita.'}</Text></View>

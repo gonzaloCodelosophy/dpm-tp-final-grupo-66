@@ -58,6 +58,10 @@ const paneles = {
                 titulo: "Altura del río hoy",
                 mensaje: "(medición de las 12:00 del 7 de noviembre de 2026), con tendencia en baja.",
         },
+        visitas: {
+                titulo: "Mis visitas",
+                mensaje: "Registrá tus visitas desde el recorrido y consultalas en Mi recorrido.",
+        },
 };
 
 function normalizar(texto: string) {
@@ -304,7 +308,7 @@ export default function HomeScreen() {
                                                                 styles.accesoCategoria
                                                         }
                                                         icono="map-marker-path"
-                                                        color="#A87721"
+                                                        color={colors.yellow}
                                                         fondo={
                                                                 colors.yellowLight
                                                         }
@@ -1016,7 +1020,10 @@ const crearEstilos = (colors: typeof paletaColors) =>
                 scroll: { flex: 1 },
                 encabezadoFijo: {
                         backgroundColor: colors.background,
-                        zIndex: 1,
+                        // En Android el header sticky necesita elevación para
+                        // quedar por encima de las tarjetas con sombra.
+                        zIndex: 10,
+                        elevation: 10,
                 },
                 content: {
                         paddingHorizontal: 18,

@@ -68,14 +68,21 @@ export function actualizarEventos(mas = false): Promise<ResultadoActualizacion> 
     publicar({ actualizando: true });
 
     try {
-      const local = await leerPaginas<Evento>('eventos');
-      const numeros = mas ? (local.siguientePagina ? [local.siguientePagina] : []) : (local.exploradas.length ? local.exploradas : [1]);
       const paginas: Pagina<Evento>[] = [];
 
-      for (const numero of numeros) {
-        if (paginas[0] && (numero - 1) * paginas[0].meta.porPagina >= paginas[0].meta.total) break;
+      if (mas) {
+        const local = await leerPaginas<Evento>('eventos');
+        if (local.siguientePagina) paginas.push(await descargarEventos(local.siguientePagina));
+      } else {
+        // La agenda guarda todas las fechas: se descargan todas las páginas
+        // para que "Todos" no quede limitado a la primera.
+        const primera = await descargarEventos(1);
+        paginas.push(primera);
 
-        paginas.push(await descargarEventos(numero));
+        const ultima = Math.max(1, Math.ceil(primera.meta.total / primera.meta.porPagina));
+        for (let numero = 2; numero <= ultima; numero++) {
+          paginas.push(await descargarEventos(numero));
+        }
       }
 
       const descargadoEn = new Date().toISOString();

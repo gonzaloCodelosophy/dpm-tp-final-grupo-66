@@ -2,20 +2,16 @@ import { leerPaginas } from './paginas.repository';
 import type { Evento } from '../../types/evento';
 import type { LecturaLocal } from '../../types/persistencia';
 import { validarEventos } from '../../services/api/eventos.api';
-import { diaLocal, finEfectivo, inicioDelDia } from '../../services/fechas-eventos';
 
-// La API ya devuelve la agenda desde hoy, pero las páginas guardadas pueden
-// tener eventos viejos. Se descartan los que terminaron antes de hoy.
+// La API se descarga desde 1900 para que "Todos" incluya también los eventos
+// pasados. El filtro por día y por estado se hace en la pantalla.
 export async function leerEventosLocal(): Promise<LecturaLocal<Evento[]> & { siguientePagina: number | null }> {
 
   const local = await leerPaginas<Evento>('eventos');
 
   if (!local.disponible) return { disponible: false, datos: null, descargadoEn: null, siguientePagina: null };
 
-  const desde = inicioDelDia(diaLocal(new Date()));
-  const datos = validarEventos(local.datos).filter(evento => finEfectivo(evento).getTime() > desde.getTime());
-
-  return { disponible: true, datos, descargadoEn: local.descargadoEn!, siguientePagina: local.siguientePagina };
+  return { disponible: true, datos: validarEventos(local.datos), descargadoEn: local.descargadoEn!, siguientePagina: local.siguientePagina };
 }
 
 /** Busca un evento en la copia local, sin filtrar por fecha (sirve para eventos viejos guardados). */

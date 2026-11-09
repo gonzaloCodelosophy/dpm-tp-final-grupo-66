@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTema } from "../../context/tema.context";
 import { colors as paletaColors } from "../../styles/theme";
 import { fuenteTitulo } from "../../styles/inicio";
@@ -14,6 +14,7 @@ import {
         Linking,
         Platform,
         TouchableOpacity,
+        Alert,
         useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -29,13 +30,17 @@ import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useEventosGuardados } from "../../hooks/use-eventos-guardados";
 import { useEventoDetalle } from "../../hooks/use-evento-detalle";
 import { useAhora } from "../../hooks/use-ahora";
+import { useDetallesLugares } from "../../hooks/use-detalles-lugares";
 import { EstadoCatalogo } from "../../components/estado-catalogo";
 import BotonEventoFavorito from "../../components/boton-evento-favorito";
+import { MapaEvento } from "../../components/mapa-evento";
+import { leerCatalogoLocal } from "../../data/repositories/catalogo.repository";
+import type { Lugar } from "../../types/Lugar";
 import {
         estadoVisible,
         formatearFechaEvento,
 } from "../../services/fechas-eventos";
-import { sincronizarRecordatorioEvento } from "../../services/recordatorios-eventos.service";
+import { sincronizarRecordatorioEvento, simularRecordatorioEvento } from "../../services/recordatorios-eventos.service";
 
 export default function PantallaDetalleEvento() {
         const { colorsInicio: colors } = useTema();
@@ -56,6 +61,34 @@ export default function PantallaDetalleEvento() {
         const evento =
                 (eventoLocal?.id === id ? eventoLocal : null) ?? eventoGuardado;
         const esperando = !evento && (cargando || guardados.cargando);
+        const [catalogoLocal, setCatalogoLocal] = useState<Lugar[]>([]);
+
+        useEffect(() => {
+                let activo = true;
+                void leerCatalogoLocal()
+                        .then((catalogo) => {
+                                if (activo)
+                                        setCatalogoLocal(
+                                                catalogo.datos?.lugares ?? [],
+                                        );
+                        })
+                        .catch(() => {
+                                if (activo) setCatalogoLocal([]);
+                        });
+                return () => {
+                        activo = false;
+                };
+        }, []);
+
+        // Si el evento no trae coordenadas, se obtienen del lugar asociado.
+        const lugarDetalle = useDetallesLugares(
+                evento?.lugarId ? [evento.lugarId] : [],
+                catalogoLocal,
+        );
+        const lugarEvento = lugarDetalle.lugares[0] ?? null;
+        const coordenadasEvento =
+                evento?.coordenadas ?? lugarEvento?.coordenadas ?? null;
+        const nombreLugar = lugarEvento?.nombre ?? null;
         const volver = useCallback(
                 () =>
                         router.navigate(
@@ -79,9 +112,9 @@ export default function PantallaDetalleEvento() {
         );
 
         const abrirMapaNativo = () => {
-                if (!evento?.coordenadas) return;
-                const { latitud, longitud } = evento.coordenadas;
-                const label = encodeURIComponent(evento.titulo);
+                if (!coordenadasEvento) return;
+                const { latitud, longitud } = coordenadasEvento;
+                const label = encodeURIComponent(evento?.titulo ?? "Evento");
                 const latLng = `${latitud},${longitud}`;
                 const url = Platform.select({
                         ios: `maps:0,0?q=${label}@${latLng}`,
@@ -103,6 +136,32 @@ export default function PantallaDetalleEvento() {
                 evento !== null &&
                 guardados.eventos.some((item) => item.id === evento.id);
         const textoFecha = evento ? formatearFechaEvento(evento, true) : "";
+        const [simulando, setSimulando] = useState(false);
+
+        const abrirLugar = () => {
+                if (!evento?.lugarId) return;
+                router.push({
+                        pathname: "/(tabs)/explore/lugar/[id]",
+                        params: { id: evento.lugarId },
+                });
+        };
+
+        const probarNotificacion = async () => {
+                if (!evento || simulando) return;
+                setSimulando(true);
+                try {
+                        await simularRecordatorioEvento(evento);
+                } catch (fallo) {
+                        Alert.alert(
+                                "Recordatorio",
+                                fallo instanceof Error
+                                        ? fallo.message
+                                        : "No se pudo mostrar la notificación de prueba.",
+                        );
+                } finally {
+                        setSimulando(false);
+                }
+        };
 
         // Mantiene el recordatorio local alineado con el estado y con si el
         // evento está guardado (la API avisa los cambios, pero el recordatorio
@@ -176,6 +235,7 @@ export default function PantallaDetalleEvento() {
                                                                         [styles.imagen, { height: altoImagen }]
                                                                 }
                                                                 contentFit="cover"
+                                                                iconoError
                                                         />
                                                 ) : (
                                                         <View
@@ -335,6 +395,46 @@ export default function PantallaDetalleEvento() {
                                                                                 "Colón, Entre Ríos"}
                                                                 </Text>
                                                         </View>
+                                                        {evento.lugarId && (
+                                                                <TouchableOpacity
+                                                                        accessibilityRole="button"
+                                                                        accessibilityLabel={
+                                                                                nombreLugar
+                                                                                        ? `Ver ${nombreLugar} en el catálogo`
+                                                                                        : "Ver el lugar en el catálogo"
+                                                                        }
+                                                                        onPress={
+                                                                                abrirLugar
+                                                                        }
+                                                                        style={
+                                                                                styles.enlaceLugar
+                                                                        }
+                                                                >
+                                                                        <Ionicons
+                                                                                name="business-outline"
+                                                                                size={18}
+                                                                                color={
+                                                                                        colors.blueText
+                                                                                }
+                                                                        />
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.enlaceLugarTexto
+                                                                                }
+                                                                        >
+                                                                                {nombreLugar
+                                                                                        ? `Ver ${nombreLugar} en el catálogo`
+                                                                                        : "Ver el lugar en el catálogo"}
+                                                                        </Text>
+                                                                        <Ionicons
+                                                                                name="chevron-forward"
+                                                                                size={16}
+                                                                                color={
+                                                                                        colors.textSecondary
+                                                                                }
+                                                                        />
+                                                                </TouchableOpacity>
+                                                        )}
                                                         {(
                                                                 <>
                                                                         <Text
@@ -390,30 +490,6 @@ export default function PantallaDetalleEvento() {
                                                                         styles.acciones
                                                                 }
                                                         >
-                                                                {programado &&
-                                                                        evento.coordenadas && (
-                                                                                <TouchableOpacity
-                                                                                        style={
-                                                                                                styles.boton
-                                                                                        }
-                                                                                        onPress={
-                                                                                                abrirMapaNativo
-                                                                                        }
-                                                                                >
-                                                                                        <Ionicons
-                                                                                                name="location-outline"
-                                                                                                size={19}
-                                                                                                color={colors.onPrimary}
-                                                                                        />
-                                                                                        <Text
-                                                                                                style={
-                                                                                                        styles.botonTexto
-                                                                                                }
-                                                                                        >
-                                                                                                Cómo llegar
-                                                                                        </Text>
-                                                                                </TouchableOpacity>
-                                                                        )}
                                                                 {(suspendido ||
                                                                         cancelado ||
                                                                         finalizado) && (
@@ -468,6 +544,63 @@ export default function PantallaDetalleEvento() {
                                                                         </TouchableOpacity>
                                                                 )}
                                                         </View>
+                                                        {coordenadasEvento && (
+                                                                <View
+                                                                        style={
+                                                                                styles.mapaSeccion
+                                                                        }
+                                                                >
+                                                                        <Text
+                                                                                style={
+                                                                                        styles.subtitle
+                                                                                }
+                                                                        >
+                                                                                Ubicación
+                                                                        </Text>
+                                                                        <MapaEvento
+                                                                                coordenadas={
+                                                                                        coordenadasEvento
+                                                                                }
+                                                                                titulo={
+                                                                                        evento.titulo
+                                                                                }
+                                                                                onPress={
+                                                                                        abrirMapaNativo
+                                                                                }
+                                                                        />
+                                                                </View>
+                                                        )}
+                                                        {Platform.OS !== "web" && (
+                                                                <View
+                                                                        style={
+                                                                                styles.simulacionContenedor
+                                                                        }
+                                                                >
+                                                                        <TouchableOpacity
+                                                                                accessibilityRole="button"
+                                                                                accessibilityLabel="Probar notificación del evento"
+                                                                                disabled={
+                                                                                        simulando
+                                                                                }
+                                                                                onPress={() => {
+                                                                                        void probarNotificacion();
+                                                                                }}
+                                                                                style={[
+                                                                                        styles.botonSimulacion,
+                                                                                        simulando &&
+                                                                                                styles.botonSimulacionDeshabilitado,
+                                                                                ]}
+                                                                        >
+                                                                                <Text
+                                                                                        style={
+                                                                                                styles.botonSimulacionTexto
+                                                                                        }
+                                                                                >
+                                                                                        !
+                                                                                </Text>
+                                                                        </TouchableOpacity>
+                                                                </View>
+                                                        )}
                                                 </View>
                                         </View>
                                 </ScrollView>
@@ -600,6 +733,44 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         marginTop: 12,
                 },
                 precioTexto: { fontSize: 12, color: colors.blueText },
+                enlaceLugar: {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: 12,
+                        marginTop: 4,
+                        borderRadius: 12,
+                        backgroundColor: colors.secondaryLight,
+                },
+                enlaceLugarTexto: {
+                        flex: 1,
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: colors.blueText,
+                },
+                mapaSeccion: { marginTop: 4 },
+                simulacionContenedor: {
+                        alignItems: "flex-end",
+                        marginTop: 12,
+                        marginBottom: 4,
+                },
+                botonSimulacion: {
+                        width: 34,
+                        height: 34,
+                        borderRadius: 17,
+                        borderWidth: 1,
+                        borderColor: colors.primary,
+                        backgroundColor: colors.surface,
+                        alignItems: "center",
+                        justifyContent: "center",
+                },
+                botonSimulacionTexto: {
+                        color: colors.primary,
+                        fontSize: 18,
+                        fontWeight: "700",
+                        lineHeight: 20,
+                },
+                botonSimulacionDeshabilitado: { opacity: 0.5 },
                 acciones: { gap: 10, marginTop: 18 },
                 boton: {
                         minHeight: 48,

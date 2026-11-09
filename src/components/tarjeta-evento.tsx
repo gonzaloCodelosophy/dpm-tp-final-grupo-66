@@ -46,6 +46,7 @@ export default function TarjetaEvento({ evento, onPress }: TarjetaEventoProps) {
                                         <ImagenPersistente
                                                 url={evento.imagenUrl}
                                                 style={styles.image}
+                                                iconoError
                                         />
                                 ) : (
                                         <View

@@ -497,7 +497,7 @@ const crearEstilos = (colors: typeof paleta, oscuro: boolean) =>
                         marginBottom: 22,
                 },
                 btnAlertaNaranja: {
-                        backgroundColor: colors.primary,
+                        backgroundColor: colors.primarySolid,
                         minHeight: 50,
                         borderRadius: 16,
                         alignItems: "center",
@@ -505,7 +505,7 @@ const crearEstilos = (colors: typeof paleta, oscuro: boolean) =>
                         paddingHorizontal: 18,
                 },
                 btnAlertaNaranjaTexto: {
-                        color: "#FFFFFF",
+                        color: colors.onPrimary,
                         fontSize: 16,
                         fontWeight: "700",
                 },
