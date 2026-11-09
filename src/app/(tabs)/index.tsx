@@ -711,27 +711,6 @@ export default function HomeScreen() {
                                         )}
                                 </View>
 
-                                <Pressable
-                                        accessibilityRole="button"
-                                        style={styles.registrar}
-                                        onPress={() => router.push("/(tabs)/recorrido/registrar-visita")}
-                                >
-                                        <View style={styles.iconoVisita}>
-                                                <Ionicons
-                                                        name="location-outline"
-                                                        size={26}
-                                                        color={colors.onPrimary}
-                                                />
-                                        </View>
-                                        <Text style={styles.registrarTexto}>
-                                                Registrar visita
-                                        </Text>
-                                        <Ionicons
-                                                name="chevron-forward"
-                                                size={22}
-                                                color={colors.primary}
-                                        />
-                                </Pressable>
 
                                 <View style={styles.seccion}>
                                         <TituloInicio titulo="Mi recorrido" />

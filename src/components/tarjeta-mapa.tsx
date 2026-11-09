@@ -3,7 +3,6 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { router } from "expo-router";
 
-import { BotonVisitaCercana } from "./boton-visita-cercana";
 import { ImagenPersistente } from "./imagen-persistente";
 import { BotonLugarFavorito } from "./boton-lugar-favorito";
 import { abrirIndicaciones } from "../services/navegacion.service";
@@ -117,7 +116,18 @@ export function TarjetaMapa({
                                         </Text>
                                 </Pressable>
                         </View>
-                        <BotonVisitaCercana key={lugar.id} lugar={lugar} />
+                        <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={`Registrar una visita a ${lugar.nombre}`}
+                                onPress={() => router.push({
+                                        pathname: "/(tabs)/recorrido/recuerdo-visita",
+                                        params: { lugarId: lugar.id },
+                                })}
+                                style={({ pressed }) => [styles.registrarVisita, { opacity: pressed ? 0.8 : 1 }]}
+                        >
+                                <Ionicons name="add-circle-outline" size={20} color={colors.onPrimary} />
+                                <Text style={styles.textoPrincipal}>Registrar visita por cercanía</Text>
+                        </Pressable>
                 </View>
         );
 }
@@ -163,6 +173,18 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         backgroundColor: colors.primarySolid,
                         alignItems: "center",
                         justifyContent: "center",
+                },
+                registrarVisita: {
+                        minHeight: 48,
+                        borderRadius: borderRadius.pill,
+                        paddingHorizontal: 18,
+                        paddingVertical: 12,
+                        marginTop: spacing.sm,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: spacing.sm,
+                        backgroundColor: colors.primarySolid,
                 },
                 comoLlegar: {
                         flex: 1,
