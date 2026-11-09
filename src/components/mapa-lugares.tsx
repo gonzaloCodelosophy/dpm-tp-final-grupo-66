@@ -9,6 +9,8 @@ import MapView, { Marker } from "react-native-maps";
 import * as Haptics from "expo-haptics";
 import {
         ActivityIndicator,
+        Animated,
+        PanResponder,
         Keyboard,
         Pressable,
         ScrollView,
@@ -47,6 +49,47 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
         const [mapReady, setMapReady] = useState(false);
         const [centrarPendiente, setCentrarPendiente] = useState(false);
         const [seguirSinUbicacion, setSeguirSinUbicacion] = useState(false);
+
+        const [panelOculto, setPanelOculto] = useState(false);
+        const [altoCercanos, setAltoCercanos] = useState(0);
+        const desplazamientoPanel = useRef(new Animated.Value(0)).current;
+        const inicioArrastre = useRef(0);
+        const limitePanel = Math.max(0, altoCercanos - 52);
+
+        function ajustarPanel(oculto: boolean) {
+                setPanelOculto(oculto);
+                Animated.spring(desplazamientoPanel, {
+                        toValue: oculto ? limitePanel : 0,
+                        useNativeDriver: true,
+                        bounciness: 0,
+                }).start();
+        }
+
+        useEffect(() => {
+                Animated.spring(desplazamientoPanel, {
+                        toValue: panelOculto ? limitePanel : 0,
+                        useNativeDriver: true,
+                        bounciness: 0,
+                }).start();
+        }, [limitePanel, panelOculto, desplazamientoPanel]);
+
+        const gestoPanel = PanResponder.create({
+                onMoveShouldSetPanResponder: (_, gesto) =>
+                        Math.abs(gesto.dy) > 5 && Math.abs(gesto.dy) > Math.abs(gesto.dx),
+                onPanResponderGrant: () => {
+                        desplazamientoPanel.stopAnimation(valor => { inicioArrastre.current = valor; });
+                },
+                onPanResponderMove: (_, gesto) => {
+                        desplazamientoPanel.setValue(Math.min(limitePanel, Math.max(0, inicioArrastre.current + gesto.dy)));
+                },
+                onPanResponderRelease: (_, gesto) => {
+                        const ocultar = Math.abs(gesto.vy) > 0.4
+                                ? gesto.vy > 0
+                                : inicioArrastre.current + gesto.dy > limitePanel / 2;
+                        ajustarPanel(ocultar);
+                },
+                onPanResponderTerminate: () => ajustarPanel(panelOculto),
+        });
 
         const camaraInicial = {
                 center: { latitude: REGION_INICIAL_COLON.lat, longitude: REGION_INICIAL_COLON.lon },
@@ -169,7 +212,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
                                         top: 12,
                                         right: 12,
                                         left: 12,
-                                        bottom: altoPanel + 12,
+                                        bottom: (!seleccionado && !mostrarPanel && panelOculto ? 52 : altoPanel) + 12,
                                 }}
                                 onPress={(evento) => {
                                         if (
@@ -354,15 +397,26 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
                                         </Pressable>
                                 </ScrollView>
                         ) : (
-                                <View
-                                        style={styles.panelCercanos}
-                                        onLayout={(evento) =>
-                                                setAltoPanel(
-                                                        evento.nativeEvent
-                                                                .layout.height,
-                                                )
-                                        }
+                                <Animated.View
+                                        style={[styles.panelCercanos, { transform: [{ translateY: desplazamientoPanel }] }]}
+                                        onLayout={evento => {
+                                                setAltoCercanos(evento.nativeEvent.layout.height);
+                                                setAltoPanel(evento.nativeEvent.layout.height);
+                                        }}
                                 >
+                                        <View {...gestoPanel.panHandlers}>
+                                                <Pressable
+                                                        accessibilityRole="button"
+                                                        accessibilityLabel={panelOculto ? "Mostrar lo que tenés cerca" : "Ocultar lo que tenés cerca"}
+                                                        accessibilityHint="También podés arrastrar hacia abajo para ocultar o hacia arriba para mostrar."
+                                                        accessibilityState={{ expanded: !panelOculto }}
+                                                        onPress={() => ajustarPanel(!panelOculto)}
+                                                        style={styles.controlPanel}
+                                                >
+                                                        <View style={styles.tiradorPanel} />
+                                                </Pressable>
+                                        </View>
+                                        <View style={{ flexShrink: 1 }} accessibilityElementsHidden={panelOculto} importantForAccessibility={panelOculto ? "no-hide-descendants" : "auto"}>
                                         <View style={styles.cabeceraCercanos}>
                                                 <Text style={styles.tituloCercanos}>
                                                         {ubicacion.coordenadas
@@ -409,7 +463,8 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
                                                         </Text>
                                                 )}
                                         </ScrollView>
-                                </View>
+                                        </View>
+                                </Animated.View>
                         )}
                 </View>
         );
@@ -417,7 +472,7 @@ export function MapaLugares({ lugares, categorias }: MapaLugaresProps) {
 
 const crearEstilos = (colors: typeof paletaColors) =>
         StyleSheet.create({
-                contenedor: { flex: 1 },
+                contenedor: { flex: 1, overflow: "hidden" },
                 mapa: { flex: 1 },
                 centrar: {
                         position: "absolute",
@@ -470,6 +525,8 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         borderTopLeftRadius: borderRadius.lg,
                         borderTopRightRadius: borderRadius.lg,
                 },
+                controlPanel: { height: 36, alignItems: "center", justifyContent: "center" },
+                tiradorPanel: { width: 42, height: 5, borderRadius: 3, backgroundColor: colors.textSecondary },
                 cabeceraCercanos: {
                         marginBottom: 8,
                         flexDirection: "row",

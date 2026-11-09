@@ -34,7 +34,7 @@ export default function RegistrarVisitaScreen() {
       <View style={styles.cabecera}>
         <Pressable
           accessibilityRole="button" accessibilityLabel="Volver a Mi recorrido"
-          onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/recorrido')}
+          onPress={() => router.dismissTo('/(tabs)/recorrido')}
           style={styles.volver}
         >
           <Ionicons name="chevron-back" size={24} color={colors.secondary} />

@@ -711,27 +711,6 @@ export default function HomeScreen() {
                                         )}
                                 </View>
 
-                                <Pressable
-                                        accessibilityRole="button"
-                                        style={styles.registrar}
-                                        onPress={() => setPanel("visitas")}
-                                >
-                                        <View style={styles.iconoVisita}>
-                                                <Ionicons
-                                                        name="location-outline"
-                                                        size={26}
-                                                        color={colors.onPrimary}
-                                                />
-                                        </View>
-                                        <Text style={styles.registrarTexto}>
-                                                Registrar visita
-                                        </Text>
-                                        <Ionicons
-                                                name="chevron-forward"
-                                                size={22}
-                                                color={colors.primary}
-                                        />
-                                </Pressable>
 
                                 <View style={styles.seccion}>
                                         <TituloInicio titulo="Mi recorrido" />
@@ -746,24 +725,22 @@ export default function HomeScreen() {
                                                                 styles.recorridoTitulo
                                                         }
                                                 >
-                                                        Tu paseo empieza acá
+                                                        Tus recuerdos de Colón
                                                 </Text>
                                                 <Text
                                                         style={
                                                                 styles.recorridoDescripcion
                                                         }
                                                 >
-                                                        Todavía no tenés un
-                                                        recorrido. Mientras
-                                                        preparamos esta función,
-                                                        guardá los lugares que
-                                                        querés conocer.
+                                                        A medida que conozcas nuevos lugares,
+                                                        vas a poder guardar tus experiencias
+                                                        y volver a recordarlas cuando quieras.
                                                 </Text>
                                                 <BotonInicio
-                                                        texto="Ver mis favoritos"
+                                                        texto="Registrar visita"
                                                         onPress={() =>
                                                                 router.push(
-                                                                        "/(tabs)/favoritos",
+                                                                        "/(tabs)/recorrido/registrar-visita",
                                                                 )
                                                         }
                                                 />

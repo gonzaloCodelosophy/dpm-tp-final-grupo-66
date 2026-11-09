@@ -141,7 +141,7 @@ export default function RecuerdoVisitaScreen() {
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <Stack.Screen options={{ headerShown: false, gestureEnabled: !guardando }} />
       <View style={[styles.cabecera, { height: insets.top + 64, paddingTop: insets.top }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Volver" disabled={guardando} onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/recorrido/registrar-visita')} style={styles.volver}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Volver a Mi recorrido" disabled={guardando} onPress={() => router.dismissTo('/(tabs)/recorrido')} style={styles.volver}>
           <Ionicons name="chevron-back" size={24} color={colors.secondary} />
         </Pressable>
         <Image source={require('../../assets/images/logo-colon.png')} style={styles.logo} contentFit="contain" accessibilityLabel="Colón, Entre Ríos" />
