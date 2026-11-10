@@ -176,16 +176,11 @@ async function sincronizar(
         }
 }
 
-/**
- * Deja los recordatorios locales de todos los eventos guardados alineados con
- * la API: agenda una notificación la cantidad de horas configurada antes del
- * inicio y cancela las de eventos quitados, suspendidos, cancelados o finalizados.
- */
 export function sincronizarRecordatoriosEventos(
         eventos: Evento[],
         horasRecordatorio: number = HORAS_POR_DEFECTO,
 ): Promise<void> {
-        if (Platform.OS === "web") return Promise.resolve();
+
 
         return enCola(async () => {
                 const permiso = await Notifications.getPermissionsAsync();
@@ -200,16 +195,12 @@ export function sincronizarRecordatoriosEventos(
         });
 }
 
-/**
- * Variante para un solo evento. Se usa cuando el detalle cambia el estado de
- * guardado antes de que el listado vuelva a leerse.
- */
 export function sincronizarRecordatorioEvento(
         evento: Evento,
         guardado: boolean,
         horasRecordatorio: number = HORAS_POR_DEFECTO,
 ): Promise<void> {
-        if (Platform.OS === "web") return Promise.resolve();
+
 
         return enCola(async () => {
                 const notificaciones =
@@ -242,19 +233,11 @@ export function sincronizarRecordatorioEvento(
         });
 }
 
-/**
- * Dispara en el acto la notificación que se vería con la anticipación
- * configurada. Sirve para comprobar el texto, el canal y que al tocarla se abra
- * el detalle.
- */
 export async function simularRecordatorioEvento(
         evento: Evento,
         horasRecordatorio: number = HORAS_POR_DEFECTO,
 ): Promise<void> {
-        if (Platform.OS === "web")
-                throw new Error(
-                        "Las notificaciones no están disponibles en la versión web.",
-                );
+
 
         await asegurarCanal();
 

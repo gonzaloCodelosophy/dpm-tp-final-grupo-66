@@ -31,7 +31,8 @@ export async function enviarVisita(visita: Visita, token: string): Promise<Visit
   const respuesta = await solicitarJson('/yo/visitas', { metodo: 'POST', token, cuerpo: { id, lugarId, fechaHora, origen, fotoUri, nota } });
   const sobre = z.object({ datos: visitaSchema, meta: z.null() }).safeParse(respuesta);
 
-  if (!sobre.success || !sobre.data.datos.sincronizada || sobre.data.datos.id !== id || sobre.data.datos.usuarioId !== visita.usuarioId || sobre.data.datos.lugarId !== lugarId || sobre.data.datos.origen !== origen || Date.parse(sobre.data.datos.fechaHora) !== Date.parse(fechaHora)) {
+  // La API y su base normalizan la fecha al segundo; pueden truncar o redondear.
+  if (!sobre.success || !sobre.data.datos.sincronizada || sobre.data.datos.id !== id || sobre.data.datos.usuarioId !== visita.usuarioId || sobre.data.datos.lugarId !== lugarId || sobre.data.datos.origen !== origen || Math.abs(Date.parse(sobre.data.datos.fechaHora) - Date.parse(fechaHora)) >= 1000) {
     throw new FalloDatos({ tipo: 'contrato', codigo: 'VISITA_NO_CONFIRMADA', mensaje: 'El servidor no confirmó esta visita. Se conservó en el teléfono.', reintentable: false });
   }
 

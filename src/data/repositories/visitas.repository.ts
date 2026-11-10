@@ -34,7 +34,7 @@ export function visitasPendientes(usuarioId: string) {
   return conBase(async db => {
     const filas = await db.getAllAsync<FilaVisita>('SELECT datosJson, errorJson FROM visitas_gps WHERE usuarioId = ? AND sincronizada = 0 ORDER BY fechaHora, id', usuarioId);
 
-    return filas.map(leerFila).filter(fila => !fila.error || fila.error.reintentable).map(fila => fila.visita);
+    return filas.map(leerFila).filter(fila => !fila.error || fila.error.reintentable || fila.error.codigo === 'VISITA_NO_CONFIRMADA').map(fila => fila.visita);
   });
 }
 
@@ -59,4 +59,31 @@ export function leerVisitaLocal(id: string, usuarioId: string) {
 
     return fila ? leerFila(fila).visita : null;
   });
+}
+
+export function leerHistorialLocal(usuarioId: string) {
+  return conBase(async db => {
+    const filas = await db.getAllAsync<FilaVisita>('SELECT datosJson, errorJson FROM visitas_gps WHERE usuarioId = ? ORDER BY fechaHora DESC, id', usuarioId);
+    return filas.map(fila => leerFila(fila).visita);
+  });
+}
+
+export function guardarHistorialLocal(visitas: Visita[]) {
+  const datos = visitas.map(validarVisita);
+  return conBase(async db => {
+    await db.withExclusiveTransactionAsync(async tx => {
+      for (const visita of datos) {
+        // Una descarga no debe reemplazar un registro que todavía está pendiente.
+        await tx.runAsync(`INSERT INTO visitas_gps VALUES (?, ?, ?, ?, ?, ?, NULL)
+          ON CONFLICT(id) DO UPDATE SET datosJson = excluded.datosJson, sincronizada = excluded.sincronizada, errorJson = NULL
+          WHERE visitas_gps.sincronizada = 1 AND visitas_gps.usuarioId = excluded.usuarioId`,
+        visita.id, visita.usuarioId, visita.lugarId, visita.fechaHora, Number(visita.sincronizada), JSON.stringify(visita));
+      }
+    });
+  });
+}
+
+export function actualizarFotoVisita(visita: Visita) {
+  const dato = validarVisita(visita);
+  return conBase(db => db.runAsync('UPDATE visitas_gps SET datosJson = ? WHERE id = ? AND usuarioId = ? AND sincronizada = 0', JSON.stringify(dato), dato.id, dato.usuarioId));
 }

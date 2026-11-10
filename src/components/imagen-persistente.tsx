@@ -46,6 +46,8 @@ export function ImagenPersistente({
                                 .catch(() => undefined);
                 };
 
+                if (url.startsWith("file://")) return;
+
                 leer();
 
                 const cancelar = observarImagenes((actual) => {

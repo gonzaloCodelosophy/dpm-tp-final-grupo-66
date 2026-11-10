@@ -1,4 +1,3 @@
-import { usePopup } from '../../context/popup.context';
 import { useCallback, useEffect, useState } from "react";
 import { useTema } from "../../context/tema.context";
 import { colors as paletaColors } from "../../styles/theme";
@@ -30,10 +29,9 @@ import {
         estadoVisible,
         formatearFechaEvento,
 } from "../../services/fechas-eventos";
-import { sincronizarRecordatorioEvento, simularRecordatorioEvento } from "../../services/recordatorios-eventos.service";
+import { sincronizarRecordatorioEvento } from "../../services/recordatorios-eventos.service";
 
 export default function PantallaDetalleEvento() {
-  const mostrarPopup = usePopup();
         const { colorsInicio: colors } = useTema();
         const styles = crearEstilos(colors);
         const { width } = useWindowDimensions();
@@ -129,7 +127,6 @@ export default function PantallaDetalleEvento() {
                 evento !== null &&
                 guardados.eventos.some((item) => item.id === evento.id);
         const textoFecha = evento ? formatearFechaEvento(evento, true) : "";
-        const [simulando, setSimulando] = useState(false);
 
         const abrirLugar = () => {
                 if (!evento?.lugarId) return;
@@ -137,26 +134,6 @@ export default function PantallaDetalleEvento() {
                         pathname: "/(tabs)/explore/lugar/[id]",
                         params: { id: evento.lugarId },
                 });
-        };
-
-        const probarNotificacion = async () => {
-                if (!evento || simulando) return;
-                setSimulando(true);
-                try {
-                        await simularRecordatorioEvento(
-                                evento,
-                                horasRecordatorio,
-                        );
-                } catch (fallo) {
-                        mostrarPopup(
-                                "Recordatorio",
-                                fallo instanceof Error
-                                        ? fallo.message
-                                        : "No se pudo mostrar la notificación de prueba.",
-                        );
-                } finally {
-                        setSimulando(false);
-                }
         };
 
         // Mantiene el recordatorio local alineado con el estado y con si el
@@ -567,37 +544,6 @@ export default function PantallaDetalleEvento() {
                                                                         />
                                                                 </View>
                                                         )}
-                                                        {Platform.OS !== "web" && (
-                                                                <View
-                                                                        style={
-                                                                                styles.simulacionContenedor
-                                                                        }
-                                                                >
-                                                                        <TouchableOpacity
-                                                                                accessibilityRole="button"
-                                                                                accessibilityLabel="Probar notificación del evento"
-                                                                                disabled={
-                                                                                        simulando
-                                                                                }
-                                                                                onPress={() => {
-                                                                                        void probarNotificacion();
-                                                                                }}
-                                                                                style={[
-                                                                                        styles.botonSimulacion,
-                                                                                        simulando &&
-                                                                                                styles.botonSimulacionDeshabilitado,
-                                                                                ]}
-                                                                        >
-                                                                                <Text
-                                                                                        style={
-                                                                                                styles.botonSimulacionTexto
-                                                                                        }
-                                                                                >
-                                                                                        !
-                                                                                </Text>
-                                                                        </TouchableOpacity>
-                                                                </View>
-                                                        )}
                                                 </View>
                                         </View>
                                 </ScrollView>
@@ -746,28 +692,6 @@ const crearEstilos = (colors: typeof paletaColors) =>
                         color: colors.blueText,
                 },
                 mapaSeccion: { marginTop: 4 },
-                simulacionContenedor: {
-                        alignItems: "flex-end",
-                        marginTop: 12,
-                        marginBottom: 4,
-                },
-                botonSimulacion: {
-                        width: 34,
-                        height: 34,
-                        borderRadius: 17,
-                        borderWidth: 1,
-                        borderColor: colors.primary,
-                        backgroundColor: colors.surface,
-                        alignItems: "center",
-                        justifyContent: "center",
-                },
-                botonSimulacionTexto: {
-                        color: colors.primary,
-                        fontSize: 18,
-                        fontWeight: "700",
-                        lineHeight: 20,
-                },
-                botonSimulacionDeshabilitado: { opacity: 0.5 },
                 acciones: { gap: 10, marginTop: 18 },
                 boton: {
                         minHeight: 48,

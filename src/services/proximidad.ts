@@ -4,13 +4,12 @@ import type { Coordenadas } from '../types/Coordenadas';
 
 export interface AvisoCercania {
   dentro: boolean;
-  ultimoAviso: number;
 }
 
 // Margen de salida para evitar que una pequeña variación del GPS repita el aviso.
 export function evaluarCercania(
   lugares: Lugar[], posicion: Coordenadas, radio: number,
-  estados: Map<string, AvisoCercania>, ahora: number,
+  estados: Map<string, AvisoCercania>,
 ) {
   const candidatos: { lugar: Lugar; distancia: number; estado: AvisoCercania }[] = [];
 
@@ -18,10 +17,10 @@ export function evaluarCercania(
     if (!lugar.activo) continue;
     const distancia = distanciaMetros(posicion, lugar.coordenadas);
     if (!Number.isFinite(distancia)) continue;
-    const estado = estados.get(lugar.id) ?? { dentro: false, ultimoAviso: -Infinity };
+    const estado = estados.get(lugar.id) ?? { dentro: false };
     estados.set(lugar.id, estado);
     if (distancia > radio + Math.max(30, radio * 0.2)) estado.dentro = false;
-    if (distancia <= radio && !estado.dentro && ahora - estado.ultimoAviso >= 30 * 60 * 1000) {
+    if (distancia <= radio && !estado.dentro) {
       candidatos.push({ lugar, distancia, estado });
     }
   }

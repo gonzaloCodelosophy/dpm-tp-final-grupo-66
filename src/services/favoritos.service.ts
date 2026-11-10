@@ -1,5 +1,4 @@
 import Storage from "expo-sqlite/kv-store";
-import { Platform } from "react-native";
 import { z } from "zod";
 import { solicitarJson } from "./api/http";
 import { puedeConsultarApi } from "./red.service";
@@ -46,17 +45,13 @@ export function observarFavoritos(oyente: () => void) {
 
 async function leer(usuarioId: string | null): Promise<FavoritosLocales> {
         const valor =
-                Platform.OS === "web"
-                        ? localStorage.getItem(clave(usuarioId))
-                        : await Storage.getItem(clave(usuarioId));
+                await Storage.getItem(clave(usuarioId));
         return valor ? JSON.parse(valor) : {};
 }
 
 async function escribir(usuarioId: string | null, estados: FavoritosLocales) {
         const valor = JSON.stringify(estados);
-        if (Platform.OS === "web")
-                localStorage.setItem(clave(usuarioId), valor);
-        else await Storage.setItem(clave(usuarioId), valor);
+        await Storage.setItem(clave(usuarioId), valor);
 }
 
 async function exclusivo<T>(
@@ -67,7 +62,6 @@ async function exclusivo<T>(
         const anterior = escrituras.get(id) ?? Promise.resolve();
         const tarea = anterior
                 .catch(() => {
-                        // @gonzalo: sigo con el próximo cambio aunque haya fallado el anterior, está bien?
                 })
                 .then(accion);
         escrituras.set(id, tarea);
@@ -95,7 +89,6 @@ export async function guardarFavorito(
         await exclusivo(usuarioId, async () => {
                 const estados = await leer(usuarioId);
                 const anterior = estados[id];
-                // @gonzalo: separo las fechas de dos toques seguidos para no perder el último, lo dejamos así?
                 const instante = Math.max(
                         Date.now(),
                         anterior ? Date.parse(anterior.actualizadoEn) + 1 : 0,
@@ -111,7 +104,6 @@ export async function guardarFavorito(
         publicar();
         if (usuarioId)
                 void sincronizarFavoritos(usuarioId).catch(() => {
-                        // @gonzalo: queda guardado en el teléfono y lo reintento cuando vuelva la conexión, te sirve así?
                 });
 }
 
@@ -122,7 +114,7 @@ export function sincronizarFavoritos(usuarioId: string): Promise<void> {
                 if (!(await puedeConsultarApi())) return;
                 const token = await obtenerToken();
                 if (!token) return;
-                // @samuel: compruebo la cuenta antes de enviar para no mezclar favoritos, está bien?
+
                 const yo = z
                         .object({ datos: z.object({ id: z.string() }) })
                         .parse(await solicitarJson("/yo", { token }));
@@ -200,7 +192,6 @@ export function sincronizarFavoritos(usuarioId: string): Promise<void> {
                                 const remoto = remotos[cambio.lugarId];
                                 let confirmado = remoto;
                                 let huboEscritura = false;
-                                // @gonzalo: comparo con la fecha del alta, pero la API no trae la fecha de las bajas de otro teléfono, cómo preferís resolver ese caso?
                                 if (
                                         !remoto ||
                                         remoto.actualizadoEn <=
@@ -279,7 +270,6 @@ export function sincronizarFavoritos(usuarioId: string): Promise<void> {
                                                 actual.actualizadoEn <=
                                                         confirmado.actualizadoEn
                                         ) {
-                                                // @gonzalo: ajusto la fecha si hubo otro toque durante el envío para conservar ese cambio, te parece?
                                                 actual.actualizadoEn = new Date(
                                                         Date.parse(
                                                                 confirmado.actualizadoEn,

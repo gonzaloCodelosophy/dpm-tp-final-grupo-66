@@ -1,3 +1,6 @@
+import { prepararFotoVisita } from './foto-visita.service';
+import { puedeConsultarApi } from './red.service';
+import { Platform } from 'react-native';
 import { resolverLugarQr } from './qr.service';
 import * as Location from 'expo-location';
 import { RADIO_REGISTRO_METROS } from '../../constants/mapa';
@@ -7,7 +10,7 @@ import { obtenerToken } from './storage.service';
 import { solicitarJson } from './api/http';
 import { descargarVisitas, enviarVisita } from './api/visitas.api';
 import { POR_PAGINA } from './api/paginacion';
-import { leerVisitaLocal, confirmarVisita, guardarErrorVisita, guardarVisitaLocal, visitasPendientes } from '../data/repositories/visitas.repository';
+import { leerHistorialLocal, guardarHistorialLocal, actualizarFotoVisita, leerVisitaLocal, confirmarVisita, guardarErrorVisita, guardarVisitaLocal, visitasPendientes } from '../data/repositories/visitas.repository';
 import { errorDatos } from './errores';
 import type { Lugar } from '../types/Lugar';
 import type { Visita } from '../types/Visita';
@@ -116,24 +119,37 @@ export async function obtenerHistorialVisitas(usuarioId: string): Promise<Visita
   const token = await obtenerToken();
   if (!token) throw new Error('Iniciá sesión para consultar tus visitas.');
 
-  const primera = await descargarVisitas(1, token);
-  const historial = [...primera.datos];
-  const paginas = Math.ceil(primera.meta.total / POR_PAGINA);
-
-  for (let pagina = 2; pagina <= paginas; pagina++) {
-    if (await obtenerToken() !== token) throw new Error('La sesión cambió. Iniciá sesión de nuevo.');
-    historial.push(...(await descargarVisitas(pagina, token)).datos);
+  const locales = await leerHistorialLocal(usuarioId);
+  let remotas: Visita[] = [];
+  if (await puedeConsultarApi()) {
+    try {
+      const primera = await descargarVisitas(1, token);
+      remotas = [...primera.datos];
+      const paginas = Math.ceil(primera.meta.total / POR_PAGINA);
+      for (let pagina = 2; pagina <= paginas; pagina++) {
+        if (await obtenerToken() !== token) throw new Error('La sesión cambió. Iniciá sesión de nuevo.');
+        remotas.push(...(await descargarVisitas(pagina, token)).datos);
+      }
+      if (await obtenerToken() !== token) throw new Error('La sesión cambió. Iniciá sesión de nuevo.');
+      remotas = remotas.filter(visita => visita.usuarioId === usuarioId);
+      if (Platform.OS !== 'web') await guardarHistorialLocal(remotas);
+    } catch (error) {
+      const detalle = errorDatos(error);
+      if (detalle.tipo !== 'red' && !(detalle.tipo === 'http' && detalle.reintentable)) throw error;
+      remotas = [];
+    }
   }
-
   if (await obtenerToken() !== token) throw new Error('La sesión cambió. Iniciá sesión de nuevo.');
-
-  for (const visita of historial) {
-    if (visita.usuarioId === usuarioId) visitasConsultadas.set(`${usuarioId}:${visita.id}`, visita);
+  const historial = new Map(locales.map(visita => [visita.id, visita]));
+  for (const visita of remotas) {
+    if (historial.get(visita.id)?.sincronizada !== false) historial.set(visita.id, visita);
   }
-
-  return historial
-    .filter(visita => visita.usuarioId === usuarioId)
-    .sort((a, b) => Date.parse(b.fechaHora) - Date.parse(a.fechaHora));
+  // Volver a leer para incluir registros o confirmaciones realizados durante la descarga.
+  if (Platform.OS !== 'web') {
+    for (const visita of await leerHistorialLocal(usuarioId)) historial.set(visita.id, visita);
+  }
+  for (const visita of historial.values()) visitasConsultadas.set(`${usuarioId}:${visita.id}`, visita);
+  return [...historial.values()].sort((a, b) => Date.parse(b.fechaHora) - Date.parse(a.fechaHora));
 }
 
 export async function obtenerVisitaRegistrada(id: string, usuarioId: string): Promise<Visita | null> {
@@ -157,6 +173,7 @@ export function sincronizarVisitas(usuarioId: string): Promise<void> {
   const tarea = (async () => {
     // Releer después de cada tanda: puede haberse registrado otra visita durante el envío.
     for (;;) {
+      if (!await puedeConsultarApi()) return;
       const pendientes = await visitasPendientes(usuarioId);
       if (!pendientes.length) return;
       const token = await obtenerToken();
@@ -171,7 +188,10 @@ export function sincronizarVisitas(usuarioId: string): Promise<void> {
         if (await obtenerToken() !== token) return;
 
         try {
-          const confirmada = await enviarVisita(visita, token);
+          const preparada = await prepararFotoVisita(visita);
+          if (preparada.fotoUri !== visita.fotoUri) await actualizarFotoVisita(preparada);
+          if (await obtenerToken() !== token) return;
+          const confirmada = await enviarVisita(preparada, token);
           await confirmarVisita(confirmada);
           visitasConsultadas.set(`${usuarioId}:${confirmada.id}`, confirmada);
           publicar(usuarioId);

@@ -18,7 +18,7 @@ import { useFavoritos } from '../hooks/use-favoritos';
 import { SelectorLugarVisita } from '../components/selector-lugar-visita';
 import type { Lugar } from '../types/Lugar';
 import { registrarVisitaCercana, registrarVisitaManual, registrarVisitaQr } from '../services/visitas.service';
-import { subirFotoVisita } from '../services/foto-visita.service';
+import { guardarFotoVisitaLocal } from '../services/foto-visita.service';
 import { RADIO_REGISTRO_METROS } from '../../constants/mapa';
 import { colorsInicio, fuenteTitulo } from '../styles/inicio';
 import { ModalRequiereAuth } from '../components/auth/modal-requiere-auth';
@@ -48,7 +48,7 @@ function RecuerdoVisitaScreen() {
   const [altoFicha, setAltoFicha] = useState(0);
   const [nota, setNota] = useState('');
   const [foto, setFoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [fotoSubida, setFotoSubida] = useState<string | undefined>();
+  const [fotoGuardada, setFotoGuardada] = useState<string | undefined>();
   const [guardando, setGuardando] = useState(false);
   const [eligiendo, setEligiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +101,7 @@ function RecuerdoVisitaScreen() {
         if (elegida.fileSize && elegida.fileSize > 5 * 1024 * 1024) throw new Error('La foto puede pesar hasta 5 MB.');
         if (elegida.mimeType && !['image/jpeg', 'image/png', 'image/webp'].includes(elegida.mimeType)) throw new Error('Elegí una foto JPG, PNG o WEBP.');
         setFoto(elegida);
-        setFotoSubida(undefined);
+        setFotoGuardada(undefined);
       }
     } catch (fallo) { setError(fallo instanceof Error ? fallo.message : 'No pudimos abrir tus fotos.'); }
     finally { setEligiendo(false); }
@@ -119,10 +119,10 @@ function RecuerdoVisitaScreen() {
     setGuardando(true);
     setError(null);
     try {
-      let fotoUri = fotoSubida;
+      let fotoUri = fotoGuardada;
       if (foto && !fotoUri) {
-        fotoUri = await subirFotoVisita(foto, usuarioId);
-        setFotoSubida(fotoUri);
+        fotoUri = await guardarFotoVisitaLocal(foto, usuarioId);
+        setFotoGuardada(fotoUri);
       }
       if (cuentaActual.current !== usuarioId) throw new Error('La cuenta cambió. Volvé a ingresar.');
       if (registroQr) await registrarVisitaQr(lugarRegistro, usuarioId, codigoQr!, { nota, fotoUri });
@@ -223,7 +223,7 @@ function RecuerdoVisitaScreen() {
               {foto && (
                 <View>
                   <Image source={{ uri: foto.uri }} style={styles.foto} contentFit="cover" />
-                  <Pressable accessibilityRole="button" accessibilityLabel="Quitar foto" disabled={guardando} onPress={() => { setFoto(null); setFotoSubida(undefined); }} style={styles.quitar}>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Quitar foto" disabled={guardando} onPress={() => { setFoto(null); setFotoGuardada(undefined); }} style={styles.quitar}>
                     <Ionicons name="close" size={18} color={colors.secondary} />
                   </Pressable>
                 </View>
@@ -233,7 +233,7 @@ function RecuerdoVisitaScreen() {
                 <Text style={styles.enlace}>{eligiendo ? 'Abriendo fotos…' : foto ? 'Cambiar foto' : 'Agregar foto'}</Text>
               </Pressable>
             </View>
-            {foto && <Text style={styles.ayuda}>La foto necesita conexión para guardarse. Podés adjuntar una imagen.</Text>}
+            {foto && <Text style={styles.ayuda}>La foto se guarda en el teléfono y se enviará cuando haya conexión.</Text>}
             {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
             <Pressable disabled={!lugarRegistro || guardando || eligiendo} accessibilityRole="button" onPress={() => void guardar()} style={[styles.guardar, (!lugarRegistro || guardando || eligiendo) && { opacity: 0.5 }]}>
               {guardando ? <ActivityIndicator color={colors.onPrimary} /> : <Text style={styles.guardarTexto}>Guardar visita</Text>}

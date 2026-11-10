@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 import { observarRed } from '../services/red.service';
 import { sincronizarVisitas } from '../services/visitas.service';
 
 export function useSincronizacionVisitas(usuarioId: string | null) {
 
   useEffect(() => {
-    if (!usuarioId || Platform.OS === 'web') return;
+    if (!usuarioId) return;
     let activo = true;
     let redAnterior: boolean | null = null;
 

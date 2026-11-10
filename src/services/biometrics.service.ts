@@ -1,5 +1,4 @@
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Platform } from 'react-native';
 
 /**
  * Verifica si el dispositivo soporta biometría y si el usuario tiene huella/rostro configurados.
@@ -9,9 +8,7 @@ export async function comprobarSoporteBiometrico(): Promise<{
   registrado: boolean;
 }> {
   try {
-    if (Platform.OS === 'web') {
-      return { soportaBiometria: false, registrado: false };
-    }
+
     const compatible = await LocalAuthentication.hasHardwareAsync();
     const enrolled = await LocalAuthentication.isEnrolledAsync();
     return {
@@ -31,9 +28,7 @@ export async function autenticarConBiometria(
   mensajePrompt: string = 'Ingresa con tu huella o rostro'
 ): Promise<boolean> {
   try {
-    if (Platform.OS === 'web') {
-      return false;
-    }
+
     const resultado = await LocalAuthentication.authenticateAsync({
       promptMessage: mensajePrompt,
       fallbackLabel: 'Usar contraseña',

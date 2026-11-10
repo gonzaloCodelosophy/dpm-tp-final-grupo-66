@@ -36,8 +36,8 @@ export default function NotificacionesScreen() {
                 preferencias.horasRecordatorioEvento,
         );
         const [radio, setRadio] = useState(preferencias.radioAvisoMetros);
-        const [porDia, setPorDia] = useState(
-                preferencias.avisosProximidadPorDia,
+        const [intervalo, setIntervalo] = useState(
+                preferencias.avisosProximidadIntervalo,
         );
         const [guardando, setGuardando] = useState(false);
         const [error, setError] = useState<string | null>(null);
@@ -46,18 +46,18 @@ export default function NotificacionesScreen() {
                 if (preferencias.cargando) return;
                 setHoras(preferencias.horasRecordatorioEvento);
                 setRadio(preferencias.radioAvisoMetros);
-                setPorDia(preferencias.avisosProximidadPorDia);
+                setIntervalo(preferencias.avisosProximidadIntervalo);
         }, [
                 preferencias.cargando,
                 preferencias.horasRecordatorioEvento,
                 preferencias.radioAvisoMetros,
-                preferencias.avisosProximidadPorDia,
+                preferencias.avisosProximidadIntervalo,
         ]);
 
         const hayCambios =
                 horas !== preferencias.horasRecordatorioEvento ||
                 radio !== preferencias.radioAvisoMetros ||
-                porDia !== preferencias.avisosProximidadPorDia;
+                intervalo !== preferencias.avisosProximidadIntervalo;
 
         async function guardarAjustes() {
                 if (guardando || !hayCambios || !usuario) return;
@@ -67,7 +67,7 @@ export default function NotificacionesScreen() {
                         await preferencias.guardar({
                                 horasRecordatorioEvento: horas,
                                 radioAvisoMetros: radio,
-                                avisosProximidadPorDia: porDia,
+                                avisosProximidadIntervalo: intervalo,
                         });
 
                         // Los recordatorios ya programados deben reflejar la
@@ -187,22 +187,22 @@ export default function NotificacionesScreen() {
                                         deshabilitado={guardando}
                                 />
                                 <SelectorNumero
-                                        etiqueta="Cantidad por día"
-                                        detalle="Limita cuántos avisos de cercanía querés recibir por día. Con 0 no se envían."
-                                        valor={porDia}
+                                        etiqueta="Intervalo entre avisos"
+                                        detalle="Tiempo mínimo entre avisos de cercanía. Cada lugar avisa como máximo una vez al día. Con 0 no se envían."
+                                        valor={intervalo}
                                         minimo={0}
-                                        maximo={3}
+                                        maximo={5}
                                         paso={1}
                                         textoValor={(valor) =>
                                                 valor === 0
                                                         ? "Sin avisos"
                                                         : `${valor} ${
                                                                   valor === 1
-                                                                          ? "aviso"
-                                                                          : "avisos"
-                                                          } por día`
+                                                                          ? "minuto"
+                                                                          : "minutos"
+                                                          } entre avisos`
                                         }
-                                        onCambiar={setPorDia}
+                                        onCambiar={setIntervalo}
                                         deshabilitado={guardando}
                                 />
 

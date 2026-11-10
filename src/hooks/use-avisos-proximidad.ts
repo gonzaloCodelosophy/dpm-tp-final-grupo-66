@@ -8,8 +8,10 @@ import { useUbicacion } from './use-ubicacion';
 import { usePreferenciasNotificaciones } from './use-preferencias-notificaciones';
 import { evaluarCercania, type AvisoCercania } from '../services/proximidad';
 import { textoDistancia } from '../services/distancias';
+import { diaLocal } from '../services/fechas-eventos';
 import {
   puedeAvisarProximidad,
+  puedeAvisarLugarHoy,
   registrarAvisoProximidad,
 } from '../services/preferencias-notificaciones.service';
 
@@ -18,10 +20,11 @@ export function useAvisosProximidad() {
   const catalogo = useCatalogo();
   const ubicacion = useUbicacion();
   const router = useRouter();
-  const { radioAvisoMetros, avisosProximidadPorDia } = usePreferenciasNotificaciones();
+  const { radioAvisoMetros, avisosProximidadIntervalo, cargando } = usePreferenciasNotificaciones();
   const estadosPorUsuario = useRef(new Map<string, Map<string, AvisoCercania>>());
+  const diaEstados = useRef(diaLocal(new Date()));
   const permisoSolicitado = useRef(new Set<string>());
-  const ocupada = useRef(false);
+  const cola = useRef<Promise<void>>(Promise.resolve());
   const notificacionesSolicitadas = useRef(new Set<string>());
   const preferencias = usuario?.preferencias;
   const habilitado = status === 'autenticado' && preferencias?.avisarProximidad === true;
@@ -29,15 +32,15 @@ export function useAvisosProximidad() {
   const { solicitar, permiso, enPrimerPlano, coordenadas, fechaPosicion, precision } = ubicacion;
 
   useEffect(() => {
-    if (Platform.OS === 'web' || !habilitado || !usuarioId || !enPrimerPlano || permiso === null) return;
+    if (cargando || avisosProximidadIntervalo <= 0 || !habilitado || !usuarioId || !enPrimerPlano || permiso === null) return;
     if (permiso !== 'granted' && !permisoSolicitado.current.has(usuarioId)) {
       permisoSolicitado.current.add(usuarioId);
       void solicitar();
     }
-  }, [habilitado, usuarioId, enPrimerPlano, permiso, solicitar]);
+  }, [habilitado, usuarioId, enPrimerPlano, permiso, solicitar, cargando, avisosProximidadIntervalo]);
 
   useEffect(() => {
-    if (Platform.OS === 'web') return;
+
     const respuesta = Notifications.addNotificationResponseReceivedListener(evento => {
       const datos = evento.notification.request.content.data;
       if (datos.tipo === 'proximidad' && habilitado && datos.usuarioId === usuarioId && typeof datos.lugarId === 'string') {
@@ -49,14 +52,13 @@ export function useAvisosProximidad() {
   }, [habilitado, usuarioId, router]);
 
   useEffect(() => {
-    if (Platform.OS === 'web' || !habilitado || !usuarioId || !enPrimerPlano || permiso !== 'granted' || !coordenadas || !fechaPosicion) return;
+    if (cargando || avisosProximidadIntervalo <= 0 || !habilitado || !usuarioId || !enPrimerPlano || permiso !== 'granted' || !coordenadas || !fechaPosicion) return;
     const radio = radioAvisoMetros;
     if (!Number.isFinite(radio) || radio <= 0 || precision === null || !Number.isFinite(precision) || !Number.isFinite(fechaPosicion) || precision < 0 || precision > radio || Math.abs(Date.now() - fechaPosicion) > 30000) return;
     let vigente = true;
 
     async function avisar() {
-      if (ocupada.current) return;
-      ocupada.current = true;
+      if (!vigente) return;
       try {
         // Android necesita el canal antes de pedir permiso de notificaciones.
         if (Platform.OS === 'android') {
@@ -71,17 +73,31 @@ export function useAvisosProximidad() {
         }
         if (!vigente || !autorizacion.granted || AppState.currentState !== 'active') return;
 
+        const hoy = diaLocal(new Date());
+        if (diaEstados.current !== hoy) {
+          estadosPorUsuario.current.clear();
+          diaEstados.current = hoy;
+        }
         let estados = estadosPorUsuario.current.get(usuarioId!);
         if (!estados) {
           estados = new Map();
           estadosPorUsuario.current.set(usuarioId!, estados);
         }
-        if (avisosProximidadPorDia <= 0) return;
-        if (!(await puedeAvisarProximidad(usuarioId!, avisosProximidadPorDia))) return;
-        const candidatos = evaluarCercania(catalogo.datos?.lugares ?? [], coordenadas!, radio, estados, Date.now());
+        if (avisosProximidadIntervalo <= 0) return;
+        if (!(await puedeAvisarProximidad(usuarioId!, avisosProximidadIntervalo))) return;
+        const candidatos = evaluarCercania(catalogo.datos?.lugares ?? [], coordenadas!, radio, estados);
         // Un solo aviso por actualización, dando prioridad al lugar más cercano.
-        const candidato = candidatos[0];
-        if (!candidato || !vigente) return;
+        let candidato: (typeof candidatos)[number] | undefined;
+        for (const cercano of candidatos) {
+          if (await puedeAvisarLugarHoy(usuarioId!, cercano.lugar.id)) {
+            candidato = cercano;
+            break;
+          }
+        }
+        if (!candidato || !vigente || AppState.currentState !== 'active' || Math.abs(Date.now() - fechaPosicion!) > 30000) return;
+        // Reservar antes de mostrar: si falla la persistencia, no se envía el aviso.
+        await registrarAvisoProximidad(usuarioId!, candidato.lugar.id);
+        if (!vigente || AppState.currentState !== 'active') return;
         const id = await Notifications.scheduleNotificationAsync({
           content: {
             title: `Estás cerca de ${candidato.lugar.nombre}`,
@@ -94,24 +110,13 @@ export function useAvisosProximidad() {
           await Notifications.dismissNotificationAsync(id);
           return;
         }
-        try {
-          await registrarAvisoProximidad(usuarioId!);
-        } catch (error) {
-          console.warn('No pudimos registrar el aviso de cercanía del día:', error);
-        }
-        // Marcar también los demás lugares de esta entrada para no encadenar avisos.
-        for (const cercano of candidatos) {
-          cercano.estado.dentro = true;
-          cercano.estado.ultimoAviso = Date.now();
-        }
+        candidato.estado.dentro = true;
       } catch (error) {
         console.warn('No pudimos mostrar el aviso de cercanía:', error);
-      } finally {
-        ocupada.current = false;
       }
     }
 
-    void avisar();
+    cola.current = cola.current.then(avisar, avisar);
     return () => { vigente = false; };
-  }, [habilitado, usuarioId, enPrimerPlano, permiso, coordenadas, precision, fechaPosicion, catalogo.datos, radioAvisoMetros, avisosProximidadPorDia]);
+  }, [habilitado, usuarioId, enPrimerPlano, permiso, coordenadas, precision, fechaPosicion, catalogo.datos, radioAvisoMetros, avisosProximidadIntervalo, cargando]);
 }

@@ -1,11 +1,10 @@
 import Storage from "expo-sqlite/kv-store";
-import { Platform } from "react-native";
 import { diaLocal } from "./fechas-eventos";
 
 export interface PreferenciasNotificaciones {
         horasRecordatorioEvento: number;
         radioAvisoMetros: number;
-        avisosProximidadPorDia: number;
+        avisosProximidadIntervalo: number;
 }
 
 export const RADIOS_AVISO = [100, 250, 500] as const;
@@ -18,13 +17,13 @@ export const PREFERENCIAS_NOTIFICACIONES_DEFAULT: PreferenciasNotificaciones =
         {
                 horasRecordatorioEvento: 2,
                 radioAvisoMetros: 500,
-                avisosProximidadPorDia: 1,
+                avisosProximidadIntervalo: 1,
         };
 
 const oyentes = new Set<() => void>();
 const clave = (usuarioId: string) => `notificaciones_v1_${usuarioId}`;
 const claveAvisos = (usuarioId: string) =>
-        `avisos_proximidad_v1_${usuarioId}`;
+        `ultimo_aviso_proximidad_v2_${usuarioId}`;
 
 function limitar(valor: number, minimo: number, maximo: number): number {
         if (!Number.isFinite(valor)) return minimo;
@@ -36,7 +35,10 @@ function normalizarRadio(valor: number | undefined): RadioAviso {
 }
 
 function normalizar(
-        valor: CambiosPreferenciasNotificaciones,
+        valor: CambiosPreferenciasNotificaciones & {
+                intervaloAvisosProximidadMinutos?: number;
+                avisosProximidadPorDia?: number;
+        },
 ): PreferenciasNotificaciones {
         return {
                 horasRecordatorioEvento: limitar(
@@ -46,21 +48,19 @@ function normalizar(
                         5,
                 ),
                 radioAvisoMetros: normalizarRadio(valor.radioAvisoMetros),
-                avisosProximidadPorDia: limitar(
-                        valor.avisosProximidadPorDia ??
-                                PREFERENCIAS_NOTIFICACIONES_DEFAULT.avisosProximidadPorDia,
+                avisosProximidadIntervalo: limitar(
+                        valor.avisosProximidadIntervalo ??
+                                valor.intervaloAvisosProximidadMinutos ??
+                                valor.avisosProximidadPorDia ??
+                                PREFERENCIAS_NOTIFICACIONES_DEFAULT.avisosProximidadIntervalo,
                         0,
-                        3,
+                        5,
                 ),
         };
 }
 
 async function leerValor(claveValor: string): Promise<string | null> {
-        if (Platform.OS === "web") {
-                return typeof window === "undefined"
-                        ? null
-                        : localStorage.getItem(claveValor);
-        }
+
         return Storage.getItem(claveValor);
 }
 
@@ -68,11 +68,7 @@ async function escribirValor(
         claveValor: string,
         valor: string,
 ): Promise<void> {
-        if (Platform.OS === "web") {
-                if (typeof window !== "undefined")
-                        localStorage.setItem(claveValor, valor);
-                return;
-        }
+
         await Storage.setItem(claveValor, valor);
 }
 
@@ -117,48 +113,34 @@ export async function guardarPreferenciasNotificaciones(
         return nuevo;
 }
 
-type RegistroAvisos = { dia: string; cantidad: number };
-
-async function leerRegistroAvisos(
-        usuarioId: string,
-): Promise<RegistroAvisos> {
-        try {
-                const valor = await leerValor(claveAvisos(usuarioId));
-                const registro = valor
-                        ? (JSON.parse(valor) as RegistroAvisos)
-                        : null;
-                const hoy = diaLocal(new Date());
-                if (!registro || registro.dia !== hoy)
-                        return { dia: hoy, cantidad: 0 };
-                return {
-                        dia: hoy,
-                        cantidad: Number.isFinite(registro.cantidad)
-                                ? Math.max(0, registro.cantidad)
-                                : 0,
-                };
-        } catch {
-                return { dia: diaLocal(new Date()), cantidad: 0 };
-        }
-}
-
+/** El intervalo es global para todos los lugares y persiste entre sesiones. */
 export async function puedeAvisarProximidad(
         usuarioId: string,
-        limiteDiario: number,
+        intervaloMinutos: number,
 ): Promise<boolean> {
-        if (limiteDiario <= 0) return false;
-        const registro = await leerRegistroAvisos(usuarioId);
-        return registro.cantidad < limiteDiario;
+        if (!Number.isFinite(intervaloMinutos) || intervaloMinutos <= 0) return false;
+        const valor = await leerValor(claveAvisos(usuarioId));
+        if (!valor) return true;
+        const ultimoAviso = Number(valor);
+        return !Number.isFinite(ultimoAviso) ||
+                Date.now() - ultimoAviso >= intervaloMinutos * 60 * 1000;
+}
+
+const claveAvisoLugar = (usuarioId: string, lugarId: string) =>
+        `aviso_proximidad_lugar_v1_${JSON.stringify([usuarioId, lugarId])}`;
+
+export async function puedeAvisarLugarHoy(
+        usuarioId: string,
+        lugarId: string,
+): Promise<boolean> {
+        const ultimoDia = await leerValor(claveAvisoLugar(usuarioId, lugarId));
+        return ultimoDia !== diaLocal(new Date());
 }
 
 export async function registrarAvisoProximidad(
         usuarioId: string,
+        lugarId: string,
 ): Promise<void> {
-        const registro = await leerRegistroAvisos(usuarioId);
-        await escribirValor(
-                claveAvisos(usuarioId),
-                JSON.stringify({
-                        dia: registro.dia,
-                        cantidad: registro.cantidad + 1,
-                }),
-        );
+        await escribirValor(claveAvisoLugar(usuarioId, lugarId), diaLocal(new Date()));
+        await escribirValor(claveAvisos(usuarioId), String(Date.now()));
 }

@@ -1,4 +1,3 @@
-import { Platform } from "react-native";
 import type { ImagePickerAsset } from "expo-image-picker";
 import { z } from "zod";
 import { solicitarJson } from "./api/http";
@@ -54,25 +53,19 @@ export async function guardarPerfil(
                 if (!["image/jpeg", "image/png", "image/webp"].includes(tipo))
                         throw new Error("Elegí una foto JPG, PNG o WEBP.");
                 const formulario = new FormData();
-                if (Platform.OS === "web") {
-                        if (!foto.file)
-                                throw new Error(
-                                        "No pudimos leer la foto seleccionada.",
-                                );
-                        formulario.append("archivo", foto.file);
-                } else {
-                        const extension =
-                                tipo === "image/png"
-                                        ? "png"
-                                        : tipo === "image/webp"
-                                          ? "webp"
-                                          : "jpg";
-                        formulario.append("archivo", {
-                                uri: foto.uri,
-                                name: `perfil.${extension}`,
-                                type: tipo,
-                        } as unknown as Blob);
-                }
+
+                const extension =
+                        tipo === "image/png"
+                                ? "png"
+                                : tipo === "image/webp"
+                                  ? "webp"
+                                  : "jpg";
+                formulario.append("archivo", {
+                        uri: foto.uri,
+                        name: `perfil.${extension}`,
+                        type: tipo,
+                } as unknown as Blob);
+
                 const subida = z
                         .object({
                                 datos: z.object({

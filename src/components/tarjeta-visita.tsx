@@ -49,6 +49,7 @@ export function TarjetaVisita({ visita, lugar, onPress }: { visita: Visita; luga
         {resumenNota ? (
           <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.nota, { color: colors.textSecondary }]}>{resumenNota}</Text>
         ) : null}
+        {!visita.sincronizada && <Text style={[styles.nota, { color: colors.textSecondary }]}>Pendiente de sincronizar</Text>}
         <View style={styles.filaHora}>
           <Ionicons name={tipo.icono} size={14} color={tipo.color} />
           <Text style={[styles.fecha, { color: colors.textSecondary }]}>{hora}</Text>
