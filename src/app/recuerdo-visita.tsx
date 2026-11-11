@@ -5,6 +5,8 @@ import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, Pre
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { useCameraPermissions } from 'expo-camera';
+import { CamaraVisita } from '../components/camara-visita';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTema } from '../context/tema.context';
@@ -51,6 +53,8 @@ function RecuerdoVisitaScreen() {
   const [fotoGuardada, setFotoGuardada] = useState<string | undefined>();
   const [guardando, setGuardando] = useState(false);
   const [eligiendo, setEligiendo] = useState(false);
+  const [mostrarCamara, setMostrarCamara] = useState(false);
+  const [, pedirPermisoCamara] = useCameraPermissions();
   const [error, setError] = useState<string | null>(null);
   const solicitada = useRef(false);
   const enCurso = useRef(false);
@@ -90,11 +94,29 @@ function RecuerdoVisitaScreen() {
   const { favoritos } = useFavoritos(lugarRegistro ? [lugarRegistro.id] : []);
   const esFavorito = Boolean(lugarRegistro && favoritos.includes(lugarRegistro.id));
 
-  async function elegirFoto() {
+  function elegirFoto() {
+    Keyboard.dismiss();
+    mostrarPopup('Foto de la visita', '¿Cómo querés agregar la foto?', [
+      { text: 'Sacar foto con la cámara', onPress: () => { void abrirFoto('camara'); } },
+      { text: 'Elegir del dispositivo', onPress: () => { void abrirFoto('dispositivo'); } },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  }
+
+  async function abrirFoto(origen: 'camara' | 'dispositivo') {
     edicionIniciada.current = true;
     setEligiendo(true);
     setError(null);
     try {
+      if (origen === 'camara') {
+        const permiso = await pedirPermisoCamara();
+        if (!permiso.granted) {
+          setError('Permití el acceso a la cámara en los ajustes del dispositivo para sacar una foto. También podés elegir una del dispositivo.');
+          return;
+        }
+        setMostrarCamara(true);
+        return;
+      }
       const resultado = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible });
       if (!resultado.canceled) {
         const elegida = resultado.assets[0];
@@ -103,7 +125,7 @@ function RecuerdoVisitaScreen() {
         setFoto(elegida);
         setFotoGuardada(undefined);
       }
-    } catch (fallo) { setError(fallo instanceof Error ? fallo.message : 'No pudimos abrir tus fotos.'); }
+    } catch (fallo) { setError(fallo instanceof Error ? fallo.message : origen === 'camara' ? 'No pudimos abrir la cámara.' : 'No pudimos abrir tus fotos.'); }
     finally { setEligiendo(false); }
   }
 
@@ -230,7 +252,7 @@ function RecuerdoVisitaScreen() {
               )}
               <Pressable disabled={guardando || eligiendo} accessibilityRole="button" onPress={() => void elegirFoto()} style={styles.agregarFoto}>
                 <Ionicons name="add" size={26} color={colors.primary} />
-                <Text style={styles.enlace}>{eligiendo ? 'Abriendo fotos…' : foto ? 'Cambiar foto' : 'Agregar foto'}</Text>
+                <Text style={styles.enlace}>{eligiendo ? 'Abriendo…' : foto ? 'Cambiar foto' : 'Agregar foto'}</Text>
               </Pressable>
             </View>
             {foto && <Text style={styles.ayuda}>La foto se guarda en el teléfono y se enviará cuando haya conexión.</Text>}
@@ -241,6 +263,12 @@ function RecuerdoVisitaScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {mostrarCamara && <CamaraVisita onCerrar={() => setMostrarCamara(false)} onFoto={captura => {
+        setFoto(captura);
+        setFotoGuardada(undefined);
+        setError(null);
+        setMostrarCamara(false);
+      }} />}
       <Modal visible={mostrarLugares} transparent animationType="fade" onRequestClose={() => setMostrarLugares(false)}>
         <SafeAreaView style={styles.fondoPopup}>
           <Pressable style={StyleSheet.absoluteFillObject} accessibilityRole="button" accessibilityLabel="Cerrar selector de lugares" onPress={() => setMostrarLugares(false)} />

@@ -80,14 +80,14 @@
                                 "expo-image-picker",
                                 {
                                         "photosPermission": "Usamos tus fotos para que puedas elegir una imagen de perfil.",
-                                        "cameraPermission": "Usamos la cámara para escanear el QR de un lugar.",
+                                        "cameraPermission": "Usamos la cámara para sacar fotos de tus visitas y escanear el QR de un lugar.",
                                         "microphonePermission": false
                                 }
                         ],
                         [
                                 "expo-camera",
                                 {
-                                        "cameraPermission": "Usamos la cámara para escanear el QR de un lugar.",
+                                        "cameraPermission": "Usamos la cámara para sacar fotos de tus visitas y escanear el QR de un lugar.",
                                         "recordAudioAndroid": false,
                                         "microphonePermission": false
                                 }
