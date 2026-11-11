@@ -7,7 +7,9 @@
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "android-fresh": "cd android && ./gradlew clean && cd .. && expo run:android",
-    "apk:android": "node scripts/build-apk.cjs",
+    "apk:android": "npx eas-cli@latest build --platform android --profile preview",
+    "apk:android-aab": "npx eas-cli@latest build --platform android --profile production",
+    "apk:android-cjs": "node scripts/build-apk.cjs",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint"
