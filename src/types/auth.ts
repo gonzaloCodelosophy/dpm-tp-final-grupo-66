@@ -12,7 +12,7 @@ export interface Usuario {
   email: string;
   avatarUrl: string | null;
   creadoEn: string;
-  preferencias?: Preferencias;
+  preferencias: Preferencias;
 }
 
 export interface CredencialesLogin {
